@@ -19,6 +19,10 @@ public:
 
     Player::Player()
     {
+        setName("Player");
+
+        setMovementSpeed(tibia::MovementSpeeds::player);
+
         setHasOutfit(true);
     }
 

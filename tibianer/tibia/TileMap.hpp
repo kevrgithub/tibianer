@@ -16,11 +16,13 @@ class TileMap : public sf::Drawable, public sf::Transformable
 
 public:
 
-    void load(std::vector<int> tiles)
+    void load(std::vector<int> tiles, bool useTileOffset = false)
     {
-        m_tileSet = tibia::sprites;
+        m_tileSet = tibia::Textures::sprites;
 
         m_tiles = tiles;
+
+        loadWaterTiles();
 
         m_width  = tibia::MAP_SIZE;
         m_height = tibia::MAP_SIZE;
@@ -48,6 +50,19 @@ public:
                 quad[1].texCoords = sf::Vector2f((tu + 1) * tibia::TILE_SIZE, tv       * tibia::TILE_SIZE);
                 quad[2].texCoords = sf::Vector2f((tu + 1) * tibia::TILE_SIZE, (tv + 1) * tibia::TILE_SIZE);
                 quad[3].texCoords = sf::Vector2f(tu       * tibia::TILE_SIZE, (tv + 1) * tibia::TILE_SIZE);
+
+                if (useTileOffset == true)
+                {
+                    quad[0].position.x -= tibia::TILE_DRAW_OFFSET;
+                    quad[1].position.x -= tibia::TILE_DRAW_OFFSET;
+                    quad[2].position.x -= tibia::TILE_DRAW_OFFSET;
+                    quad[3].position.x -= tibia::TILE_DRAW_OFFSET;
+
+                    quad[0].position.y -= tibia::TILE_DRAW_OFFSET;
+                    quad[1].position.y -= tibia::TILE_DRAW_OFFSET;
+                    quad[2].position.y -= tibia::TILE_DRAW_OFFSET;
+                    quad[3].position.y -= tibia::TILE_DRAW_OFFSET;
+                }
             }
         }
     }
@@ -76,54 +91,60 @@ public:
         return m_tiles;
     }
 
-    sf::Vector2u getTileCoordsByTileNumber(int tileNumber)
+    std::vector<int> getWaterTiles()
     {
-        int tileId = m_tiles.at(tileNumber);
-
-        tileId = tileId - 1;
-
-        sf::Vector2u tileCoords;
-        tileCoords.x = tileId % (m_tileSet.getSize().x / tibia::TILE_SIZE);
-        tileCoords.y = tileId / (m_tileSet.getSize().x / tibia::TILE_SIZE);
-
-        return tileCoords;
+        return m_waterTiles;
     }
 
-    int getTileNumberByTileCoords(int x, int y)
+    void loadWaterTiles()
     {
-        int tileX = x;
-        int tileY = y;
+        for (unsigned int i = 0; i < m_tiles.size(); i++)
+        {
+            int tileId = m_tiles.at(i);
 
-        tileX = tileX - (tileX % tibia::TILE_SIZE);
-        tileY = tileY - (tileY % tibia::TILE_SIZE);
+            if (tileId == tibia::TILE_NULL)
+            {
+                continue;
+            }
 
-        return (tileX + tileY * tibia::MAP_SIZE) / tibia::TILE_SIZE;
+            for (unsigned int j = 0; j < (sizeof(tibia::SpriteData::water) / sizeof(int)); j++)
+            {
+                if (tileId == tibia::SpriteData::water[j])
+                {
+                    m_waterTiles.push_back(i);
+                }
+            }
+        }
     }
 
     void doAnimatedWater()
     {
-        for (unsigned int tileNumber = 0; tileNumber < m_tiles.size(); tileNumber++)
+        for (m_waterTiles_it = m_waterTiles.begin(); m_waterTiles_it != m_waterTiles.end(); m_waterTiles_it++)
         {
-            for (int n = 0; n < sizeof(tibia::animatedTiles::water); n++)
-            {
-                if (m_tiles.at(tileNumber) == tibia::animatedTiles::water[n])
-                {
-                    int waterId = tibia::animatedTiles::water[n];
+            int tileNumber = *m_waterTiles_it;
 
-                    if (waterId == tibia::animatedTiles::water[3])
+            int tileId = m_tiles.at(tileNumber);
+
+            for (int j = 0; j < (sizeof(tibia::SpriteData::water) / sizeof(int)); j++)
+            {
+                if (tileId == tibia::SpriteData::water[j])
+                {
+                    int waterTileId = tibia::SpriteData::water[j];
+
+                    if (waterTileId == tibia::SpriteData::water[3])
                     {
-                        waterId = tibia::animatedTiles::water[0];
+                        waterTileId = tibia::SpriteData::water[0];
                     }
-                    else if (waterId == tibia::animatedTiles::water[7])
+                    else if (waterTileId == tibia::SpriteData::water[7])
                     {
-                        waterId = tibia::animatedTiles::water[4];
+                        waterTileId = tibia::SpriteData::water[4];
                     }
                     else
                     {
-                        waterId = waterId + 1;
+                        waterTileId += 1;
                     }
 
-                    updateTile(tileNumber, waterId);
+                    updateTile(tileNumber, waterTileId);
 
                     break;
                 }
@@ -133,10 +154,15 @@ public:
 
     void doAnimatedObjects()
     {
-        //std::cout << "TileMap doAnimatedObjects()" << std::endl;
-
         for (unsigned int tileNumber = 0; tileNumber < m_tiles.size(); tileNumber++)
         {
+            int tileId = m_tiles.at(tileNumber);
+
+            if (tileId == tibia::TILE_NULL)
+            {
+                continue;
+            }
+
             for (unsigned int i = 0; i < tibia::animatedObjectsList.size(); i++)
             {
                 std::vector<int> sprites = tibia::animatedObjectsList.at(i);
@@ -145,7 +171,7 @@ public:
                 {
                     int sprite = sprites.at(n);
 
-                    if (m_tiles.at(tileNumber) == sprite)
+                    if (tileId == sprite)
                     {
                         n++;
 
@@ -165,13 +191,64 @@ public:
         }
     }
 
+    sf::Vector2u getTileCoordsByTileNumber(int tileNumber)
+    {
+        int tileId = m_tiles.at(tileNumber);
+
+        tileId = tileId - 1;
+
+        sf::Vector2u tileCoords;
+        tileCoords.x = tileId % (m_tileSet.getSize().x / tibia::TILE_SIZE);
+        tileCoords.y = tileId / (m_tileSet.getSize().x / tibia::TILE_SIZE);
+
+        return tileCoords;
+    }
+
+    std::string getName()
+    {
+        return m_name;
+    }
+
+    void setName(std::string name)
+    {
+        m_name = name;
+    }
+
+    std::string getType()
+    {
+        return m_type;
+    }
+
+    void setType(std::string type)
+    {
+        m_type = type;
+    }
+
+    int getZ()
+    {
+        return m_z;
+    }
+
+    void setZ(int z)
+    {
+        m_z = z;
+    }
+
 private:
 
-    unsigned int m_width;
-    unsigned int m_height;
+    std::string m_name;
+    std::string m_type;
+
+    int m_z;
+
+    int m_width;
+    int m_height;
 
     std::vector<int> m_tiles;
     std::vector<int>::iterator m_tiles_it;
+
+    std::vector<int> m_waterTiles;
+    std::vector<int>::iterator m_waterTiles_it;
 
     sf::VertexArray m_vertices;
 

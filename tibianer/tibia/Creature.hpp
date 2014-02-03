@@ -22,22 +22,29 @@ public:
 
     Creature::Creature()
     {
-        m_drawOffset = 8;
+        m_tileOffset = tibia::TILE_DRAW_OFFSET;
 
         m_z = 0;
 
         m_direction = 2;
 
+        m_movementSpeed = 0.5;
+
         m_outfitHead = 0;
         m_outfitBody = 0;
         m_outfitLegs = 0;
         m_outfitFeet = 0;
+
+        m_clockMovement.restart();
     }
 
     void setCoords(int x, int y)
     {
         setX(x);
         setY(y);
+
+        setTileX(x * tibia::TILE_SIZE);
+        setTileY(y * tibia::TILE_SIZE);
     }
 
     void setOutfit(int head, int body, int legs, int feet)
@@ -62,50 +69,137 @@ public:
 
     void updateOutfit()
     {
-        m_spriteOutfitHead.setId(tibia::outfits::head[(m_outfitHead * 4) + m_direction]);
-        m_spriteOutfitBody.setId(tibia::outfits::body[(m_outfitBody * 4) + m_direction]);
-        m_spriteOutfitLegs.setId(tibia::outfits::legs[(m_outfitLegs * 4) + m_direction]);
-        m_spriteOutfitFeet.setId(tibia::outfits::feet[(m_outfitFeet * 4) + m_direction]);
+        m_spriteOutfitHead.setId(tibia::Outfits::head[(m_outfitHead * 4) + m_direction]);
+        m_spriteOutfitBody.setId(tibia::Outfits::body[(m_outfitBody * 4) + m_direction]);
+        m_spriteOutfitLegs.setId(tibia::Outfits::legs[(m_outfitLegs * 4) + m_direction]);
+        m_spriteOutfitFeet.setId(tibia::Outfits::feet[(m_outfitFeet * 4) + m_direction]);
+    }
+
+    void updateTileCoords()
+    {
+        m_tileX = m_x * tibia::TILE_SIZE;
+        m_tileY = m_y * tibia::TILE_SIZE;
     }
 
     void update()
     {
-        m_drawX = m_x * tibia::TILE_SIZE;
-        m_drawY = m_y * tibia::TILE_SIZE;
+        updateTileCoords();
 
-        setPosition(m_drawX - m_drawOffset, m_drawY - m_drawOffset);
+        int tileOffset = m_tileOffset;
+
+        if (m_isSitting == true)
+        {
+            tileOffset *= 2;
+        }
+
+        setPosition(m_tileX - tileOffset, m_tileY - tileOffset);
 
         updateOutfit();
     }
 
-    int getDrawX()
+    void doTurn(int direction)
     {
-        return m_drawX;
+        setDirection(direction);
     }
 
-    void setDrawX(int x)
+    void doMove(int direction)
     {
-        m_drawX = x;
+        m_timeMovement = m_clockMovement.getElapsedTime();
+
+        if (m_timeMovement.asSeconds() >= m_movementSpeed)
+        {
+            m_movementReady = true;
+        }
+
+        if (m_movementReady == false)
+        {
+            return;
+        }
+
+        switch (direction)
+        {
+            case tibia::Directions::up:
+                if (m_y != 0)
+                {
+                    m_y--;
+                }
+                break;
+
+            case tibia::Directions::right:
+                if (m_x != MAP_XY_MAX)
+                {
+                    m_x++;
+                }
+                break;
+
+            case tibia::Directions::down:
+                if (m_y != MAP_XY_MAX)
+                {
+                    m_y++;
+                }
+                break;
+
+            case tibia::Directions::left:
+                if (m_x != 0)
+                {
+                    m_x--;
+                }
+                break;
+        }
+
+        m_movementReady = false;
+
+        m_clockMovement.restart();
     }
 
-    int getDrawY()
+    int getTileX()
     {
-        return m_drawY;
+        return m_tileX;
     }
 
-    void setDrawY(int y)
+    void setTileX(int x)
     {
-        m_drawY = y;
+        m_tileX = x;
     }
 
-    int getDrawOffset()
+    int getTileY()
     {
-        return m_drawOffset;
+        return m_tileY;
     }
 
-    void setDrawOffset(int offset)
+    void setTileY(int y)
     {
-        m_drawOffset = offset;
+        m_tileY = y;
+    }
+
+    int getTileOffset()
+    {
+        return m_tileOffset;
+    }
+
+    void setTileOffset(int offset)
+    {
+        m_tileOffset = offset;
+    }
+
+    bool getIsSitting()
+    {
+        return m_isSitting;
+    }
+
+    void setIsSitting(bool b)
+    {
+        m_isSitting = b;
+    }
+
+    std::string getName()
+    {
+        return m_name;
+    }
+
+    void setName(std::string name)
+    {
+        m_name = name;
     }
 
     int getX()
@@ -146,6 +240,26 @@ public:
     void setDirection(int direction)
     {
         m_direction = direction;
+    }
+
+    bool getMovementReady()
+    {
+        return m_movementReady;
+    }
+
+    void setMovementReady(bool b)
+    {
+        m_movementReady = b;
+    }
+
+    float getMovementSpeed()
+    {
+        return m_movementSpeed;
+    }
+
+    void setMovementSpeed(float movementSpeed)
+    {
+        m_movementSpeed = movementSpeed;
     }
 
     int getHp()
@@ -258,12 +372,21 @@ public:
         m_spriteOutfitFeet = feet;
     }
 
+    sf::Clock getClockMovement()
+    {
+        return m_clockMovement;
+    }
+
 private:
 
-    int m_drawX;
-    int m_drawY;
+    int m_tileX;
+    int m_tileY;
 
-    int m_drawOffset;
+    int m_tileOffset;
+
+    bool m_isSitting;
+
+    std::string m_name;
 
     int m_x;
     int m_y;
@@ -271,8 +394,15 @@ private:
 
     int m_direction;
 
+    bool m_movementReady;
+
+    float m_movementSpeed;
+
     int m_hp;
     int m_mp;
+
+    int m_gold;
+    int m_platinum;
 
     int m_exp;
 
@@ -294,6 +424,9 @@ private:
     tibia::Sprite m_spriteOutfitBody;
     tibia::Sprite m_spriteOutfitLegs;
     tibia::Sprite m_spriteOutfitFeet;
+
+    sf::Clock m_clockMovement;
+    sf::Time m_timeMovement;
 
 private:
 

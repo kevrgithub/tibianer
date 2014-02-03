@@ -1,0 +1,6 @@
+#ifndef TIBIA_ANIMATION_HPP
+#define TIBIA_ANIMATION_HPP
+
+
+
+#endif // TIBIA_ANIMATION_HPP

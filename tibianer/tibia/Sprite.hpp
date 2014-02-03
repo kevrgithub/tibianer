@@ -17,12 +17,12 @@ public:
 
     Sprite::Sprite()
     {
-        setTexture(tibia::sprites);
+        setTexture(tibia::Textures::sprites);
     }
 
     Sprite::Sprite(int id)
     {
-        setTexture(tibia::sprites);
+        setTexture(tibia::Textures::sprites);
         setTextureRect(tibia::getSpriteRectById(id));
     }
 
