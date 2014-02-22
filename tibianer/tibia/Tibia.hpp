@@ -6,7 +6,11 @@
 #include <memory>
 #include <cmath>
 
+#include "boost_foreach.hpp"
+
 #include <SFML/Graphics.hpp>
+
+#include <Thor/Vectors/VectorAlgebra2D.hpp>
 
 namespace tibia
 {
@@ -19,7 +23,9 @@ namespace tibia
     const int NUM_TILES_X = 13;
     const int NUM_TILES_Y = 9;
 
-    const int MAP_XY_MAX = (MAP_SIZE * TILE_SIZE) - TILE_SIZE;
+    const int MAP_XY_MAX = MAP_SIZE;
+
+    const int MAP_TILE_XY_MAX = MAP_SIZE * TILE_SIZE;
 
     const int TILES_WIDTH  = NUM_TILES_X * TILE_SIZE;
     const int TILES_HEIGHT = NUM_TILES_Y * TILE_SIZE;
@@ -28,53 +34,47 @@ namespace tibia
 
     const int TILE_DRAW_OFFSET = 8;
 
+    const int VOLUME_MULTIPLIER = 8;
+
+    const float TEXT_TIME = 5.0;
+
+    const float DRAW_DISTANCE_MAX = 10.0;
+
+    const int CREATURES_MAX_LOAD = 256;
+
     namespace Textures
     {
         sf::Texture sprites;
 
+        sf::Texture font;
+        sf::Texture font2;
+
         sf::Texture light;
         sf::Texture light2;
         sf::Texture light3;
-    }
-
-    bool loadTextures()
-    {
-        if (tibia::Textures::sprites.loadFromFile("images/sprites.png") == false)
-        {
-            return false;
-        }
-
-        if (tibia::Textures::light.loadFromFile("images/light.png") == false)
-        {
-            return false;
-        }
-
-        if (tibia::Textures::light2.loadFromFile("images/light2.png") == false)
-        {
-            return false;
-        }
-
-        if (tibia::Textures::light3.loadFromFile("images/light3.png") == false)
-        {
-            return false;
-        }
-
-        return true;
+        sf::Texture light4;
+        sf::Texture light5;
     }
 
     namespace Fonts
     {
         std::string default = "fonts/OpenSans.ttf";
-        int defaultSize = 48;
+        std::string small   = "fonts/NewFont.ttf";
+        std::string martel  = "fonts/martel.ttf";
+    }
 
-        std::string small = "fonts/NewFont.ttf";
-        int smallSize = 16;
-
-        int gameSize = 24;
+    namespace FontSizes
+    {
+        int default = 48;
+        int small   = 16;
+        int game    = 24;
+        int title   = 128;
     }
 
     namespace Colors
     {
+        sf::Color transparent(0, 0, 0, 0);
+
         sf::Color black(0, 0, 0);
         sf::Color white(255, 255, 255);
         sf::Color red(255, 0, 0);
@@ -89,12 +89,28 @@ namespace tibia
         sf::Color windowBorderColor(128, 128, 128);
 
         sf::Color gameTextShadowColor(32, 32, 32, 192);
+
+        sf::Color tileIsSolid(64, 64, 64);
+        sf::Color tileIsMoveAboveOrBelow(255, 255, 0);
     }
+
+    enum Teams
+    {
+        neutral,
+        good,
+        evil
+    };
 
     namespace GuiData
     {
         int gameWindowX = 32;
         int gameWindowY = 32;
+
+        int miniMapWindowX = 32 + 32 + 416;
+        int miniMapWindowY = 32;
+
+        int miniMapWindowSizeX = 128;
+        int miniMapWindowSizeY = 88;
     }
 
     enum ZAxis
@@ -109,12 +125,20 @@ namespace tibia
         up,
         right,
         down,
-        left
+        left,
+        upLeft,
+        upRight,
+        downRight,
+        downLeft,
+
+        begin = up,
+        end   = downLeft
     };
 
     namespace MovementSpeeds
     {
-        float player = 0.01; // 0.1
+        float default = 0.5;
+        float player  = 0.01; // 0.2
     }
 
     namespace SpriteData
@@ -126,7 +150,7 @@ namespace tibia
         int lever[] = {49, 50};
 
         int stepTileStone[] = {398,  399};
-        int stepTileWood[]  = {1275, 1276};
+        int stepTileWood[] = { 1275, 1276 };
 
         int trough[]   = {52, 51, 685, 686, 687, 688, 689, 690};
         int bucket[]   = {310, 678, 679, 680, 681, 682, 683, 684};
@@ -140,17 +164,13 @@ namespace tibia
         int depot   = 1273;
         int mailBox = 1274;
 
-        int runeBlank = 1277;
+        int blankRune = 1277;
 
         int fishingRod = 1470;
 
         int dustBin = 1472;
 
-        int spellBlue = 1829;
-
         int presentBox = 2160;
-
-        int spellBlack = 3252;
 
         int water[] = 
         {
@@ -166,7 +186,7 @@ namespace tibia
 
         int solid[] = 
         {
-            12, 13, 21, 25, 27, 28, 29,
+            12, 13, 21, 24, 25, 27, 28, 29,
             37,
             39,
             44,
@@ -301,12 +321,51 @@ namespace tibia
             3260, 3261, 3262, 3263, 3264, 3265, 3266, 3267,
             3271, 3275, 3279,
             3295, 3303,
-            3310, 3313
+            3310, 3313,
+            3322, 3326
         };
 
         int blockProjectiles[] =
         {
-            88
+            12, 13, 21, 24, 25, 27, 28, 29,
+            55, 56, 58, 60, 66, 67, 68, 72,
+            88,
+            315,
+            388,
+            466, 467, 468, 469, 470, 471, 472, 473, 474, 475, 476, 477,
+            486,
+            548, 549, 554, 555,
+            562,
+            565, 566, 569, 570, 574, 575, 576, 580, 582, 584, 586, 588,
+            703, 707,
+            906, 907, 909, 910, 915, 916, 918, 919,
+            934, 935, 936, 937, 938, 939, 940, 941, 942, 943, 944, 945, 946, 947, 948, 949, 950, 951, 952, 953, 954, 955, 956, 957, 958, 959, 960,
+            997, 999, 1001,
+            1066, 1067, 1068, 1069, 1070,
+            1140, 1144, 1152, 1160, 1164, 1168, 1172, 1176, 1180,
+            1195, 1196, 1197, 1198,
+            1224,
+            1591, 1592, 1593, 1594,
+            1595, 1596, 1597, 1598,
+            1602,
+            1610, 1614, 1618, 1622, 1630, 1634, 1669,
+            1670, 1671,
+            1676, 1680, 1684, 1688, 1692, 1760, 1764, 1768, 1772,
+            1939, 1940, 1941, 1942, 1943, 1944, 1945, 1946,
+            2123, 2127, 2131,
+            2152,
+            2164, 2168, 2172,
+            2408,
+            2486, 2490, 2494,
+            2703, 2704, 2705, 2706, 2707, 2708, 2709, 2710, 2711, 2712, 2713, 2714, 2715, 2716, 2717, 2718,
+            3030, 3032, 3034,
+            3039, 3043,
+            3235,
+            3254, 3255, 3256, 3257,
+            3271, 3275, 3279,
+            3294, 3295, 3301, 3303,
+            3310, 3313,
+            3322, 3326
         };
 
         int chairs[] = 
@@ -320,6 +379,47 @@ namespace tibia
             1924, 1925, 1926, 1927,
             3239, 3240
         };
+
+        int offsetObjects[] =
+        {
+            37,
+            46,
+            88,
+            1264, 1265, 1266, 1267,
+            1273, 1274
+        };
+
+        int ladder = 455;
+
+        int stairs = 460;
+
+        int holes[] =
+        {
+            47, 456, 479, 480, 481, 487,
+            610, 611,
+            691, 692, 693, 694, 695, 696, 697, 698, 699,
+            1205,
+            3241, 3243
+        };
+    }
+
+    enum CreatureTypes
+    {
+        human,
+
+        demon,
+        gameMaster,
+        hero,
+        orc,
+        skeleton,
+        zombie
+    };
+
+    namespace CreatureSprites
+    {
+        std::vector<int> hero = {1645, 1646, 1643, 1644};
+
+        std::vector<int> gameMaster = {3330, 3329, 3327, 3328};
     }
 
     //namespace AnimatedObjects
@@ -328,6 +428,105 @@ namespace tibia
     //}
 
     std::vector<std::vector<int>> animatedObjectsList;
+
+    namespace Animations
+    {
+        // {id, numFrames}
+
+        int waterSplash[2] = {335, 4};
+
+        int hitBlood[2]  = {363, 4};
+        int hitMiss[2]   = {920, 4};
+        int hitBlock[2]  = {924, 3};
+        int hitBlack[2]  = {1388, 8};
+        int hitPoison[2] = {2132, 4};
+
+        int urine[2] =  {1374, 7};
+        int poison[2] = {1381, 7};
+
+        int spellBlue[2]  = {1396, 8};
+        int spellBlack[2] = {3244, 8};
+
+        int fire[2]        = {1489, 2};
+        int electricity[2] = {1497, 2};
+
+        int particlesBlue[2]  = {1499, 5};
+        int particlesRed[2]   = {1504, 5};
+        int particlesGreen[2] = {1509, 5};
+
+        int bubbleGreen[2] = {1570, 5};
+        int bubbleRed[2]   = {1582, 5};
+    }
+
+    namespace AnimatedDecals
+    {
+        int corpse[2] = {491, 7};
+
+        int poolRed[2]    = {745, 3};
+        int poolBlue[2]   = {751, 3};
+        int poolGreen[2]  = {757, 3};
+        int poolOrange[2] = {763, 3};
+        int poolYellow[2] = {769, 3};
+        int poolPurple[2] = {775, 3};
+        int poolWhite[2]  = {781, 3};
+
+        int splatRed[2]    = {748, 3};
+        int splatBlue[2]   = {754, 3};
+        int splatGreen[2]  = {760, 3};
+        int splatOrange[2] = {766, 3};
+        int splatYellow[2] = {772, 3};
+        int splatPurple[2] = {778, 3};
+        int splatWhite[2]  = {784, 3};
+    }
+
+    namespace AnimationTimes
+    {
+        float default = 0.1;
+        float decal   = 60.0;
+    }
+
+    namespace Projectiles
+    {
+        const int spellBlue  = 1829;
+        const int spellBlack = 3252;
+
+        const int spellFire[8] = {1831, 1834, 1836, 1833, 1830, 1832, 1837, 1835};
+
+        const int spear[8] = {963, 965, 967, 969, 970, 964, 966, 968};
+
+        const int bolt[8] = {972, 974, 976, 978, 979, 973, 975, 977};
+
+        const int arrow[8]       = {980, 982, 984, 986, 987, 981, 983, 985};
+        const int arrowFire[8]   = {1855, 1857, 1859, 1861, 1854, 1856, 1858, 1860};
+        const int arrowPoison[8] = {1847, 1849, 1851, 1853, 1846, 1848, 1850, 1852};
+    }
+
+    enum ProjectileTypes
+    {
+        spellBlue,
+        spellBlack,
+        spellFire,
+        spear,
+        bolt,
+        arrow,
+        arrowFire,
+        arrowPoison
+    };
+
+    namespace ProjectileRanges
+    {
+        const float default = 6.0;
+    }
+
+    namespace ProjectileSpeeds
+    {
+        const float default = 8.0;
+    }
+
+    namespace ProjectileDamages
+    {
+        const float default = 5.0;
+    }
 
     namespace Outfits
     {
@@ -393,14 +592,50 @@ namespace tibia
         };
     }
 
+    enum TileMapTypes
+    {
+        tiles,
+        edges,
+        walls,
+        objects,
+        objectsDrawLast,
+        offset
+    };
+
+    namespace Sounds
+    {
+        sf::SoundBuffer death;
+
+        sf::SoundBuffer arrowBlock;
+    }
+
     float calculateDistance(float x1, float y1, float x2, float y2)
     {
         return sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2));
     }
 
+    int calculateDistanceByTile(int x1, int y1, int x2, int y2)
+    {
+        return std::max(std::abs(x1 - x2), std::abs(y1 - y2)) / tibia::TILE_SIZE;
+    }
+
+    float calculateVolumeByDistance(float distance)
+    {
+        float volume = 100 - (distance * tibia::VOLUME_MULTIPLIER);
+
+        if (volume < 0)
+        {
+            volume = 0;
+        }
+
+        //std::cout << "volume: " << volume << std::endl;
+
+        return volume;
+    }
+
     int getRandomNumber(int low, int high)
     {
-        return std::rand() % (high - low + 1) + low;
+        return std::rand() % ((high - low) + 1) + low;
     }
 
     sf::IntRect getSpriteRectById(int id)
@@ -424,6 +659,183 @@ namespace tibia
         tileY = tileY - (tileY % tibia::TILE_SIZE);
 
         return (tileX + tileY * tibia::MAP_SIZE) / tibia::TILE_SIZE;
+    }
+
+    sf::Vector2u getTileCoordsByTileNumber(int tileNumber)
+    {
+        sf::Vector2u coords;
+
+        coords.x = (tileNumber % tibia::TILE_SIZE) * tibia::TILE_SIZE;
+        coords.y = (tileNumber / tibia::TILE_SIZE) * tibia::TILE_SIZE;
+
+        return coords;
+    }
+
+    int roundUp(int number, int multiple) 
+    { 
+        if (multiple == 0)
+        { 
+            return number;
+        } 
+
+         int remainder = number % multiple;
+
+         if (remainder == 0)
+         {
+            return number;
+         }
+
+        return number + multiple - remainder;
+    }
+
+    float getFloatInverse(float value)
+    {
+        unsigned int *i = (unsigned int*)&value;
+
+        *i = 0x7F000000 - *i; 
+
+        return value;
+    }
+
+    float getFloatNormal(float value)
+    {
+        if (value == 0) return 0;
+
+        return (value < 0) ? -1 : 1;
+    }
+
+    float getFloatNormalEx(float value)
+    {
+        if (value == 0) return 0;
+
+        if (value > 0 && value < 0.5) return 0;
+
+        if (value < 0 && value > -0.5) return 0;
+
+        return (value < 0) ? -1 : 1;
+    }
+
+    sf::Vector2f getNormalByVectors(sf::Vector2f origin, sf::Vector2f destination)
+    {
+        sf::Vector2f normal;
+
+        normal = destination - origin;
+
+        normal = normal / thor::length(normal);
+
+        return normal;
+    }
+
+    sf::Vector2f getVectorByDirection(int direction)
+    {
+        sf::Vector2f vec(0, 0);
+
+        switch (direction)
+        {
+            case tibia::Directions::up:
+                vec.y--;
+                break;
+
+            case tibia::Directions::right:
+                vec.x++;
+                break;
+
+            case tibia::Directions::down:
+                vec.y++;
+                break;
+
+            case tibia::Directions::left:
+                vec.x--;
+                break;
+
+            case tibia::Directions::upLeft:
+                vec.x--;
+                vec.y--;
+                break;
+
+            case tibia::Directions::upRight:
+                vec.x++;
+                vec.y--;
+                break;
+
+            case tibia::Directions::downLeft:
+                vec.x--;
+                vec.y++;
+                break;
+
+            case tibia::Directions::downRight:
+                vec.x++;
+                vec.y++;
+                break;
+        }
+
+        return vec;
+    }
+
+    int getDirectionByVector(sf::Vector2f vec)
+    {
+        int direction = -1;
+
+        if (vec.x == 0 && vec.y < 0)
+        {
+            direction = tibia::Directions::up;
+        }
+        else if (vec.x > 0 && vec.y == 0)
+        {
+            direction = tibia::Directions::right;
+        }
+        else if (vec.x == 0 && vec.y > 0)
+        {
+            direction = tibia::Directions::down;
+        }
+        else if (vec.x < 0 && vec.y == 0)
+        {
+            direction = tibia::Directions::left;
+        }
+        else if (vec.x < 0 && vec.y < 0)
+        {
+            direction = tibia::Directions::upLeft;
+        }
+        else if (vec.x > 0 && vec.y < 0)
+        {
+            direction = tibia::Directions::upRight;
+        }
+        else if (vec.x < 0 && vec.y > 0)
+        {
+            direction = tibia::Directions::downLeft;
+        }
+        else if (vec.x > 0 && vec.y > 0)
+        {
+            direction = tibia::Directions::downRight;
+        }
+
+        return direction;
+    }
+
+    int getDirectionByKey(sf::Keyboard::Key key)
+    {
+        int direction = -1;
+
+        switch (key)
+        {
+            case sf::Keyboard::Up:
+                direction = tibia::Directions::up;
+                break;
+
+            case sf::Keyboard::Right:
+                direction = tibia::Directions::right;
+                break;
+
+            case sf::Keyboard::Down:
+                direction = tibia::Directions::down;
+                break;
+
+            case sf::Keyboard::Left:
+                direction = tibia::Directions::left;
+                break;
+        }
+
+        return direction;
     }
 
 }

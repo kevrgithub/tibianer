@@ -26,6 +26,8 @@ class Map
 
 public:
 
+    typedef std::vector<tibia::TileMap*>::iterator tileMapListIterator;
+
     std::vector<tibia::TileMap*> tileMapList;
     std::vector<tibia::TileMap*>::iterator tileMapList_it;
 
@@ -39,7 +41,7 @@ public:
     tibia::TileMap tileMapUnderGroundWalls2;
     tibia::TileMap tileMapUnderGroundObjects;
     tibia::TileMap tileMapUnderGroundObjects2;
-    tibia::TileMap tileMapUnderGroundObjectsOffset;
+    tibia::TileMap tileMapUnderGroundObjects3;
     tibia::TileMap tileMapUnderGroundObjectsDrawLast;
     tibia::TileMap tileMapUnderGroundObjectsDrawLast2;
 
@@ -50,7 +52,7 @@ public:
     tibia::TileMap tileMapGroundWalls2;
     tibia::TileMap tileMapGroundObjects;
     tibia::TileMap tileMapGroundObjects2;
-    tibia::TileMap tileMapGroundObjectsOffset;
+    tibia::TileMap tileMapGroundObjects3;
     tibia::TileMap tileMapGroundObjectsDrawLast;
     tibia::TileMap tileMapGroundObjectsDrawLast2;
 
@@ -61,7 +63,7 @@ public:
     tibia::TileMap tileMapAboveGroundWalls2;
     tibia::TileMap tileMapAboveGroundObjects;
     tibia::TileMap tileMapAboveGroundObjects2;
-    tibia::TileMap tileMapAboveGroundObjectsOffset;
+    tibia::TileMap tileMapAboveGroundObjects3;
     tibia::TileMap tileMapAboveGroundObjectsDrawLast;
     tibia::TileMap tileMapAboveGroundObjectsDrawLast2;
 
@@ -103,125 +105,125 @@ public:
 
             if (docMapLayerName == "underground tiles")
             {
-                tileMapUnderGroundTiles.load(docMapLayerDataTiles);
+                tileMapUnderGroundTiles.load(docMapLayerDataTiles, tibia::TileMapTypes::tiles);
             }
             else if (docMapLayerName == "underground edges")
             {
-                tileMapUnderGroundEdges.load(docMapLayerDataTiles);
+                tileMapUnderGroundEdges.load(docMapLayerDataTiles, tibia::TileMapTypes::edges);
             }
             else if (docMapLayerName == "underground walls")
             {
-                tileMapUnderGroundWalls.load(docMapLayerDataTiles);
+                tileMapUnderGroundWalls.load(docMapLayerDataTiles, tibia::TileMapTypes::walls);
             }
             else if (docMapLayerName == "underground walls ex")
             {
-                tileMapUnderGroundWallsEx.load(docMapLayerDataTiles);
+                tileMapUnderGroundWallsEx.load(docMapLayerDataTiles, tibia::TileMapTypes::walls);
             }            
             else if (docMapLayerName == "underground walls 2")
             {
-                tileMapUnderGroundWalls2.load(docMapLayerDataTiles);
+                tileMapUnderGroundWalls2.load(docMapLayerDataTiles, tibia::TileMapTypes::walls);
             }
             else if (docMapLayerName == "underground objects")
             {
-                tileMapUnderGroundObjects.load(docMapLayerDataTiles);
+                tileMapUnderGroundObjects.load(docMapLayerDataTiles, tibia::TileMapTypes::objects);
             }
             else if (docMapLayerName == "underground objects 2")
             {
-                tileMapUnderGroundObjects2.load(docMapLayerDataTiles);
+                tileMapUnderGroundObjects2.load(docMapLayerDataTiles, tibia::TileMapTypes::objects);
             }
-            else if (docMapLayerName == "underground objects offset")
+            else if (docMapLayerName == "underground objects 3")
             {
-                tileMapUnderGroundObjectsOffset.load(docMapLayerDataTiles, true);
+                tileMapUnderGroundObjects3.load(docMapLayerDataTiles, tibia::TileMapTypes::objects);
             }
             else if (docMapLayerName == "underground objects draw last")
             {
-                tileMapUnderGroundObjectsDrawLast.load(docMapLayerDataTiles);
+                tileMapUnderGroundObjectsDrawLast.load(docMapLayerDataTiles, tibia::TileMapTypes::objectsDrawLast);
             }
             else if (docMapLayerName == "underground objects draw last 2")
             {
-                tileMapUnderGroundObjectsDrawLast2.load(docMapLayerDataTiles);
+                tileMapUnderGroundObjectsDrawLast2.load(docMapLayerDataTiles, tibia::TileMapTypes::objectsDrawLast);
             }
 
             else if (docMapLayerName == "ground tiles")
             {
-                tileMapGroundTiles.load(docMapLayerDataTiles);
+                tileMapGroundTiles.load(docMapLayerDataTiles, tibia::TileMapTypes::tiles);
             }
             else if (docMapLayerName == "ground edges")
             {
-                tileMapGroundEdges.load(docMapLayerDataTiles);
+                tileMapGroundEdges.load(docMapLayerDataTiles, tibia::TileMapTypes::edges);
             }
             else if (docMapLayerName == "ground walls")
             {
-                tileMapGroundWalls.load(docMapLayerDataTiles);
+                tileMapGroundWalls.load(docMapLayerDataTiles, tibia::TileMapTypes::walls);
             }
             else if (docMapLayerName == "ground walls ex")
             {
-                tileMapGroundWallsEx.load(docMapLayerDataTiles);
+                tileMapGroundWallsEx.load(docMapLayerDataTiles, tibia::TileMapTypes::walls);
             }            
             else if (docMapLayerName == "ground walls 2")
             {
-                tileMapGroundWalls2.load(docMapLayerDataTiles);
+                tileMapGroundWalls2.load(docMapLayerDataTiles, tibia::TileMapTypes::walls);
             }
             else if (docMapLayerName == "ground objects")
             {
-                tileMapGroundObjects.load(docMapLayerDataTiles);
+                tileMapGroundObjects.load(docMapLayerDataTiles, tibia::TileMapTypes::objects);
             }
             else if (docMapLayerName == "ground objects 2")
             {
-                tileMapGroundObjects2.load(docMapLayerDataTiles);
+                tileMapGroundObjects2.load(docMapLayerDataTiles, tibia::TileMapTypes::objects);
             }
-            else if (docMapLayerName == "ground objects offset")
+            else if (docMapLayerName == "ground objects 3")
             {
-                tileMapGroundObjectsOffset.load(docMapLayerDataTiles, true);
+                tileMapGroundObjects3.load(docMapLayerDataTiles, tibia::TileMapTypes::objects);
             }
             else if (docMapLayerName == "ground objects draw last")
             {
-                tileMapGroundObjectsDrawLast.load(docMapLayerDataTiles);
+                tileMapGroundObjectsDrawLast.load(docMapLayerDataTiles, tibia::TileMapTypes::objectsDrawLast);
             }
             else if (docMapLayerName == "ground objects draw last 2")
             {
-                tileMapGroundObjectsDrawLast2.load(docMapLayerDataTiles);
+                tileMapGroundObjectsDrawLast2.load(docMapLayerDataTiles, tibia::TileMapTypes::objectsDrawLast);
             }
 
             else if (docMapLayerName == "aboveground tiles")
             {
-                tileMapAboveGroundTiles.load(docMapLayerDataTiles);
+                tileMapAboveGroundTiles.load(docMapLayerDataTiles, tibia::TileMapTypes::tiles);
             }
             else if (docMapLayerName == "aboveground edges")
             {
-                tileMapAboveGroundEdges.load(docMapLayerDataTiles);
+                tileMapAboveGroundEdges.load(docMapLayerDataTiles, tibia::TileMapTypes::edges);
             }
             else if (docMapLayerName == "aboveground walls")
             {
-                tileMapAboveGroundWalls.load(docMapLayerDataTiles);
+                tileMapAboveGroundWalls.load(docMapLayerDataTiles, tibia::TileMapTypes::walls);
             }
             else if (docMapLayerName == "aboveground walls ex")
             {
-                tileMapAboveGroundWallsEx.load(docMapLayerDataTiles);
+                tileMapAboveGroundWallsEx.load(docMapLayerDataTiles, tibia::TileMapTypes::walls);
             }            
             else if (docMapLayerName == "aboveground walls 2")
             {
-                tileMapAboveGroundWalls2.load(docMapLayerDataTiles);
+                tileMapAboveGroundWalls2.load(docMapLayerDataTiles, tibia::TileMapTypes::walls);
             }
             else if (docMapLayerName == "aboveground objects")
             {
-                tileMapAboveGroundObjects.load(docMapLayerDataTiles);
+                tileMapAboveGroundObjects.load(docMapLayerDataTiles, tibia::TileMapTypes::objects);
             }
             else if (docMapLayerName == "aboveground objects 2")
             {
-                tileMapAboveGroundObjects2.load(docMapLayerDataTiles);
+                tileMapAboveGroundObjects2.load(docMapLayerDataTiles, tibia::TileMapTypes::objects);
             }
-            else if (docMapLayerName == "aboveground objects offset")
+            else if (docMapLayerName == "aboveground objects 3")
             {
-                tileMapAboveGroundObjectsOffset.load(docMapLayerDataTiles, true);
+                tileMapAboveGroundObjects3.load(docMapLayerDataTiles, tibia::TileMapTypes::objects);
             }
             else if (docMapLayerName == "aboveground objects draw last")
             {
-                tileMapAboveGroundObjectsDrawLast.load(docMapLayerDataTiles);
+                tileMapAboveGroundObjectsDrawLast.load(docMapLayerDataTiles, tibia::TileMapTypes::objectsDrawLast);
             }
             else if (docMapLayerName == "aboveground objects draw last 2")
             {
-                tileMapAboveGroundObjectsDrawLast2.load(docMapLayerDataTiles);
+                tileMapAboveGroundObjectsDrawLast2.load(docMapLayerDataTiles, tibia::TileMapTypes::objectsDrawLast);
             }
         }
 
@@ -232,7 +234,7 @@ public:
         tileMapUnderGroundWalls2.setName("underground walls 2");
         tileMapUnderGroundObjects.setName("underground objects");
         tileMapUnderGroundObjects2.setName("underground objects 2");
-        tileMapUnderGroundObjectsOffset.setName("underground objects offset");
+        tileMapUnderGroundObjects3.setName("underground objects 3");
         tileMapUnderGroundObjectsDrawLast.setName("underground objects draw last");
         tileMapUnderGroundObjectsDrawLast2.setName("underground objects draw last 2");
 
@@ -243,7 +245,7 @@ public:
         tileMapGroundWalls2.setName("ground walls 2");
         tileMapGroundObjects.setName("ground objects");
         tileMapGroundObjects2.setName("ground objects 2");
-        tileMapGroundObjectsOffset.setName("ground objects offset");
+        tileMapGroundObjects3.setName("ground objects 3");
         tileMapGroundObjectsDrawLast.setName("ground objects draw last");
         tileMapGroundObjectsDrawLast2.setName("ground objects draw last 2");
 
@@ -254,42 +256,9 @@ public:
         tileMapAboveGroundWalls2.setName("aboveground walls 2");
         tileMapAboveGroundObjects.setName("aboveground objects");
         tileMapAboveGroundObjects2.setName("aboveground objects 2");
-        tileMapAboveGroundObjectsOffset.setName("aboveground objects offset");
+        tileMapAboveGroundObjects3.setName("aboveground objects 3");
         tileMapAboveGroundObjectsDrawLast.setName("aboveground objects draw last");
         tileMapAboveGroundObjectsDrawLast2.setName("aboveground objects draw last 2");
-
-        tileMapUnderGroundTiles.setType("tiles");
-        tileMapUnderGroundEdges.setType("edges");
-        tileMapUnderGroundWalls.setType("walls");
-        tileMapUnderGroundWallsEx.setType("walls");
-        tileMapUnderGroundWalls2.setType("walls");
-        tileMapUnderGroundObjects.setType("objects");
-        tileMapUnderGroundObjects2.setType("objects");
-        tileMapUnderGroundObjectsOffset.setType("objects");
-        tileMapUnderGroundObjectsDrawLast.setType("objects draw last");
-        tileMapUnderGroundObjectsDrawLast2.setType("objects draw last");
-
-        tileMapGroundTiles.setType("tiles");
-        tileMapGroundEdges.setType("edges");
-        tileMapGroundWalls.setType("walls");
-        tileMapGroundWallsEx.setType("walls");
-        tileMapGroundWalls2.setType("walls");
-        tileMapGroundObjects.setType("objects");
-        tileMapGroundObjects2.setType("objects");
-        tileMapGroundObjectsOffset.setType("objects");
-        tileMapGroundObjectsDrawLast.setType("objects draw last");
-        tileMapGroundObjectsDrawLast2.setType("objects draw last");
-
-        tileMapAboveGroundTiles.setType("tiles");
-        tileMapAboveGroundEdges.setType("edges");
-        tileMapAboveGroundWalls.setType("walls");
-        tileMapAboveGroundWallsEx.setType("walls");
-        tileMapAboveGroundWalls2.setType("walls");
-        tileMapAboveGroundObjects.setType("objects");
-        tileMapAboveGroundObjects2.setType("objects");
-        tileMapAboveGroundObjectsOffset.setType("objects");
-        tileMapAboveGroundObjectsDrawLast.setType("objects draw last");
-        tileMapAboveGroundObjectsDrawLast2.setType("objects draw last");
 
         tileMapUnderGroundTiles.setZ(tibia::ZAxis::underGround);
         tileMapUnderGroundEdges.setZ(tibia::ZAxis::underGround);
@@ -298,7 +267,7 @@ public:
         tileMapUnderGroundWalls2.setZ(tibia::ZAxis::underGround);
         tileMapUnderGroundObjects.setZ(tibia::ZAxis::underGround);
         tileMapUnderGroundObjects2.setZ(tibia::ZAxis::underGround);
-        tileMapUnderGroundObjectsOffset.setZ(tibia::ZAxis::underGround);
+        tileMapUnderGroundObjects3.setZ(tibia::ZAxis::underGround);
         tileMapUnderGroundObjectsDrawLast.setZ(tibia::ZAxis::underGround);
         tileMapUnderGroundObjectsDrawLast2.setZ(tibia::ZAxis::underGround);
 
@@ -309,7 +278,7 @@ public:
         tileMapGroundWalls2.setZ(tibia::ZAxis::ground);
         tileMapGroundObjects.setZ(tibia::ZAxis::ground);
         tileMapGroundObjects2.setZ(tibia::ZAxis::ground);
-        tileMapGroundObjectsOffset.setZ(tibia::ZAxis::ground);
+        tileMapGroundObjects3.setZ(tibia::ZAxis::ground);
         tileMapGroundObjectsDrawLast.setZ(tibia::ZAxis::ground);
         tileMapGroundObjectsDrawLast2.setZ(tibia::ZAxis::ground);
 
@@ -320,7 +289,7 @@ public:
         tileMapAboveGroundWalls2.setZ(tibia::ZAxis::aboveGround);
         tileMapAboveGroundObjects.setZ(tibia::ZAxis::aboveGround);
         tileMapAboveGroundObjects2.setZ(tibia::ZAxis::aboveGround);
-        tileMapAboveGroundObjectsOffset.setZ(tibia::ZAxis::aboveGround);
+        tileMapAboveGroundObjects3.setZ(tibia::ZAxis::aboveGround);
         tileMapAboveGroundObjectsDrawLast.setZ(tibia::ZAxis::aboveGround);
         tileMapAboveGroundObjectsDrawLast2.setZ(tibia::ZAxis::aboveGround);
 
@@ -331,7 +300,7 @@ public:
         tileMapList.push_back(&tileMapUnderGroundWalls2);
         tileMapList.push_back(&tileMapUnderGroundObjects);
         tileMapList.push_back(&tileMapUnderGroundObjects2);
-        tileMapList.push_back(&tileMapUnderGroundObjectsOffset);
+        tileMapList.push_back(&tileMapUnderGroundObjects3);
         tileMapList.push_back(&tileMapUnderGroundObjectsDrawLast);
         tileMapList.push_back(&tileMapUnderGroundObjectsDrawLast2);
 
@@ -342,7 +311,7 @@ public:
         tileMapList.push_back(&tileMapGroundWalls2);
         tileMapList.push_back(&tileMapGroundObjects);
         tileMapList.push_back(&tileMapGroundObjects2);
-        tileMapList.push_back(&tileMapGroundObjectsOffset);
+        tileMapList.push_back(&tileMapGroundObjects3);
         tileMapList.push_back(&tileMapGroundObjectsDrawLast);
         tileMapList.push_back(&tileMapGroundObjectsDrawLast2);
 
@@ -353,25 +322,25 @@ public:
         tileMapList.push_back(&tileMapAboveGroundWalls2);
         tileMapList.push_back(&tileMapAboveGroundObjects);
         tileMapList.push_back(&tileMapAboveGroundObjects2);
-        tileMapList.push_back(&tileMapAboveGroundObjectsOffset);
+        tileMapList.push_back(&tileMapAboveGroundObjects3);
         tileMapList.push_back(&tileMapAboveGroundObjectsDrawLast);
         tileMapList.push_back(&tileMapAboveGroundObjectsDrawLast2);
 
         tileMapObjectsList.push_back(&tileMapUnderGroundObjects);
         tileMapObjectsList.push_back(&tileMapUnderGroundObjects2);
-        tileMapObjectsList.push_back(&tileMapUnderGroundObjectsOffset);
+        tileMapObjectsList.push_back(&tileMapUnderGroundObjects3);
         tileMapObjectsList.push_back(&tileMapUnderGroundObjectsDrawLast);
         tileMapObjectsList.push_back(&tileMapUnderGroundObjectsDrawLast2);
 
         tileMapObjectsList.push_back(&tileMapGroundObjects);
         tileMapObjectsList.push_back(&tileMapGroundObjects2);
-        tileMapObjectsList.push_back(&tileMapGroundObjectsOffset);
+        tileMapObjectsList.push_back(&tileMapGroundObjects3);
         tileMapObjectsList.push_back(&tileMapGroundObjectsDrawLast);
         tileMapObjectsList.push_back(&tileMapGroundObjectsDrawLast2);
 
         tileMapObjectsList.push_back(&tileMapAboveGroundObjects);
         tileMapObjectsList.push_back(&tileMapAboveGroundObjects2);
-        tileMapObjectsList.push_back(&tileMapAboveGroundObjectsOffset);
+        tileMapObjectsList.push_back(&tileMapAboveGroundObjects3);
         tileMapObjectsList.push_back(&tileMapAboveGroundObjectsDrawLast);
         tileMapObjectsList.push_back(&tileMapAboveGroundObjectsDrawLast2);
 

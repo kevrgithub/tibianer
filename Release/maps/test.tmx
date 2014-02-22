@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" width="128" height="128" tilewidth="32" tileheight="32">
+ <tileset firstgid="1" name="tibia" tilewidth="32" tileheight="32">
+  <image source="../images/sprites.png" width="2048" height="2048"/>
+ </tileset>
+ <layer name="underground tiles" width="128" height="128">
+  <data encoding="base64" compression="zlib">
+   eJzt24lu0zAABuBW6qONMXaUJ18ZNwjxLiSiFq5n52rSpOT7JItqQ8vk33e8zWbZvm2nKyyf/NdN/sszZSZDy91us7mpyrud/Kc2d9a57N9X5bn6vO/RDhhm7rxL2X/Y/v03tIO2NsAwc2cecr9Jsn/p2QYYZu7s63Jb5XrYnmb/MdMG3vZYDwwpazR39nW5r3J92v3LOdf/H6vvP8h/dE318akqnxvKl4nbwPP2cn1f/q/Lz+3pOBzG6FC+jlz/aRuQ//Ta8s9lH/rmWPmH9V+8BgwlPDfO/67n2YD8y9ryz2Uf2sRY+d8mmcfPrOf9N8ncX///KcaDNWrLPx3zz+3/cV9P+/zjcfyPn5nLuU/+fc4S12hI/vGePK7bLuNyrq+H9lRnmn5/X2gvua+nz+57lrhGpbqo1/6/t6dzcGks2BdyydV1yDeM63F52J2eBZTKofA5bRPxWiLMW03jxhqV6uJHVX51zCBXQruI20DcH0s51PmHMSG358i1mzBntP1O8n+tbfyP6+4lyT/NIrd32xf6Y+k8N+wBX6Jnxs/JnQHdZ9pE3C66niGtUZf8w3lsOAso7f/Tubs0LrTt6eufE553zrlf2i7afs4aNdVHPQd8byilvhuv6dL5N25DTWNA18zGLGs0dh2mfS60h9IYcolzPfmXTV2n8ZyQriHkP7+p67TpTP8S7/Tk3+wS9Xq/y+8PltT35T99SfcH8p/fpfNP73T1vecrv2Vryz+91zPmOMD82vKf8l4f82vKJ3c2IP//S9/1QO693dD1APMbkn/8TulwHA/SeyLub1yHPvmX5oP98V2hvwG6PufM32E8SN/jHzq2AeY3Rf5d94rM75z8m94VhHYh/+vVdQwI977iO2Dhs/yvV58xIL7/Fd8Dc3/reg3ZFzztut8DY9mGrgm63gNj2c5ZG3YpLJv8103+6yb/dZP/uskfAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAICcP9CdLMk=
+  </data>
+ </layer>
+ <layer name="underground objects" width="128" height="128">
+  <data encoding="base64" compression="zlib">
+   eJzt2jENACAQA8D/Hf9OsAC2CBJY+BDuFHRqOjQCAAAAAN7RW3UCADZ9DPCnkREzq1PAGbsFAAAAAAAAAADu8zcDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAeNsCI9IFYg==
+  </data>
+ </layer>
+ <layer name="underground objects draw last" width="128" height="128">
+  <data encoding="base64" compression="zlib">
+   eJzt2kENADAMxLArf1obr1Hob61kIwiAJAAAAAAAAAA9p5JbvysAAAAAAAAAAACYzm8GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHs9QHgDFw==
+  </data>
+ </layer>
+ <layer name="ground tiles" width="128" height="128">
+  <data encoding="base64" compression="zlib">
+   eJzt2tlu00AUBmAXoQIvgiq46Yuwc8W+7+sNOwUKldj35bXgBRDiLdg5EY1IghU7sd0xyXfxSTlSG3nmz5kZJ96YZdlGAACAhs31SH0t/GvDEHl/v36Z/CdDb97vC/JfP+B/yX8+R+p5TzkXefl3sv+Q9X8G6si/DTpjfjrz17TmP7+cb+/4B7Pv/Qzkvceo2ZfpuVU95N/8Z6C3HqX/q8y9/NtplP1/3LlvQ//b/4vzL3P+nxsi9VhoXifnb6v7c/80I/9pof9p0qY4BGwOW8LWVemvh2IfZ+p7r22R+fawI+yUf+NOhdPhTDg7Rj34fsPOk3lnysF+L6qLxvM+R+o5brNz4Xy4EC6OUVfNf7Dfi2r510v/T7cm+//zuj/0f3s12f9l8tf/aU3a/s9oJm3/ZzT6nzbR79NNv6+8L7NZ9jV8C99ni+vU1zuM36VG9yMy/Rl+hWxNcd37v7vC7rAn7C1Rr0T+nd+nu+RfrEr/7wv7w4FwsEQt//ap0v+HwuFwJBwtUcu/far0/7FwPJwIJ0vUK5G//T+dus4Dw54z6j5vJtv2qes8MCz/Yb2t/9Oq6zxQJf/uvm//X3l1nQeq9n/vM8qp52SajXv/r/8nw7j3//b/yTDu/f+4+dMu497/yz+NS+FyuFLydVPXIf80roZr4XrJ1/KfLDfCzbBQ8nXq66Veda//98OD8DA8yqlTj5d+da//j8OT8DQ8y6lTj5d+da//z8OL8DK8yqlTj5d+da//r8Ob8Da8y6lTj5d+da//Vff/xbVZdmvA3bXp52lS1b3+V93/b0fWNwfckX9j6l7/q+7/3fyXwj35N67u9b/q/t/Nv7PmL8q/cW37/sf6P906a/7CgCX5AwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMt+AxmdtTs=
+  </data>
+ </layer>
+ <layer name="ground edges" width="128" height="128">
+  <data encoding="base64" compression="zlib">
+   eJzt2llqwzAUBVD/Zm8dMrTp7jvQYR21wR+qoSlu5NjxPQceBByQ4UqO/JSmAQAAgHHu27qb+yaYRZf9tq1dYw4kum3r0Na+rZuZ74V5dHNA9gAAQA1dj+GxLz2GPMfi89Nsd5GjXG9jq8b6HI6/La7tJhiPn45/f+VXNdbnmPE9D+qbKv/nTdO89PW6qTO+/OubKv+3IvN3+S+W/LNNlf9Hm/lnX1/yXyz7v2zdee7DP6vGOfBw/ENxbT/BeCyb/k+28nlgvV/GmB6gHtz6nLMHM3eu3zn5279fP/lnG/MOONyTnXp/G5L/+p16HjjPXT+/B9nkn00/l5J+bjb5Z5N/Nuc510U/P5v3t2zyzyb/bPLPJv9s8s8m/2zyzyb/bPLPds5/AQEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADgkr4BWyxVDA==
+  </data>
+ </layer>
+ <layer name="ground walls" width="128" height="128">
+  <data encoding="base64" compression="zlib">
+   eJzt2LEJwCAURVEXyAAp3H9Nq0AaUSEhxHcO2MgvhIsIlgIAAAAAAAAAAAAAAAAAAACw7phc7Od8eI5/0T+b/tlGXa+3X/89uf/Z9M+mfzb9s+lP75/vvlc/OBcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADva6nVAtc=
+  </data>
+ </layer>
+ <layer name="ground walls ex" width="128" height="128">
+  <data encoding="base64" compression="zlib">
+   eJztzjERAAAIBCADuNq/qhkcvF8gAVUAAAAAAAAAAAAAAAAAAAAAN50OAAAAAABvJh0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgagEGuAAi
+  </data>
+ </layer>
+ <layer name="ground walls 2" width="128" height="128">
+  <data encoding="base64" compression="zlib">
+   eJzt2LEJACEQRUELsAD7r/QuFkQvOIT9M7CRifAQYVsDAAAAAAAAAAAAAAAAAAAA+Ga80w9m3Logvzrtqn9N+mfTP9uuq/+/Nu8/m/7Z9M+mfzb9s817vtUZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAANT3X0AK5
+  </data>
+ </layer>
+ <layer name="ground objects" width="128" height="128">
+  <data encoding="base64" compression="zlib">
+   eJzt281LFGEcwPFnfd9d/4ai0gwMyzp2KyMoMOjUrUMEJlGmRYX2ckh60SLI0iQ7FQS9QeUpsCIigi4RBnopiIou3bp46jfsI86Ou7PzzOzMjrPfDzz8nNmZx9XfPC8z+6xSAKDUSCoXX0mckfJWb3+uV+qLlNn63PacxPn6wnX0ZHLxiI5HdezTcUDHUzqe0XFQx3M6Dut4SccrOvY25+Ko3h7JeP/7UB5W7uds+f/QXLn3gvJ5URe8jv4S7fFsiO11e0N4dSedlfvFYjeTzsXzKbP6TpThWrK0p5YKwuWn/bcaHNvio37yXzlbasz2u1nMvfMa6CxxXqn82/v86brC++HPQJGx2r6/w6A+P+0fQDTeGx6frlkqhbyMuL3T50erVP7jYIdcE11cF4Cxcs7/EX97m8zP8TOnD/qccZvcC24NVoWrae5TPFmp93PfsoX332WesMyC/mzngt4+GGLOx3zWPRTBs8HuVH5MqtMec/Agos/8TjYsFcsx+f/3JTwHK82+CPvN45L7fp3/i41KDTd6P/dH1n0b4Vtc53FYrpnehvx9dpkKrylw9vfV0v/HRdqW/wMB7jeLzfX8Hgdv7gdsv5Vu/9XqRkzu6eztv8ux1tDv8yeT8Z/+X6nvAed1oz7On9DXn7397yyy1tTyy0M++kqsOSv1Ospnv8d9afr/FanboM33pMN7H26cc71H0uc8jsm4F0eHYvBc9LUe8xdseXrnMg+4bJDPJ3LsU/IPxNq/uvyCaHTEoP+3kP/K2eRyDXTG5PpAdDaTc5TZM/r0xBotU27vyb37R/3zoNQ5pOttC1hvT5P7NvKNZyQXjhKV3dH9KhQxlXHfDtMel9c6lNl30pxo995UMv92cf7uSZIFzf9zn/OBWRn/v+rn96ukjqzkf7Wtrk8+P59l/Dcz5Rj7JyNq/3OS+3nb5zcZR/t3rhVAddlF/hPNuv97aLg24GajUmN6nfC4xAmDNcOInzeGbfyW5Pu2zvkdiZPkPxEmsu7bAIBk+Vmr1G8pf2qXv/ZXzw3bZCzYoMeDNRLXSlnH+FA12iXXG3W+WyS2SllP/gEAqGpXZe44UmD+iOpwTXJ/nfwDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJBI/wEfFHeD
+  </data>
+ </layer>
+ <layer name="ground objects 2" width="128" height="128">
+  <data encoding="base64" compression="zlib">
+   eJzt2iEOgEAMBMCGoPglv+KeicQRHDkPR9iZpKJukxU1rQIAAAAAAAAAAAAAeM46jU7Am455dAIAAAAAgBzbUtVuc+3k6PvWfxb9Z9N/ttbdf/iC3a8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPzOCXIFC9s=
+  </data>
+ </layer>
+ <layer name="ground objects 3" width="128" height="128">
+  <data encoding="base64" compression="zlib">
+   eJztzjENAAAIA7Dd+H9wiwwCaRU0AQAAAAAAAAAAAAAAAAAAAACu6doeAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPDRAJdWAKQ=
+  </data>
+ </layer>
+ <layer name="ground objects draw last" width="128" height="128">
+  <data encoding="base64" compression="zlib">
+   eJzt2stOE1EYB/BTIKRYovESF76EuvKyUdeClzdwA6zVqE8gCHiJGjXqowhGjbrQVxC8oXGha3XnaZQIhell2jLT6e+XnDRnMgMT/j3f+Zg2BIB0Xo6G8Go067sgK69zkv2x4RCOD2d9F8XyZCSEhZHWrzs/FMKFoc7fTz0nZN9xiymyr7q4xdnTefsHQjgw0PzxLCTVfHtB+w4mZJx0PAtJNd9eAP1Fze9vaj50Ti/0/3TOWDmE8fL/eR77/0OlEA7HcaSU3T0U1aly43Py4Gib2b+rhLBU2Xj8YewfHukh1vk5GsKvLXq+f3sohDtb8NxweZPsqx43yH68tP61iC7Fv//lNRn83sLPdu56Zpy5KykyOB3XzZkeqJsf4rr/WEmek87ZHsi+6lOl/rxWbb3vh/pfNEm9Xtrz6C1JvV7a84ruRtz/b+a8D0v7/KnV/b8f6/+tNdkvxX19uY29fTZeO9fi9ffi77/f4P13bk32n2MWK03m0er+3+/et9nXzae4/kGLtedLgddiLzoZMx9rMveJkRAmU36/rB16ve4Zb2HNT7WQ/UKs+Ys1e/6zOH+e0AdcjXVkOqGW6PV6z9NNcn5RpwecyXkPCwBAc3bFsbPJsTuje2Sj2diPz3WgJ9/b4fNWTZRDmCwnz2nPfIf+H+tW/lPl+nPyoVv5r7Lu861Rrtv+jX0pf751n2+N8q9+XfFNyf5fVI1yfZvy80D7f2/o9v5Pvsm/v8m/v1VzbebZX9r+n3zbs8mx7XHsCH97f6D4VgZD+BrHt8H1x7/HIvBDIQAAoMZ07Btn4rg22PhcimdW7n3tuvwBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAoND+AA4MWAY=
+  </data>
+ </layer>
+ <layer name="ground objects draw last 2" width="128" height="128">
+  <data encoding="base64" compression="zlib">
+   eJzt0csJgEAQRMGRTcCTwfrb+MzKiUFYZpEq6PuDjgAAAAAAAAAAAAAAAAAAAAAAAPjuWaoLmMFWHQAAwHBrdQAAAAAA09hbxJE7W3UJFa78/c51/wMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD81gs/wwPu
+  </data>
+ </layer>
+ <objectgroup name="ground entities" width="128" height="128">
+  <object name="temple_sign" type="sign" x="320" y="160" width="32" height="32">
+   <properties>
+    <property name="text" value="This is the temple\nwhere you respawn\nafter dying."/>
+   </properties>
+  </object>
+  <object name="temple_start" type="start" x="320" y="320" width="32" height="32"/>
+  <object name="town_sign" type="sign" x="1440" y="704" width="32" height="32">
+   <properties>
+    <property name="text" value="This is the town."/>
+   </properties>
+  </object>
+  <object name="teleport_to_temple" type="teleport" x="96" y="320" width="32" height="32">
+   <properties>
+    <property name="direction" value="2"/>
+    <property name="x" value="10"/>
+    <property name="y" value="10"/>
+    <property name="z" value="0"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <layer name="aboveground tiles" width="128" height="128" opacity="0.44">
+  <data encoding="base64" compression="zlib">
+   eJzt2zEOgzAQRUF8Fjruf6HchJYiASuGbOQ/I20JRnpyYSQvCwAA/I92GH5nO5lvtIvpea73/YzTP5v+2e7u/86d/Z/+jjT6Z9M/W1J/AAAA5uM8Wa/33//Ta1NjpP9oP/3rVfannv4AAAAAfLK2vmFO+mfTP5v+2c6av/Sfnv2fTf9s+mfTP5v+AAAAAHncB8umPwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABwtANmfBdN
+  </data>
+ </layer>
+ <layer name="aboveground edges" width="128" height="128">
+  <data encoding="base64" compression="zlib">
+   eJzt0UENwDAQwLAbl278IY5C+21sKQgyAwAAAAAAAAAAAAAAAAAAAGe+Z2Ztxn1eX9P8b/O/zf82/9v8b/O/zf82/9v8BwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgLYfhf8DFg==
+  </data>
+ </layer>
+ <layer name="aboveground walls" width="128" height="128">
+  <data encoding="base64" compression="zlib">
+   eJzt17ENACAMA8FI7L8IYgG2Y4PQx3eSq5RfpQoAgHR7VZ1mzHabxt2NGfTPpn82/bPpn03/bNf/BwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwMcDkGcTzA==
+  </data>
+ </layer>
+ <layer name="aboveground walls ex" width="128" height="128">
+  <data encoding="base64" compression="zlib">
+   eJzt1zERADAIADHu8O+HuisaGCFZX8FHAABwXeWsAQAAsMfzfwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALQPjhkCMw==
+  </data>
+ </layer>
+ <layer name="aboveground walls 2" width="128" height="128">
+  <data encoding="base64" compression="zlib">
+   eJzt17ENACAMA8FI7D8JCzAeExD6+E5ylfKrVAEAkG6v95jvNJ27GzPon03/bPpn0z+b/tn8fwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPxc3RoSSQ==
+  </data>
+ </layer>
+ <layer name="aboveground objects" width="128" height="128">
+  <data encoding="base64" compression="zlib">
+   eJzt1jENAAAIBLGXiX8lKCBhhnY8BZcAAADf1bIBAHCD/wMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAmDYSHAWE=
+  </data>
+ </layer>
+</map>

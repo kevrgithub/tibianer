@@ -1,8 +1,6 @@
 #ifndef TIBIA_DRAWABLEANDTRANSFORMABLE_HPP
 #define TIBIA_DRAWABLEANDTRANSFORMABLE_HPP
 
-#include <string>
-
 #include <SFML/Graphics.hpp>
 
 namespace tibia

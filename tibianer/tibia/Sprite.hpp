@@ -18,18 +18,32 @@ public:
     Sprite::Sprite()
     {
         setTexture(tibia::Textures::sprites);
+
+        setTextureRect(sf::IntRect(0, 0, tibia::TILE_SIZE, tibia::TILE_SIZE));
     }
 
-    Sprite::Sprite(int id)
+    Sprite::Sprite(unsigned int id)
     {
         setTexture(tibia::Textures::sprites);
-        setTextureRect(tibia::getSpriteRectById(id));
+
+        setId(id);
     }
 
-    void setId(int id)
+    void setId(unsigned int id)
     {
-        setTextureRect(tibia::getSpriteRectById(id));
+        m_id = id;
+
+        setTextureRect(tibia::getSpriteRectById(m_id));
     }
+
+    unsigned int getId()
+    {
+        return m_id;
+    }
+
+private:
+
+    unsigned int m_id;
 
 };
 

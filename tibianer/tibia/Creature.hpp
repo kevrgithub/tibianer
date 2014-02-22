@@ -9,13 +9,13 @@
 #include <SFML/Graphics.hpp>
 
 #include "tibia/Tibia.hpp"
-#include "tibia/DrawableAndTransformable.hpp"
+#include "tibia/Thing.hpp"
 #include "tibia/Sprite.hpp"
 
 namespace tibia
 {
 
-class Creature : public tibia::DrawableAndTransformable
+class Creature : public tibia::Thing
 {
 
 public:
@@ -24,27 +24,74 @@ public:
     {
         m_tileOffset = tibia::TILE_DRAW_OFFSET;
 
-        m_z = 0;
+        setZ(tibia::ZAxis::ground);
 
-        m_direction = 2;
+        m_isPlayer = false;
 
-        m_movementSpeed = 0.5;
+        m_distanceFromPlayer = 0;
+
+        m_direction = tibia::Directions::down;
+
+        m_type = tibia::CreatureTypes::human;
+
+        m_team = tibia::Teams::neutral;
+
+        m_hp    = 100;
+        m_hpMax = 100;
+
+        m_mp    = 200;
+        m_mpMax = 200;
+
+        m_movementSpeed = tibia::MovementSpeeds::default;
+
+        m_isDead     = false;
+        m_hasDecayed = false;
+
+        m_hasOutfit = true;
 
         m_outfitHead = 0;
         m_outfitBody = 0;
         m_outfitLegs = 0;
         m_outfitFeet = 0;
 
+        setPropertiesByType();
+
         m_clockMovement.restart();
     }
 
-    void setCoords(int x, int y)
+    void setPropertiesByType()
     {
-        setX(x);
-        setY(y);
+        if (m_type != tibia::CreatureTypes::human)
+        {
+            m_hasOutfit = false;
+        }
 
-        setTileX(x * tibia::TILE_SIZE);
-        setTileY(y * tibia::TILE_SIZE);
+        switch (m_type)
+        {
+            case tibia::CreatureTypes::gameMaster:
+                m_hp = 1000;
+                m_hpMax = 1000;
+
+                m_spritesList = tibia::CreatureSprites::gameMaster;
+                break;
+
+            case tibia::CreatureTypes::hero:
+                m_hp    = 1000;
+                m_hpMax = 1000;
+
+                m_spritesList = tibia::CreatureSprites::hero;
+                break;
+        }
+    }
+
+    void updateSprite()
+    {
+        if (m_spritesList.size() == 0)
+        {
+            return;
+        }
+
+        m_sprite.setId(m_spritesList[m_direction]);
     }
 
     void setOutfit(int head, int body, int legs, int feet)
@@ -75,10 +122,32 @@ public:
         m_spriteOutfitFeet.setId(tibia::Outfits::feet[(m_outfitFeet * 4) + m_direction]);
     }
 
-    void updateTileCoords()
+    void updateCorpse()
     {
-        m_tileX = m_x * tibia::TILE_SIZE;
-        m_tileY = m_y * tibia::TILE_SIZE;
+        if (isDead() == false)
+        {
+            return;
+        }
+
+        m_timeCorpse = m_clockCorpse.getElapsedTime();
+
+        if (m_timeCorpse.asSeconds() >= tibia::AnimationTimes::decal)
+        {
+            int corpseId = m_spriteCorpse.getId();
+
+            if (corpseId == 0) m_spriteCorpse.setId(tibia::SpriteData::corpse[0]);
+
+            if (corpseId >= tibia::SpriteData::corpse[0] && corpseId < tibia::SpriteData::corpse[6])
+            {
+                m_spriteCorpse.setId(corpseId + 1);
+            }
+            else if (corpseId == tibia::SpriteData::corpse[6])
+            {
+                setHasDecayed(true);
+            }
+
+            m_clockCorpse.restart();
+        }
     }
 
     void update()
@@ -92,14 +161,51 @@ public:
             tileOffset *= 2;
         }
 
-        setPosition(m_tileX - tileOffset, m_tileY - tileOffset);
+        setPosition(getTileX() - tileOffset, getTileY() - tileOffset);
+
+        updateSprite();
 
         updateOutfit();
+
+        updateCorpse();
     }
 
     void doTurn(int direction)
     {
-        setDirection(direction);
+        int dir = direction;
+
+        if (dir > tibia::Directions::left)
+        {
+            int random = tibia::getRandomNumber(1, 2);
+
+            switch (dir)
+            {
+                case tibia::Directions::upLeft:
+                    if (random == 1)
+                    {
+                        dir = tibia::Directions::up;
+                    }
+                    else
+                    {
+                        dir = tibia::Directions::left;
+                    }
+                    break;
+
+                case tibia::Directions::upRight:
+                    dir = tibia::getRandomNumber(tibia::Directions::up, tibia::Directions::right);
+                    break;
+
+                case tibia::Directions::downRight:
+                    dir = tibia::getRandomNumber(tibia::Directions::right, tibia::Directions::down);
+                    break;
+
+                case tibia::Directions::downLeft:
+                    dir = tibia::getRandomNumber(tibia::Directions::down, tibia::Directions::left);
+                    break;
+            }
+        }
+
+        setDirection(dir);
     }
 
     void doMove(int direction)
@@ -116,33 +222,68 @@ public:
             return;
         }
 
+        int x = getX();
+        int y = getY();
+
         switch (direction)
         {
             case tibia::Directions::up:
-                if (m_y != 0)
+                if (y != 0)
                 {
-                    m_y--;
+                    setY(y - 1);
                 }
                 break;
 
             case tibia::Directions::right:
-                if (m_x != MAP_XY_MAX)
+                if (x != MAP_XY_MAX - 1)
                 {
-                    m_x++;
+                    setX(x + 1);
                 }
                 break;
 
             case tibia::Directions::down:
-                if (m_y != MAP_XY_MAX)
+                if (y != MAP_XY_MAX - 1)
                 {
-                    m_y++;
+                    setY(y + 1);
                 }
                 break;
 
             case tibia::Directions::left:
-                if (m_x != 0)
+                if (x != 0)
                 {
-                    m_x--;
+                    setX(x - 1);
+                }
+                break;
+
+            case tibia::Directions::upLeft:
+                if (y != 0 && x != 0)
+                {
+                    setY(y - 1);
+                    setX(x - 1);
+                }
+                break;
+
+            case tibia::Directions::upRight:
+                if (y != 0 && x != MAP_XY_MAX - 1)
+                {
+                    setY(y - 1);
+                    setX(x + 1);
+                }
+                break;
+
+            case tibia::Directions::downLeft:
+                if (y != MAP_XY_MAX - 1 && x != 0)
+                {
+                    setY(y + 1);
+                    setX(x - 1);
+                }
+                break;
+
+            case tibia::Directions::downRight:
+                if (y != MAP_XY_MAX - 1 && x != MAP_XY_MAX - 1)
+                {
+                    setY(y + 1);
+                    setX(x + 1);
                 }
                 break;
         }
@@ -152,24 +293,56 @@ public:
         m_clockMovement.restart();
     }
 
-    int getTileX()
+    void takeDamage(int damage)
     {
-        return m_tileX;
+        m_hp = m_hp - damage;
+
+        if (m_hp <= 0)
+        {
+            m_hp = 0;
+
+            setIsDead(true);
+        }
     }
 
-    void setTileX(int x)
+    void takeDamageFromCreature(tibia::Creature* creature, int damage)
     {
-        m_tileX = x;
+        m_attacker = creature;
+
+        takeDamage(damage);
     }
 
-    int getTileY()
+    bool isDead()
     {
-        return m_tileY;
+        return m_isDead;
     }
 
-    void setTileY(int y)
+    void setIsDead(bool b)
     {
-        m_tileY = y;
+        m_isDead = b;
+
+        if (m_isDead == true)
+        {
+            m_tileOffset = 0;
+
+            m_spriteCorpse.setId(tibia::SpriteData::corpse[0]);
+
+            m_clockCorpse.restart();
+        }
+        else
+        {
+            m_tileOffset = tibia::TILE_DRAW_OFFSET;
+        }
+    }
+
+    bool hasDecayed()
+    {
+        return m_hasDecayed;
+    }
+
+    void setHasDecayed(bool b)
+    {
+        m_hasDecayed = b;
     }
 
     int getTileOffset()
@@ -182,7 +355,27 @@ public:
         m_tileOffset = offset;
     }
 
-    bool getIsSitting()
+    bool isPlayer()
+    {
+        return m_isPlayer;
+    }
+
+    void setIsPlayer(bool b)
+    {
+        m_isPlayer = b;
+    }
+
+    float getDistanceFromPlayer()
+    {
+        return m_distanceFromPlayer;
+    }
+
+    void setDistanceFromPlayer(float distance)
+    {
+        m_distanceFromPlayer = distance;
+    }
+
+    bool isSitting()
     {
         return m_isSitting;
     }
@@ -202,34 +395,14 @@ public:
         m_name = name;
     }
 
-    int getX()
+    int getType()
     {
-        return m_x;
+        return m_type;
     }
 
-    void setX(int x)
+    void setType(int type)
     {
-        m_x = x;
-    }
-
-    int getY()
-    {
-        return m_y;
-    }
-
-    void setY(int y)
-    {
-        m_y = y;
-    }
-
-    int getZ()
-    {
-        return m_z;
-    }
-
-    void setZ(int z)
-    {
-        m_z = z;
+        m_type = type;
     }
 
     int getDirection()
@@ -262,6 +435,16 @@ public:
         m_movementSpeed = movementSpeed;
     }
 
+    int getTeam()
+    {
+        return m_team;
+    }
+
+    void setTeam(int team)
+    {
+        m_team = team;
+    }
+
     int getHp()
     {
         return m_hp;
@@ -272,6 +455,16 @@ public:
         m_hp = hp;
     }
 
+    int getHpMax()
+    {
+        return m_hpMax;
+    }
+
+    void setHpMax(int hp)
+    {
+        m_hpMax = hp;
+    }
+
     int getMp()
     {
         return m_mp;
@@ -280,6 +473,16 @@ public:
     void setMp(int mp)
     {
         m_mp = mp;
+    }
+
+    int getMpMax()
+    {
+        return m_mpMax;
+    }
+
+    void setMpMax(int mp)
+    {
+        m_mpMax = mp;
     }
 
     bool hasOutfit()
@@ -372,25 +575,19 @@ public:
         m_spriteOutfitFeet = feet;
     }
 
-    sf::Clock getClockMovement()
-    {
-        return m_clockMovement;
-    }
-
 private:
-
-    int m_tileX;
-    int m_tileY;
 
     int m_tileOffset;
 
+    bool m_isPlayer;
+
+    float m_distanceFromPlayer;
+
     bool m_isSitting;
 
-    std::string m_name;
+    int m_type;
 
-    int m_x;
-    int m_y;
-    int m_z;
+    std::string m_name;
 
     int m_direction;
 
@@ -398,8 +595,13 @@ private:
 
     float m_movementSpeed;
 
+    int m_team;
+
     int m_hp;
+    int m_hpMax;
+
     int m_mp;
+    int m_mpMax;
 
     int m_gold;
     int m_platinum;
@@ -413,6 +615,15 @@ private:
 
     bool m_isAnimated;
 
+    bool m_isDead;
+    bool m_hasDecayed;
+
+    sf::Clock m_clockCorpse;
+    sf::Time m_timeCorpse;
+
+    tibia::Sprite m_sprite;
+    std::vector<int> m_spritesList;
+
     bool m_hasOutfit;
 
     int m_outfitHead;
@@ -425,16 +636,29 @@ private:
     tibia::Sprite m_spriteOutfitLegs;
     tibia::Sprite m_spriteOutfitFeet;
 
+    tibia::Sprite m_spriteCorpse;
+
     sf::Clock m_clockMovement;
     sf::Time m_timeMovement;
 
-private:
+    tibia::Creature* m_attacker;
 
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const
     {
         states.transform *= getTransform();
 
-        if (m_hasOutfit == true)
+        if (m_isDead == true)
+        {
+            target.draw(m_spriteCorpse, states);
+
+            return;
+        }
+
+        if (m_hasOutfit == false)
+        {
+            target.draw(m_sprite, states);
+        }
+        else
         {
             target.draw(m_spriteOutfitFeet, states);
             target.draw(m_spriteOutfitLegs, states);

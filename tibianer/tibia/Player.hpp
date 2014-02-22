@@ -21,9 +21,13 @@ public:
     {
         setName("Player");
 
-        setMovementSpeed(tibia::MovementSpeeds::player);
+        setIsPlayer(true);
 
         setHasOutfit(true);
+
+        setIsSitting(false);
+
+        setMovementSpeed(tibia::MovementSpeeds::player);
     }
 
 };

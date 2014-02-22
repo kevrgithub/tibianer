@@ -9,7 +9,8 @@
 #include <algorithm>
 #include <memory>
 
-#include "boost_foreach.hpp"
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/ini_parser.hpp>
 
 #include <SFML/System.hpp>
 #include <SFML/Graphics.hpp>
@@ -19,6 +20,7 @@
 
 #include "tibia/Tibia.hpp"
 #include "tibia/Game.hpp"
+#include "tibia/Tile.hpp"
 #include "tibia/TileMap.hpp"
 #include "tibia/Map.hpp"
 #include "tibia/Text.hpp"
@@ -26,207 +28,319 @@
 #include "tibia/Sprite.hpp"
 #include "tibia/Creature.hpp"
 #include "tibia/Player.hpp"
+#include "tibia/Animation.hpp"
+#include "tibia/Projectile.hpp"
+
+std::string gameTitle = "Tibianer";
+
+std::string fileOptions = "data/options.ini";
+std::string fileSprites = "data/sprites.ini";
+
+sf::Uint32 windowStyle = sf::Style::Default;
 
 int windowWidth  = 640;
 int windowHeight = 480;
 
-float zoomFactor = 0.8;
+bool windowIsFullscreen = false;
 
-void renderingThread(sf::RenderWindow* window, tibia::Game* game)
+unsigned int framerateLimit = 60;
+
+float zoomLevel  = 1;
+float zoomFactor = 0.4;
+
+bool fileExists(std::string filename)
 {
-    window->setActive(true);
+    std::ifstream file(filename.c_str());
 
-    sf::Clock* clockAnimatedWaterAndObjects = game->getClockAnimatedWaterAndObjects();
-
-    while (window->isOpen())
+    if (file.good())
     {
-        sf::Time timeAnimatedWaterAndObjects = clockAnimatedWaterAndObjects->getElapsedTime();
-
-        if (timeAnimatedWaterAndObjects.asSeconds() >= 1.0)
-        {
-            game->doAnimatedWater();
-            game->doAnimatedObjects();
-
-            clockAnimatedWaterAndObjects->restart();
-        }
-
-        window->clear(tibia::Colors::mainWindowColor);
-
-        game->getPlayer()->update();
-        game->updateCreatures();
-
-        //game->showGameText("You died.", 32, sf::Color(255, 255, 255));
-
-        game->drawGameWindow(window);
-
-        window->display();
+        file.close();
+        return true;
     }
+    else
+    {
+        file.close();
+        return false;
+    }
+}
+
+void loadOptions()
+{
+    if (fileExists(fileOptions) == false)
+    {
+        return;
+    }
+
+    boost::property_tree::ptree pt;
+    boost::property_tree::ini_parser::read_ini(fileOptions, pt);
+
+    windowIsFullscreen = pt.get<bool>("Window.Fullscreen", windowIsFullscreen);
 }
 
 int main()
 {
-    //sf::Vector2f vecA;
-    //vecA.x = 0;
-    //vecA.y = 0;
+    std::cout << "Loading options" << std::endl;
 
-    //sf::Vector2f vecB;
-    //vecB.x = windowWidth;
-    //vecB.y = windowHeight;
-
-    //sf::Vector2f vecDiff;
-    //vecDiff = vecB - vecA;
-
-    //vecDiff = vecDiff / thor::length(vecDiff);
+    loadOptions();
 
     std::cout << "Initializing random number seed" << std::endl;
     std::srand(std::time(0));
 
     std::cout << "Creating main window" << std::endl;
-    sf::RenderWindow mainWindow(sf::VideoMode(windowWidth, windowHeight), "Tibianer");
-    mainWindow.setFramerateLimit(30);
+
+    if (windowIsFullscreen == true)
+    {
+        windowStyle |= sf::Style::Fullscreen;
+    }
+
+    sf::RenderWindow mainWindow;
+    mainWindow.create(sf::VideoMode(windowWidth, windowHeight), gameTitle, windowStyle);
+    //mainWindow.setFramerateLimit(framerateLimit);
 
     tibia::Game game;
 
-    std::cout << "Loading font" << std::endl;
-    if (game.loadFont(tibia::Fonts::default) == false)
+    std::cout << "Loading fonts" << std::endl;
+    if (game.loadFonts() == false)
     {
-        std::cout << "Error: Failed to load font" << std::endl;
+        std::cout << "Error: Failed to load fonts" << std::endl;
         return EXIT_FAILURE;
     }
 
-    sf::Text loadingText("Loading...", *game.getFont(), tibia::Fonts::defaultSize);
-    loadingText.setColor(sf::Color(255, 255, 255));
-    loadingText.setPosition
+    sf::Text titleText(gameTitle, *game.getFontMartel(), tibia::FontSizes::title);
+    titleText.setColor(tibia::Colors::yellow);
+    titleText.setPosition
     (
-        (windowWidth  / 2) - (loadingText.getLocalBounds().width  / 2),
-        (windowHeight / 2) - (loadingText.getLocalBounds().height / 2)
+        (windowWidth  / 2) - (titleText.getLocalBounds().width  / 2),
+        (windowHeight / 4) - (titleText.getLocalBounds().height / 2)
     );
 
-    mainWindow.clear(sf::Color(0, 0, 0));
+    sf::Text loadingText("Loading...", *game.getFont(), tibia::FontSizes::default);
+    loadingText.setColor(tibia::Colors::white);
+    loadingText.setPosition
+    (
+        (windowWidth  / 2)                  - (loadingText.getLocalBounds().width  / 2),
+        (windowHeight - (windowHeight / 4)) - (loadingText.getLocalBounds().height / 2)
+    );
+
+    mainWindow.clear(tibia::Colors::black);
+    mainWindow.draw(titleText);
     mainWindow.draw(loadingText);
     mainWindow.display();
 
-    std::cout << "Creating game window" << std::endl;
-    if (game.createGameWindow() == false)
+    std::cout << "Creating game windows" << std::endl;
+    if (game.createWindows() == false)
     {
-        std::cout << "Error: Failed to create game window" << std::endl;
+        std::cout << "Error: Failed to create game windows" << std::endl;
         return EXIT_FAILURE;
     }
 
     std::cout << "Loading textures" << std::endl;
-    if (tibia::loadTextures() == false)
+    if (game.loadTextures() == false)
     {
         std::cout << "Error: Failed to load textures" << std::endl;
         return EXIT_FAILURE;
     }
 
-    sf::SoundBuffer sb;
-    sb.loadFromFile("sounds/everquest/snd2/button_1.wav");
-
-    sf::Sound sound;
-    sound.setBuffer(sb);
-    //sound.play();
+    std::cout << "Loading sounds" << std::endl;
+    if (game.loadSounds() == false)
+    {
+        std::cout << "Error: Failed to load sounds" << std::endl;
+        return EXIT_FAILURE;
+    }
 
     std::cout << "Loading creatures" << std::endl;
     game.loadCreatures();
-    game.spawnCreature();
 
-    std::vector<std::shared_ptr<tibia::Creature>> creatures = game.getCreaturesList();
-    std::vector<std::shared_ptr<tibia::Creature>>::iterator creatures_it;
+    for (int i = 0; i < 100; i++)
+    {
+        std::stringstream creatureName;
+
+        creatureName << "Good Guy #" << i + 1;
+
+        tibia::Game::creatureSharedPtr creatureGood(new tibia::Creature);
+        creatureGood->setName(creatureName.str());
+        creatureGood->setTeam(tibia::Teams::good);
+        creatureGood->setHasOutfit(true);
+        creatureGood->setOutfitRandom();
+        creatureGood->setCoords(11, 8);
+
+        game.spawnCreature(creatureGood);
+
+        creatureName.str("");
+
+        creatureName << "Evil Guy #" << i + 1;
+
+        tibia::Game::creatureSharedPtr creatureEvil(new tibia::Creature);
+        creatureEvil->setName(creatureName.str());
+        creatureEvil->setTeam(tibia::Teams::evil);
+        creatureEvil->setHasOutfit(true);
+        creatureEvil->setOutfitRandom();
+        creatureEvil->setCoords(61, 20);
+
+        game.spawnCreature(creatureEvil);
+    }
+
+    tibia::Game::creatureSharedPtr creatureGoodLeader(new tibia::Creature);
+    creatureGoodLeader->setName("Good Leader");
+    creatureGoodLeader->setTeam(tibia::Teams::good);
+    creatureGoodLeader->setType(tibia::CreatureTypes::gameMaster);
+    creatureGoodLeader->setPropertiesByType();
+    creatureGoodLeader->setCoords(9, 12);
+
+    game.spawnCreature(creatureGoodLeader);
+
+    tibia::Game::creatureSharedPtr creatureEvilLeader(new tibia::Creature);
+    creatureEvilLeader->setName("Evil Leader");
+    creatureEvilLeader->setTeam(tibia::Teams::evil);
+    creatureEvilLeader->setType(tibia::CreatureTypes::hero);
+    creatureEvilLeader->setPropertiesByType();
+    creatureEvilLeader->setCoords(63, 20);
+
+    game.spawnCreature(creatureEvilLeader);
 
     std::cout << "Loading animated objects" << std::endl;
     game.loadAnimatedObjects();
 
-    //std::auto_ptr<tibia::Sprite> vecSprite2(new tibia::Sprite);
-    //vecSprite2->setId(128);
-    //vecSprite2->setPosition(32, 32);
-
-    //tibia::Sprite vecSprite;
-    //vecSprite.setId(128);
-    //vecSprite.setPosition(0, 0);
-
     std::cout << "Loading map" << std::endl;
-    if (game.loadMap("maps/tibia.xml") == false)
+    if (game.loadMap("maps/test.xml") == false)
     {
         std::cout << "Error: Failed to load map" << std::endl;
         return EXIT_FAILURE;
     }
 
-    //std::cout << "Creating threads" << std::endl;
-
-    //sf::Thread threadAnimatedWater(&tibia::TileMap::doAnimatedWater, &map.tileMapGroundTiles);
-    //sf::Thread threadAnimatedObjects(&tibia::Map::doAnimatedObjects, &map);
-
-    //sf::Font myfont;
-    //if (!myfont.loadFromFile("c:/windows/fonts/arial.ttf"))
-        //return 1;
-
-    //std::string temp_text = "Tibianer!";
-
-    //sf::Text mytext(temp_text, myfont, 48);
-    //mytext.setPosition(1024, 1024);
-
-    //tibia::Sprite mysprite;
-    //mysprite.setId(491);
-    //mysprite.setPosition(0, 0);
-
-    //std::string test_text = "Hello, world!\nThe quick brown Fox jumps over the lazy Dog.\nWhat?";
-
-    //tibia::BitmapFontText bft;
-    //bft.load(sf::Color(0, 255, 0), test_text, "images/font.png", sf::Vector2u(8, 8), false);
-    //bft.setPosition(100, 100);
-
     std::cout << "Loading player" << std::endl;
-    tibia::Player* player = game.getPlayer();
+
+    tibia::Creature* player = game.getPlayer();
     player->setCoords(10, 10);
-    //player->setPosition(64, 64);
 
     bool playerMovementReady = true;
 
-    std::cout << "Loading view" << std::endl;
-    sf::View* view = game.getWindowView();
+    std::cout << "Loading game window and view" << std::endl;
 
-    //sf::RenderTexture light_rt;
-    //light_rt.create(tibia::MAP_SIZE * tibia::TILE_SIZE, tibia::MAP_SIZE * tibia::TILE_SIZE);
+    sf::RenderTexture* gameWindow = game.getWindow();
 
-    //sf::RectangleShape light_rect;
-    //light_rect.setPosition(0, 0);
-    //light_rect.setSize(sf::Vector2f(tibia::MAP_SIZE * tibia::TILE_SIZE, tibia::MAP_SIZE * tibia::TILE_SIZE));
-
-    std::cout << "Starting rendering loop" << std::endl;
-
-    mainWindow.clear(sf::Color(0, 0, 0));
-    mainWindow.setActive(false);
-
-    sf::Thread threadStartRendering(std::bind(&renderingThread, &mainWindow, &game));
-    threadStartRendering.launch();
+    sf::View* gameView = game.getWindowView();
 
     std::cout << "Starting main loop" << std::endl;
 
-    sf::Clock* clock = game.getClock();
+    sf::Clock* clockGame                    = game.getClock();
+    sf::Clock* clockAnimatedWaterAndObjects = game.getClockAnimatedWaterAndObjects();
+    sf::Clock* clockCreatureLogic           = game.getClockCreatureLogic();
+    sf::Clock* clockMiniMap                 = game.getClockMiniMap();
 
-    sf::Clock clockOneSecond;
-    clockOneSecond.restart();
+    sf::Clock clockDebugInfo;
+
+    sf::Clock clockFramesPerSecond;
+    int numFrames = 0;
+    int framesPerSecond = 0;
+
+    bool doEnterGameAnimation = true;
+
+    bool doUpdateMiniMap = true;
 
     while (mainWindow.isOpen())
     {
-        sf::Time elapsedTime = clock->restart();
+        sf::Time elapsedTime = clockGame->getElapsedTime();
 
-        sf::Time timeOneSecond = clockOneSecond.getElapsedTime();
+        sf::Time timeDebugInfo = clockDebugInfo.getElapsedTime();
 
-        if (timeOneSecond.asSeconds() >= 1.0)
+        if (timeDebugInfo.asSeconds() >= 1.0)
         {
             //std::cout << "elapsed time: " << elapsedTime.asSeconds() << std::endl;
 
-            std::cout << "player x,y,z: " << player->getX() << "," << player->getY() << "," << player->getZ() << std::endl;
-            std::cout << "player tile x,y: " << player->getTileX() << "," << player->getTileY() << std::endl;
+            std::cout << "player x,y,z:       " << player->getX()     << "," << player->getY()     << "," << player->getZ() << std::endl;
+            std::cout << "player tile x,y:    " << player->getTileX() << "," << player->getTileY()                          << std::endl;
 
-            //std::cout << "player->getMovementSpeed(): " << player->getMovementSpeed() << std::endl;
+            std::cout << "player tile number: " << player->getTileNumber() << std::endl;
 
-            std::cout << "player tile number: " << game.getCreatureTileNumber(player) << std::endl;
-
-            clockOneSecond.restart();
+            clockDebugInfo.restart();
         }
+
+        mainWindow.clear(tibia::Colors::mainWindowColor);
+
+        sf::Time timeAnimatedWaterAndObjects = clockAnimatedWaterAndObjects->getElapsedTime();
+
+        if (timeAnimatedWaterAndObjects.asSeconds() >= 1.0)
+        {
+            game.doAnimatedWater();
+            game.doAnimatedObjects();
+
+            clockAnimatedWaterAndObjects->restart();
+        }
+
+        sf::Time timeCreatureLogic = clockCreatureLogic->getElapsedTime();
+
+        if (timeCreatureLogic.asSeconds() >= 1.0)
+        {
+            game.doCreatureLogic();
+
+            clockCreatureLogic->restart();
+        }
+
+        game.updateAnimatedDecals();
+
+        game.updatePlayer();
+        game.updateCreatures();
+
+        game.updateProjectiles();
+
+        game.updateAnimations();
+
+        game.drawGameWindow(&mainWindow);
+
+        if (doUpdateMiniMap == true)
+        {
+            game.updateMiniMapWindow();
+
+            doUpdateMiniMap = false;
+        }
+
+        game.drawMiniMapWindow(&mainWindow);
+
+        sf::Time timeMiniMap = clockMiniMap->getElapsedTime();
+
+        if (timeMiniMap.asSeconds() >= 0.1)
+        {
+            game.updateMiniMapWindow();
+
+            clockMiniMap->restart();
+        }
+
+        game.updateSounds();
+
+        if (doEnterGameAnimation == true)
+        {
+            game.spawnAnimation(tibia::Animations::spellBlue, game.getPlayer()->getX(), game.getPlayer()->getY(), game.getPlayer()->getZ());
+
+            doEnterGameAnimation = false;
+        }
+
+        numFrames++;
+
+        sf::Time timeFramesPerSecond = clockFramesPerSecond.getElapsedTime();
+
+        if (timeFramesPerSecond.asSeconds() >= 1)
+        {
+            framesPerSecond = numFrames;
+
+            numFrames = 0;
+
+            clockFramesPerSecond.restart();
+        }
+
+        std::stringstream ssFramesPerSecond;
+        ssFramesPerSecond << "FPS: " << framesPerSecond;
+
+        sf::Text textFramesPerSecond;
+        textFramesPerSecond.setString(ssFramesPerSecond.str());
+        textFramesPerSecond.setFont(*game.getFontSmall());
+        textFramesPerSecond.setCharacterSize(tibia::FontSizes::small);
+        textFramesPerSecond.setColor(tibia::Colors::pink);
+        textFramesPerSecond.setPosition(8, 0);
+
+        mainWindow.draw(textFramesPerSecond);
+
+        mainWindow.display();
 
         sf::Event event;
         while (mainWindow.pollEvent(event))
@@ -235,11 +349,17 @@ int main()
             {
                 if (event.mouseWheel.delta > 0)
                 {
-                    view->zoom(zoomFactor);
+                    zoomLevel -= zoomFactor;
+
+                    if (zoomLevel < 1) zoomLevel = 1;
+
+                    gameView->setSize(sf::Vector2f(tibia::TILES_WIDTH * zoomLevel, tibia::TILES_HEIGHT * zoomLevel));
                 }
                 else if (event.mouseWheel.delta < 0)
                 {
-                    view->zoom(1.0 + (1.0 - zoomFactor));
+                    zoomLevel += zoomFactor;
+
+                    gameView->setSize(sf::Vector2f(tibia::TILES_WIDTH * zoomLevel, tibia::TILES_HEIGHT * zoomLevel));
                 }
             }
 
@@ -247,68 +367,18 @@ int main()
             {
                 case sf::Event::KeyPressed:
                 {
-                    int direction = -1;
-
                     switch (event.key.code)
                     {
+                        case sf::Keyboard::Escape:
+                            mainWindow.close();
+                            break;
+
                         case sf::Keyboard::Up:
-                            direction = tibia::Directions::up;
-
-                            if (event.key.control == false)
-                            {
-                                if (game.checkCollision(player, direction) == false)
-                                {
-                                    player->doMove(direction);
-                                }
-                            }
-
-                            player->doTurn(direction);
-                            player->setIsSitting(game.checkIsSitting(player));
-                            break;
-
                         case sf::Keyboard::Right:
-                            direction = tibia::Directions::right;
-
-                            if (event.key.control == false)
-                            {
-                                if (game.checkCollision(player, direction) == false)
-                                {
-                                    player->doMove(direction);
-                                }
-                            }
-
-                            player->doTurn(direction);
-                            player->setIsSitting(game.checkIsSitting(player));
-                            break;
-
                         case sf::Keyboard::Down:
-                            direction = tibia::Directions::down;
-
-                            if (event.key.control == false)
-                            {
-                                if (game.checkCollision(player, direction) == false)
-                                {
-                                    player->doMove(direction);
-                                }
-                            }
-
-                            player->doTurn(direction);
-                            player->setIsSitting(game.checkIsSitting(player));
-                            break;
-
                         case sf::Keyboard::Left:
-                            direction = tibia::Directions::left;
-
-                            if (event.key.control == false)
-                            {
-                                if (game.checkCollision(player, direction) == false)
-                                {
-                                    player->doMove(direction);
-                                }
-                            }
-
-                            player->doTurn(direction);
-                            player->setIsSitting(game.checkIsSitting(player));
+                            game.updatePlayer();
+                            game.handleCreatureMovement(player, tibia::getDirectionByKey(event.key.code), event.key.control);
                             break;
 
                         case sf::Keyboard::O:
@@ -327,59 +397,187 @@ int main()
                             break;
 
                         case sf::Keyboard::H:
-                            game.showGameText("You say:\nHello!", tibia::Fonts::gameSize, tibia::Colors::yellow);
+                            game.showGameText("You say:\nHello!", tibia::FontSizes::game, tibia::Colors::yellow);
+                            break;
+
+                        case sf::Keyboard::A:
+                            game.spawnAnimation(tibia::Animations::spellBlue, player->getTileX(), player->getTileY(), player->getZ(), 1.0);
+                            break;
+
+                        case sf::Keyboard::D:
+                            game.spawnAnimatedDecal(tibia::AnimatedDecals::poolRed, player->getTileX(), player->getTileY(), player->getZ(), 30.0);
+                            game.spawnAnimatedDecal(tibia::AnimatedDecals::corpse,  player->getTileX(), player->getTileY(), player->getZ(), 30.0);
+                            break;
+
+                        case sf::Keyboard::B:
+                            game.spawnProjectile
+                            (
+                                player,
+                                tibia::ProjectileTypes::spellBlue,
+                                player->getDirection(),
+                                sf::Vector2f(player->getTileX(), player->getTileY()),
+                                sf::Vector2f
+                                (
+                                    player->getTileX() + (tibia::getVectorByDirection(player->getDirection()).x * tibia::TILE_SIZE),
+                                    player->getTileY() + (tibia::getVectorByDirection(player->getDirection()).y * tibia::TILE_SIZE)
+                                )
+                            );
+                            break;
+
+                        case sf::Keyboard::F:
+                            game.spawnProjectile
+                            (
+                                player,
+                                tibia::ProjectileTypes::spellFire,
+                                player->getDirection(),
+                                sf::Vector2f(player->getTileX(), player->getTileY()),
+                                sf::Vector2f
+                                (
+                                    player->getTileX() + (tibia::getVectorByDirection(player->getDirection()).x * tibia::TILE_SIZE),
+                                    player->getTileY() + (tibia::getVectorByDirection(player->getDirection()).y * tibia::TILE_SIZE)
+                                )
+                            );
+                            break;
+
+                        case sf::Keyboard::P:
+                            game.spawnProjectile
+                            (
+                                player,
+                                tibia::ProjectileTypes::arrowPoison,
+                                player->getDirection(),
+                                sf::Vector2f(player->getTileX(), player->getTileY()),
+                                sf::Vector2f
+                                (
+                                    player->getTileX() + (tibia::getVectorByDirection(player->getDirection()).x * tibia::TILE_SIZE),
+                                    player->getTileY() + (tibia::getVectorByDirection(player->getDirection()).y * tibia::TILE_SIZE)
+                                )
+                            );
+                            break;
+
+                        case sf::Keyboard::S:
+                            for (int i = tibia::Directions::begin; i < tibia::Directions::end + 1; i++)
+                            {
+                                game.spawnProjectile
+                                (
+                                    player,
+                                    tibia::ProjectileTypes::spear,
+                                    i,
+                                    sf::Vector2f(player->getTileX(), player->getTileY()),
+                                    sf::Vector2f
+                                    (
+                                        player->getTileX() + (tibia::getVectorByDirection(i).x * tibia::TILE_SIZE),
+                                        player->getTileY() + (tibia::getVectorByDirection(i).y * tibia::TILE_SIZE)
+                                    )
+                                );
+                            }
                             break;
 
                         case sf::Keyboard::C:
-                            for (creatures_it = creatures.begin(); creatures_it != creatures.end(); creatures_it++)
+                            for (auto creature : game.getCreaturesList())
                             {
-                                std::cout  << "name: " << (*creatures_it)->getName() << std::endl;
+                                std::cout  << "name: " << creature->getName() << std::endl;
 
-                                (*creatures_it)->setOutfitRandom();
+                                creature->setOutfitRandom();
 
-                                int playerX = player->getX();
-                                int playerY = player->getY();
-
-                                int creatureX = (*creatures_it)->getX();
-                                int creatureY = (*creatures_it)->getY();
-
-                                std::cout << playerX << "," << playerY << " | " << creatureX << "," << creatureY <<  std::endl;
-
-                                float distance = tibia::calculateDistance(playerX, playerY, creatureX, creatureY);
-
-                                //distance /= tibia::TILE_SIZE;
+                                float distance = creature->getDistanceFromPlayer();
 
                                 std::cout << "distance: " << distance << std::endl;
 
-                                float volume = 100 - (distance * 8);
-
-                                if (volume < 0) volume = 0;
+                                float volume = tibia::calculateVolumeByDistance(distance);
 
                                 std::cout << "volume: " << volume << std::endl;
-
-                                sound.setVolume(volume);
-
-                                sound.play();
                             }
-                            break;
-
-                        case sf::Keyboard::V:
-                            std::vector<int> visibleTileNumbers = game.getVisibleTileNumbers();
-                            for (int i = 0; i < visibleTileNumbers.size(); i++)
-                            {
-                                if (visibleTileNumbers.at(i) < 1000)
-                                    std::cout << " ";
-
-                                std::cout << visibleTileNumbers.at(i) << " ";
-
-                                if (i > 0 && (i + 1) % 13 == 0)
-                                    std::cout << std::endl;
-                            }
-                            std::cout << std::endl;
-                            std::cout << visibleTileNumbers.size() << std::endl;
                             break;
                     }
                 }
+                break;
+
+                case sf::Event::MouseButtonPressed:
+                {
+                    sf::Vector2i mouseWindowPosition = sf::Mouse::getPosition(mainWindow);
+
+                    std::cout << "mouse x,y: " << mouseWindowPosition.x << "," << mouseWindowPosition.y << std::endl;
+
+                    sf::Vector2f mouseTilePositionFloat = gameWindow->mapPixelToCoords(mouseWindowPosition);
+
+                    if (mouseTilePositionFloat.x < 0) mouseTilePositionFloat.x = 0;
+                    if (mouseTilePositionFloat.y < 0) mouseTilePositionFloat.y = 0;
+
+                    mouseTilePositionFloat.x -= tibia::GuiData::gameWindowX;
+                    mouseTilePositionFloat.y -= tibia::GuiData::gameWindowY;
+
+                    sf::Vector2u mouseTilePosition;
+                    mouseTilePosition.x = mouseTilePositionFloat.x;
+                    mouseTilePosition.y = mouseTilePositionFloat.y;
+
+                    while (mouseTilePosition.x > 0 && mouseTilePosition.x % tibia::TILE_SIZE != 0) mouseTilePosition.x--;
+                    while (mouseTilePosition.y > 0 && mouseTilePosition.y % tibia::TILE_SIZE != 0) mouseTilePosition.y--;
+
+                    std::cout << "mouse tile x,y: " << mouseTilePosition.x << "," << mouseTilePosition.y << std::endl;
+
+                    int mouseTileNumber = tibia::getTileNumberByTileCoords(mouseTilePosition.x, mouseTilePosition.y);
+
+                    std::cout << "mouse tile number: " << mouseTileNumber << std::endl;
+
+                    switch (event.mouseButton.button)
+                    {
+                        case sf::Mouse::Button::Left:
+                        {
+                            sf::Vector2f playerTilePositionFloat;
+                            playerTilePositionFloat.x = player->getTileX();
+                            playerTilePositionFloat.y = player->getTileY();
+
+                            sf::Vector2f playerMovementNormal = tibia::getNormalByVectors(playerTilePositionFloat, mouseTilePositionFloat);
+
+                            std::cout << playerMovementNormal.x << "," << playerMovementNormal.y << std::endl;
+
+                            playerMovementNormal.x = tibia::getFloatNormalEx(playerMovementNormal.x);
+                            playerMovementNormal.y = tibia::getFloatNormalEx(playerMovementNormal.y);
+
+                            std::cout << playerMovementNormal.x << "," << playerMovementNormal.y << std::endl;
+
+                            int playerMovementDirection = tibia::getDirectionByVector(playerMovementNormal);
+
+                            game.handleCreatureMovement(player, playerMovementDirection);
+                            break;
+                        }
+
+                        case sf::Mouse::Button::Right:
+                        {
+                            if (game.doCreatureUseLadder(player, mouseTilePosition) == true)
+                            {
+                                break;
+                            }
+
+                            if (game.doCreatureUseLever(player, mouseTilePosition) == true)
+                            {
+                                break;
+                            }
+
+                            if (player->getTileNumber() == mouseTileNumber)
+                            {
+                                break;
+                            }
+
+                            game.spawnProjectile
+                            (
+                                player,
+                                tibia::ProjectileTypes::arrow,
+                                player->getDirection(),
+                                sf::Vector2f(player->getTileX(), player->getTileY()),
+                                sf::Vector2f
+                                (
+                                    mouseTilePosition.x,
+                                    mouseTilePosition.y
+                                ),
+                                true
+                            );
+
+                            break;
+                        }
+                    }
+                }
+                break;
             }
 
             if (event.type == sf::Event::Closed)
@@ -387,77 +585,6 @@ int main()
                 mainWindow.close();
             }
         }
-
-        //view->setCenter(player->getTileX() + (tibia::TILE_SIZE / 2), player->getTileY() + (tibia::TILE_SIZE / 2));
-
-        //sf::RectangleShape light_squares[3];
-
-        //light_squares[0].setSize(sf::Vector2f(32, 32));
-        //light_squares[0].setFillColor(sf::Color(255, 255, 255, 128));
-        //light_squares[0].setPosition(player.tileX, player.tileY);
-
-        //light_squares[1].setSize(sf::Vector2f(96, 96));
-        //light_squares[1].setFillColor(sf::Color(255, 255, 255, 160));
-        //light_squares[1].setPosition(player.tileX - tibia::TILE_SIZE, player.tileY - tibia::TILE_SIZE);
-
-        //light_squares[2].setSize(sf::Vector2f(160, 160));
-        //light_squares[2].setFillColor(sf::Color(255, 255, 255, 192));
-        //light_squares[2].setPosition(player.tileX - (tibia::TILE_SIZE * 2), player.tileY - (tibia::TILE_SIZE * 2));
-
-        //sf::CircleShape light_circle;
-        //light_circle.setRadius(96);
-        //light_circle.setPointCount(16);
-        //light_circle.setFillColor(sf::Color(255, 255, 255, 128));
-        //light_circle.setPosition(10 * tibia::TILE_SIZE, 10 * tibia::TILE_SIZE);
-
-        //light_rt.clear(sf::Color(0, 0, 0, 192));
-
-        //for (unsigned int ls = 0; ls < 3; ls++)
-        //{
-            //light_rt.draw(light_squares[ls],  sf::BlendMode::BlendMultiply);
-        //}
-
-        //light_rt.draw(light_circle,  sf::BlendMode::BlendMultiply);
-
-        //light_rt.display();
-
-        //light_rect.setTexture(&light_rt.getTexture());
-
-
-        //gameWindow.setView(game.getWindowView());
-        //gameWindow.clear(sf::Color(0, 0, 0));
-        //gameWindow.draw(map.tileMapGroundTiles);
-        //gameWindow.draw(map.tileMapGroundEdges);
-        //gameWindow.draw(map.tileMapGroundWalls);
-        //gameWindow.draw(map.tileMapGroundWallsEx);
-        //gameWindow.draw(map.tileMapGroundWalls2);
-        //gameWindow.draw(map.tileMapGroundObjects);
-        //gameWindow.draw(map.tileMapGroundObjects2);
-        //gameWindow.draw(mytext);
-        //gameWindow.draw(mysprite);
-        //gameWindow.draw(bft);
-        //gameWindow.draw(player);
-
-        //gameWindow.draw(map.tileMapGroundObjectsDrawLast);
-        //gameWindow.draw(map.tileMapGroundObjectsDrawLast2);
-
-        //std::vector<int> objectsDrawLastTiles = map.tileMapGroundObjectsDrawLast.getTiles();
-
-        //int objectsDrawLastTileNumber = map.tileMapGroundObjectsDrawLast.getTileNumberByTileCoords(player.getTileX() - 1, player.getTileY() - 1);
-
-        //if (objectsDrawLastTiles.at(objectsDrawLastTileNumber) != tibia::TILE_NULL)
-        //{
-            //std::cout << "Drawing player again" << std::endl;
-
-            //gameWindow.draw(player);
-        //}
-
-        //std::vector<int> groundTiles = map.tileMapGroundTiles.getTiles();
-        //int playerTileNumber = map.tileMapGroundTiles.getTileNumberByTileCoords(player.tileX, player.tileY);
-        //std::cout << "player is in tile: " << groundTiles.at(playerTileNumber) << std::endl;
-
-        //gameWindow.draw(light_rect);
-        //gameWindow.display();
     }
 
     return EXIT_SUCCESS;

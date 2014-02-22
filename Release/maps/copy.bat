@@ -1,2 +1,2 @@
-copy tibia.tmx tibia.xml
+copy test.tmx test.xml
 pause
