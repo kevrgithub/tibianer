@@ -15,11 +15,14 @@ class Animation : public tibia::Thing
 
 public:
 
-    Animation::Animation(int id, int numFrames)
+    Animation::Animation(int tileX, int tileY, int z, int id, int numFrames)
     {
-        m_id = id;
+        setTileCoords(tileX, tileY);
+        setPosition(sf::Vector2f(tileX, tileY));
 
-        m_sprite.setId(m_id);
+        setZ(z);
+
+        setId(id);
 
         setNumFrames(numFrames);
 
@@ -28,6 +31,18 @@ public:
         m_numRepeat = 0;
 
         m_clock.restart();
+    }
+
+    void setId(int id)
+    {
+        m_id = id;
+
+        m_sprite.setId(m_id);
+    }
+
+    int getId()
+    {
+        return m_id;
     }
 
     void setNumFrames(int numFrames)

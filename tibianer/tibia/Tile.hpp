@@ -53,104 +53,14 @@ public:
         m_position = position;
     }
 
-    bool isNull()
+    int getFlags()
     {
-        return m_isNull;
+        return m_flags;
     }
 
-    void setIsNull(bool b)
+    void setFlags(int flags)
     {
-        m_isNull = b;
-    }
-
-    bool isSolid()
-    {
-        return m_isSolid;
-    }
-
-    void setIsSolid(bool b)
-    {
-        m_isSolid = b;
-    }
-
-    bool isBlockProjectiles()
-    {
-        return m_isBlockProjectiles;
-    }
-
-    void setIsBlockProjectiles(bool b)
-    {
-        m_isBlockProjectiles = b;
-    }
-
-    bool isWater()
-    {
-        return m_isWater;
-    }
-
-    void setIsWater(bool b)
-    {
-        m_isWater = b;
-    }
-
-    bool isLava()
-    {
-        return m_isLava;
-    }
-
-    void setIsLava(bool b)
-    {
-        m_isLava = b;
-    }
-
-    bool isChair()
-    {
-        return m_isChair;
-    }
-
-    void setIsChair(bool b)
-    {
-        m_isChair = b;
-    }
-
-    bool isOffset()
-    {
-        return m_isOffset;
-    }
-
-    void setIsOffset(bool b)
-    {
-        m_isOffset = b;
-    }
-
-    bool isLadder()
-    {
-        return m_isLadder;
-    }
-
-    void setIsLadder(bool b)
-    {
-        m_isLadder = b;
-    }
-
-    bool isMoveAbove()
-    {
-        return m_isMoveAbove;
-    }
-
-    void setIsMoveAbove(bool b)
-    {
-        m_isMoveAbove = b;
-    }
-
-    bool isMoveBelow()
-    {
-        return m_isMoveBelow;
-    }
-
-    void setIsMoveBelow(bool b)
-    {
-        m_isMoveBelow = b;
+        m_flags = flags;
     }
 
 private:
@@ -162,16 +72,7 @@ private:
 
     sf::Vector2u m_position;
 
-    bool m_isNull;
-    bool m_isSolid;
-    bool m_isBlockProjectiles;
-    bool m_isWater;
-    bool m_isLava;
-    bool m_isChair;
-    bool m_isOffset;
-    bool m_isLadder;
-    bool m_isMoveAbove;
-    bool m_isMoveBelow;
+    int m_flags;
 };
 
 }

@@ -8,6 +8,7 @@
 #include <vector>
 #include <algorithm>
 #include <memory>
+#include <thread>
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
@@ -27,7 +28,6 @@
 #include "tibia/BitmapFontText.hpp"
 #include "tibia/Sprite.hpp"
 #include "tibia/Creature.hpp"
-#include "tibia/Player.hpp"
 #include "tibia/Animation.hpp"
 #include "tibia/Projectile.hpp"
 
@@ -36,7 +36,7 @@ std::string gameTitle = "Tibianer";
 std::string fileOptions = "data/options.ini";
 std::string fileSprites = "data/sprites.ini";
 
-sf::Uint32 windowStyle = sf::Style::Default;
+sf::Uint32 windowStyle = sf::Style::Titlebar | sf::Style::Close;
 
 int windowWidth  = 640;
 int windowHeight = 480;
@@ -148,56 +148,6 @@ int main()
         return EXIT_FAILURE;
     }
 
-    std::cout << "Loading creatures" << std::endl;
-    game.loadCreatures();
-
-    for (int i = 0; i < 100; i++)
-    {
-        std::stringstream creatureName;
-
-        creatureName << "Good Guy #" << i + 1;
-
-        tibia::Game::creatureSharedPtr creatureGood(new tibia::Creature);
-        creatureGood->setName(creatureName.str());
-        creatureGood->setTeam(tibia::Teams::good);
-        creatureGood->setHasOutfit(true);
-        creatureGood->setOutfitRandom();
-        creatureGood->setCoords(11, 8);
-
-        game.spawnCreature(creatureGood);
-
-        creatureName.str("");
-
-        creatureName << "Evil Guy #" << i + 1;
-
-        tibia::Game::creatureSharedPtr creatureEvil(new tibia::Creature);
-        creatureEvil->setName(creatureName.str());
-        creatureEvil->setTeam(tibia::Teams::evil);
-        creatureEvil->setHasOutfit(true);
-        creatureEvil->setOutfitRandom();
-        creatureEvil->setCoords(61, 20);
-
-        game.spawnCreature(creatureEvil);
-    }
-
-    tibia::Game::creatureSharedPtr creatureGoodLeader(new tibia::Creature);
-    creatureGoodLeader->setName("Good Leader");
-    creatureGoodLeader->setTeam(tibia::Teams::good);
-    creatureGoodLeader->setType(tibia::CreatureTypes::gameMaster);
-    creatureGoodLeader->setPropertiesByType();
-    creatureGoodLeader->setCoords(9, 12);
-
-    game.spawnCreature(creatureGoodLeader);
-
-    tibia::Game::creatureSharedPtr creatureEvilLeader(new tibia::Creature);
-    creatureEvilLeader->setName("Evil Leader");
-    creatureEvilLeader->setTeam(tibia::Teams::evil);
-    creatureEvilLeader->setType(tibia::CreatureTypes::hero);
-    creatureEvilLeader->setPropertiesByType();
-    creatureEvilLeader->setCoords(63, 20);
-
-    game.spawnCreature(creatureEvilLeader);
-
     std::cout << "Loading animated objects" << std::endl;
     game.loadAnimatedObjects();
 
@@ -213,7 +163,120 @@ int main()
     tibia::Creature* player = game.getPlayer();
     player->setCoords(10, 10);
 
-    bool playerMovementReady = true;
+    std::cout << "Loading creatures" << std::endl;
+    game.loadCreatures();
+
+    for (int i = 0; i < 100; i++)
+    {
+        std::stringstream creatureName;
+
+        creatureName << "Good Guy #" << i + 1;
+
+        tibia::Game::creatureSharedPtr creatureGood = std::make_shared<tibia::Creature>(0, 0, tibia::ZAxis::ground);
+        creatureGood->setName(creatureName.str());
+        creatureGood->setTeam(tibia::Teams::good);
+        creatureGood->setHasOutfit(true);
+        creatureGood->setOutfitRandom();
+        creatureGood->setCoords(11, 8);
+
+        game.spawnCreature(creatureGood);
+
+        creatureName.str("");
+
+        creatureName << "Evil Guy #" << i + 1;
+
+        tibia::Game::creatureSharedPtr creatureEvil = std::make_shared<tibia::Creature>(0, 0, tibia::ZAxis::ground);
+        creatureEvil->setName(creatureName.str());
+        creatureEvil->setTeam(tibia::Teams::evil);
+        creatureEvil->setHasOutfit(true);
+        creatureEvil->setOutfitRandom();
+        creatureEvil->setCoords(61, 20);
+
+        game.spawnCreature(creatureEvil);
+    }
+
+    tibia::Game::creatureSharedPtr creatureGoodLeader = std::make_shared<tibia::Creature>(0, 0, tibia::ZAxis::ground);
+    creatureGoodLeader->setName("Good Leader");
+    creatureGoodLeader->setType(tibia::CreatureTypes::gameMaster);
+    creatureGoodLeader->setTeam(tibia::Teams::good);
+    creatureGoodLeader->setPropertiesByType();
+    creatureGoodLeader->setHpMax(1000);
+    creatureGoodLeader->setHp(1000);
+    creatureGoodLeader->setCoords(9, 12);
+
+    game.spawnCreature(creatureGoodLeader);
+
+    tibia::Game::creatureSharedPtr creatureAvatar = std::make_shared<tibia::Creature>(0, 0, tibia::ZAxis::ground);
+    creatureAvatar->setName("Good Avatar");
+    creatureAvatar->setTeam(tibia::Teams::good);
+    creatureAvatar->setType(tibia::CreatureTypes::hero);
+    creatureAvatar->setPropertiesByType();
+    creatureAvatar->setHpMax(1000);
+    creatureAvatar->setHp(1000);
+    creatureAvatar->setCoords(11, 12);
+
+    game.spawnCreature(creatureAvatar);
+
+    tibia::Game::creatureSharedPtr creatureWitch = std::make_shared<tibia::Creature>(0, 0, tibia::ZAxis::ground);
+    creatureWitch->setName("Evil Witch");
+    creatureWitch->setTeam(tibia::Teams::evil);
+    creatureWitch->setType(tibia::CreatureTypes::witch);
+    creatureWitch->setPropertiesByType();
+    creatureWitch->setHpMax(1000);
+    creatureWitch->setHp(1000);
+    creatureWitch->setCoords(64, 20);
+
+    game.spawnCreature(creatureWitch);
+
+    for (int i = 0; i < 10; i++)
+    {
+        tibia::Game::creatureSharedPtr creatureDemon = std::make_shared<tibia::Creature>(0, 0, tibia::ZAxis::ground);
+        creatureDemon->setName("Evil Demon");
+        creatureDemon->setTeam(tibia::Teams::evil);
+        creatureDemon->setType(tibia::CreatureTypes::demon);
+        creatureDemon->setPropertiesByType();
+        creatureDemon->setHpMax(2000);
+        creatureDemon->setHp(2000);
+        creatureDemon->setCoords(66, 20);
+
+        game.spawnCreature(creatureDemon);
+    }
+
+    for (int i = 0; i < 25; i++)
+    {
+        std::stringstream creatureName;
+
+        creatureName << "Zombie #" << i + 1;
+
+        tibia::Game::creatureSharedPtr creatureZombie = std::make_shared<tibia::Creature>(0, 0, tibia::ZAxis::ground);
+        creatureZombie->setName(creatureName.str());
+        creatureZombie->setTeam(tibia::Teams::evil);
+        creatureZombie->setType(tibia::CreatureTypes::zombie);
+        creatureZombie->setPropertiesByType();
+        creatureZombie->setHpMax(50);
+        creatureZombie->setHp(50);
+        creatureZombie->setCoords(80, 19);
+
+        game.spawnCreature(creatureZombie);
+
+        creatureName.str("");
+
+        creatureName << "Skeleton #" << i + 1;
+
+        tibia::Game::creatureSharedPtr creatureSkeleton = std::make_shared<tibia::Creature>(0, 0, tibia::ZAxis::ground);
+        creatureSkeleton->setName(creatureName.str());
+        creatureSkeleton->setTeam(tibia::Teams::evil);
+        creatureSkeleton->setType(tibia::CreatureTypes::skeleton);
+        creatureSkeleton->setPropertiesByType();
+        creatureSkeleton->setHpMax(25);
+        creatureSkeleton->setHp(25);
+        creatureSkeleton->setCoords(59, 20);
+
+        game.spawnCreature(creatureSkeleton);
+    }
+
+    std::cout << "Loading objects" << std::endl;
+    game.loadObjects();
 
     std::cout << "Loading game window and view" << std::endl;
 
@@ -246,12 +309,25 @@ int main()
 
         if (timeDebugInfo.asSeconds() >= 1.0)
         {
-            //std::cout << "elapsed time: " << elapsedTime.asSeconds() << std::endl;
+            std::cout << "elapsed time:       " << elapsedTime.asSeconds() << std::endl;
 
             std::cout << "player x,y,z:       " << player->getX()     << "," << player->getY()     << "," << player->getZ() << std::endl;
             std::cout << "player tile x,y:    " << player->getTileX() << "," << player->getTileY()                          << std::endl;
 
             std::cout << "player tile number: " << player->getTileNumber() << std::endl;
+
+            //std::vector<std::vector<int>>* groundTiles = game.getMap()->tileMapGroundTiles.getTilesArray();
+
+            //int playerTileId = (*groundTiles)[player->getX()][player->getY()];
+
+            //std::cout << "player tile id:     " << playerTileId << std::endl;
+
+            //std::cout << "player is near water: " << game.isPlayerNearWater() << std::endl;
+
+            //std:: cout << "view x,y center: " << gameView->getCenter().x - (tibia::TILE_SIZE / 2) << "," << gameView->getCenter().y - (tibia::TILE_SIZE / 2) << std::endl;
+
+            std::cout << "creatures:          " << game.getCreaturesList().size()      << std::endl;
+            std::cout << "animated decals:    " << game.getAnimatedDecalsList().size() << std::endl;
 
             clockDebugInfo.restart();
         }
@@ -282,6 +358,8 @@ int main()
         game.updatePlayer();
         game.updateCreatures();
 
+        game.updateObjects();
+
         game.updateProjectiles();
 
         game.updateAnimations();
@@ -310,7 +388,7 @@ int main()
 
         if (doEnterGameAnimation == true)
         {
-            game.spawnAnimation(tibia::Animations::spellBlue, game.getPlayer()->getX(), game.getPlayer()->getY(), game.getPlayer()->getZ());
+            game.spawnAnimation(game.getPlayer()->getTileX(), game.getPlayer()->getTileY(), game.getPlayer()->getZ(), tibia::Animations::spellBlue);
 
             doEnterGameAnimation = false;
         }
@@ -401,12 +479,12 @@ int main()
                             break;
 
                         case sf::Keyboard::A:
-                            game.spawnAnimation(tibia::Animations::spellBlue, player->getTileX(), player->getTileY(), player->getZ(), 1.0);
+                            game.spawnAnimation(player->getTileX(), player->getTileY(), player->getZ(), tibia::Animations::spellBlue, 1.0);
                             break;
 
                         case sf::Keyboard::D:
-                            game.spawnAnimatedDecal(tibia::AnimatedDecals::poolRed, player->getTileX(), player->getTileY(), player->getZ(), 30.0);
-                            game.spawnAnimatedDecal(tibia::AnimatedDecals::corpse,  player->getTileX(), player->getTileY(), player->getZ(), 30.0);
+                            game.spawnAnimatedDecal(player->getTileX(), player->getTileY(), player->getZ(), tibia::AnimatedDecals::poolRed, 30.0);
+                            game.spawnAnimatedDecal(player->getTileX(), player->getTileY(), player->getZ(), tibia::AnimatedDecals::corpse,  30.0);
                             break;
 
                         case sf::Keyboard::B:
@@ -498,13 +576,24 @@ int main()
 
                     std::cout << "mouse x,y: " << mouseWindowPosition.x << "," << mouseWindowPosition.y << std::endl;
 
-                    sf::Vector2f mouseTilePositionFloat = gameWindow->mapPixelToCoords(mouseWindowPosition);
+                    sf::Vector2f mouseTilePositionFloat = gameWindow->mapPixelToCoords(mouseWindowPosition, *gameView);
 
                     if (mouseTilePositionFloat.x < 0) mouseTilePositionFloat.x = 0;
                     if (mouseTilePositionFloat.y < 0) mouseTilePositionFloat.y = 0;
 
                     mouseTilePositionFloat.x -= tibia::GuiData::gameWindowX;
                     mouseTilePositionFloat.y -= tibia::GuiData::gameWindowY;
+
+                    if
+                    (
+                        mouseTilePositionFloat.x < 0 ||
+                        mouseTilePositionFloat.y < 0 ||
+                        mouseTilePositionFloat.x > tibia::MAP_TILE_XY_MAX ||
+                        mouseTilePositionFloat.y > tibia::MAP_TILE_XY_MAX
+                    )
+                    {
+                        break;
+                    }
 
                     sf::Vector2u mouseTilePosition;
                     mouseTilePosition.x = mouseTilePositionFloat.x;
@@ -519,59 +608,71 @@ int main()
 
                     std::cout << "mouse tile number: " << mouseTileNumber << std::endl;
 
+                    if (mouseTileNumber < 0)
+                    {
+                        break;
+                    }
+
                     switch (event.mouseButton.button)
                     {
                         case sf::Mouse::Button::Left:
                         {
-                            sf::Vector2f playerTilePositionFloat;
-                            playerTilePositionFloat.x = player->getTileX();
-                            playerTilePositionFloat.y = player->getTileY();
+                            if (tibia::GuiData::gameWindowRect.contains(mouseWindowPosition))
+                            {
+                                sf::Vector2f playerTilePositionFloat;
+                                playerTilePositionFloat.x = player->getTileX();
+                                playerTilePositionFloat.y = player->getTileY();
 
-                            sf::Vector2f playerMovementNormal = tibia::getNormalByVectors(playerTilePositionFloat, mouseTilePositionFloat);
+                                sf::Vector2f playerMovementNormal = tibia::getNormalByVectors(playerTilePositionFloat, mouseTilePositionFloat);
 
-                            std::cout << playerMovementNormal.x << "," << playerMovementNormal.y << std::endl;
+                                std::cout << playerMovementNormal.x << "," << playerMovementNormal.y << std::endl;
 
-                            playerMovementNormal.x = tibia::getFloatNormalEx(playerMovementNormal.x);
-                            playerMovementNormal.y = tibia::getFloatNormalEx(playerMovementNormal.y);
+                                playerMovementNormal.x = tibia::getFloatNormalEx(playerMovementNormal.x);
+                                playerMovementNormal.y = tibia::getFloatNormalEx(playerMovementNormal.y);
 
-                            std::cout << playerMovementNormal.x << "," << playerMovementNormal.y << std::endl;
+                                std::cout << playerMovementNormal.x << "," << playerMovementNormal.y << std::endl;
 
-                            int playerMovementDirection = tibia::getDirectionByVector(playerMovementNormal);
+                                int playerMovementDirection = tibia::getDirectionByVector(playerMovementNormal);
 
-                            game.handleCreatureMovement(player, playerMovementDirection);
+                                game.handleCreatureMovement(player, playerMovementDirection);
+                            }
+
                             break;
                         }
 
                         case sf::Mouse::Button::Right:
                         {
-                            if (game.doCreatureUseLadder(player, mouseTilePosition) == true)
+                            if (tibia::GuiData::gameWindowRect.contains(mouseWindowPosition))
                             {
-                                break;
-                            }
+                                if (game.doCreatureUseLadder(player, mouseTilePosition) == true)
+                                {
+                                    break;
+                                }
 
-                            if (game.doCreatureUseLever(player, mouseTilePosition) == true)
-                            {
-                                break;
-                            }
+                                if (game.doCreatureUseLever(player, mouseTilePosition) == true)
+                                {
+                                    break;
+                                }
 
-                            if (player->getTileNumber() == mouseTileNumber)
-                            {
-                                break;
-                            }
+                                if (player->getTileNumber() == mouseTileNumber)
+                                {
+                                    break;
+                                }
 
-                            game.spawnProjectile
-                            (
-                                player,
-                                tibia::ProjectileTypes::arrow,
-                                player->getDirection(),
-                                sf::Vector2f(player->getTileX(), player->getTileY()),
-                                sf::Vector2f
+                                game.spawnProjectile
                                 (
-                                    mouseTilePosition.x,
-                                    mouseTilePosition.y
-                                ),
-                                true
-                            );
+                                    player,
+                                    tibia::ProjectileTypes::arrow,
+                                    player->getDirection(),
+                                    sf::Vector2f(player->getTileX(), player->getTileY()),
+                                    sf::Vector2f
+                                    (
+                                        mouseTilePosition.x,
+                                        mouseTilePosition.y
+                                    ),
+                                    true
+                                );
+                            }
 
                             break;
                         }

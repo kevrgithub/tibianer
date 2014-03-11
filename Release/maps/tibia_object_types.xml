@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<objecttypes>
+ <objecttype name="chest" color="#ff00ff"/>
+ <objecttype name="door" color="#ff00ff"/>
+ <objecttype name="sign" color="#ff00ff"/>
+ <objecttype name="switch" color="#ff00ff"/>
+ <objecttype name="start" color="#ff00ff"/>
+ <objecttype name="teleport" color="#ff00ff"/>
+</objecttypes>

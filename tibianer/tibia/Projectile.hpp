@@ -53,7 +53,7 @@ public:
 
         m_sprite.setId(m_id);
 
-        m_clock.restart();
+        setPosition(origin.x, origin.y);
     }
 
     Projectile::~Projectile()
@@ -150,11 +150,27 @@ public:
 
     void update()
     {
-        updateTileCoords();
+        //updateTileCoords();
 
-        setPosition(getTileX(), getTileY());
+        //setPosition(getTileX(), getTileY());
 
         doMovement();
+
+        setTileCoords(getSpriteTilePosition().x, getSpriteTilePosition().y);
+
+        updateTileNumber();
+
+        updateBox();
+    }
+
+    void setId(int id)
+    {
+        m_id = id;
+    }
+
+    int getId()
+    {
+        return m_id;
     }
 
     void setAnimationOnHit(int* animationOnHit)
@@ -264,12 +280,7 @@ public:
 
     sf::Vector2f getSpritePosition()
     {
-        sf::Vector2f position;
-
-        position.x = m_sprite.getPosition().x;
-        position.y = m_sprite.getPosition().y;
-
-        return position;
+        return m_sprite.getPosition();
     }
 
     sf::Vector2f getSpriteTilePosition()

@@ -23,6 +23,11 @@ namespace tibia
     const int NUM_TILES_X = 13;
     const int NUM_TILES_Y = 9;
 
+    const int NUM_TILES_FROM_CENTER_X = 6;
+    const int NUM_TILES_FROM_CENTER_Y = 4;
+
+    const int NUM_TILES_TOTAL = NUM_TILES_X * NUM_TILES_Y;
+
     const int MAP_XY_MAX = MAP_SIZE;
 
     const int MAP_TILE_XY_MAX = MAP_SIZE * TILE_SIZE;
@@ -41,6 +46,9 @@ namespace tibia
     const float DRAW_DISTANCE_MAX = 10.0;
 
     const int CREATURES_MAX_LOAD = 256;
+
+    const int LIGHT_WIDTH  = 480;
+    const int LIGHT_HEIGHT = 352;
 
     namespace Textures
     {
@@ -91,7 +99,11 @@ namespace tibia
         sf::Color gameTextShadowColor(32, 32, 32, 192);
 
         sf::Color tileIsSolid(64, 64, 64);
+        sf::Color tileIsWater(0, 0, 192);
+        sf::Color tileIsLava(192, 0, 0);
         sf::Color tileIsMoveAboveOrBelow(255, 255, 0);
+
+        sf::Color light(255, 255, 255, 192);
     }
 
     enum Teams
@@ -106,18 +118,27 @@ namespace tibia
         int gameWindowX = 32;
         int gameWindowY = 32;
 
-        int miniMapWindowX = 32 + 32 + 416;
+        int gameWindowWidth  = TILES_WIDTH;
+        int gameWindowHeight = TILES_HEIGHT;
+
+        sf::IntRect gameWindowRect(gameWindowX, gameWindowY, gameWindowWidth, gameWindowHeight);
+
+        int miniMapWindowX = gameWindowX + gameWindowWidth + 32;
         int miniMapWindowY = 32;
 
-        int miniMapWindowSizeX = 128;
-        int miniMapWindowSizeY = 88;
+        int miniMapWindowWidth  = 128;
+        int miniMapWindowHeight = 88;
+
+        sf::IntRect miniMapWindowRect(miniMapWindowX, miniMapWindowY, miniMapWindowWidth, miniMapWindowHeight);
     }
 
     enum ZAxis
     {
+        floor       = -2,
         underGround = -1,
         ground      = 0,
-        aboveGround = 1
+        aboveGround = 1,
+        ceiling     = 2
     };
 
     enum Directions
@@ -150,7 +171,7 @@ namespace tibia
         int lever[] = {49, 50};
 
         int stepTileStone[] = {398,  399};
-        int stepTileWood[] = { 1275, 1276 };
+        int stepTileWood[]  = {1275, 1276};
 
         int trough[]   = {52, 51, 685, 686, 687, 688, 689, 690};
         int bucket[]   = {310, 678, 679, 680, 681, 682, 683, 684};
@@ -172,19 +193,33 @@ namespace tibia
 
         int presentBox = 2160;
 
-        int water[] = 
+        int ladder = 455;
+
+        int stairs = 460;
+
+        int treeWall = 3344;
+
+        std::vector<int> magicWalls = {3271, 3275, 3279};
+
+        std::vector<int> water =
         {
             106, 107, 108, 109,
-            110, 111, 112, 113,
+            110, 111, 112, 113
         };
 
-        int lava[] =
+        int waterBegin = water.front();
+        int waterEnd   = water.back();
+
+        std::vector<int> lava =
         {
             1785, 1786, 1787, 1788,
-            1789, 1790, 1791, 1792,
+            1789, 1790, 1791, 1792
         };
 
-        int solid[] = 
+        int lavaBegin = lava.front();
+        int lavaEnd   = lava.back();
+
+        std::vector<int> solid =
         {
             12, 13, 21, 24, 25, 27, 28, 29,
             37,
@@ -205,6 +240,7 @@ namespace tibia
             202, 203, 204, 205,
             285, 286, 288, 290,
             315,
+            334,
             339, 340, 341, 342, 343, 344, 345, 346, 347, 348, 349, 350, 351, 352, 353, 354, 355, 356, 357, 358, 359, 360, 361, 362,
             367, 368, 369, 370,
             376, 378,
@@ -322,10 +358,13 @@ namespace tibia
             3271, 3275, 3279,
             3295, 3303,
             3310, 3313,
-            3322, 3326
+            3322, 3326,
+            3344,
+            3348,
+            3374
         };
 
-        int blockProjectiles[] =
+        std::vector<int> blockProjectiles =
         {
             12, 13, 21, 24, 25, 27, 28, 29,
             55, 56, 58, 60, 66, 67, 68, 72,
@@ -342,6 +381,7 @@ namespace tibia
             934, 935, 936, 937, 938, 939, 940, 941, 942, 943, 944, 945, 946, 947, 948, 949, 950, 951, 952, 953, 954, 955, 956, 957, 958, 959, 960,
             997, 999, 1001,
             1066, 1067, 1068, 1069, 1070,
+            1092, 1093, 1094, 1095, 1096, 1097, 1098, 1099, 1100, 1101, 1102, 1103,
             1140, 1144, 1152, 1160, 1164, 1168, 1172, 1176, 1180,
             1195, 1196, 1197, 1198,
             1224,
@@ -365,10 +405,12 @@ namespace tibia
             3271, 3275, 3279,
             3294, 3295, 3301, 3303,
             3310, 3313,
-            3322, 3326
+            3322, 3326,
+            3344,
+            3348
         };
 
-        int chairs[] = 
+        std::vector<int> chairs =
         {
             298,
             299,
@@ -380,7 +422,7 @@ namespace tibia
             3239, 3240
         };
 
-        int offsetObjects[] =
+        std::vector<int> offsetObjects =
         {
             37,
             46,
@@ -389,17 +431,157 @@ namespace tibia
             1273, 1274
         };
 
-        int ladder = 455;
-
-        int stairs = 460;
-
-        int holes[] =
+        std::vector<int> holes =
         {
             47, 456, 479, 480, 481, 487,
             610, 611,
             691, 692, 693, 694, 695, 696, 697, 698, 699,
             1205,
             3241, 3243
+        };
+
+        std::vector<int> lights =
+        {
+            197, 198, 199,
+            395, 396,
+            443, 444, 446, 447, 449, 450,
+            455, // ladder
+            486,
+            489,
+            525, 526,
+            703, 707,
+            1049,
+            1123, 1124,
+            1154, 1156,
+            1489, 1490, 1491, 1492, 1493, 1494,
+            1497, 1498,
+            1582, 1583, 1584, 1585, 1586,
+            1785, 1786, 1787, 1788, 1789, 1790, 1791, 1792,
+            1818, 1819, 1821, 1822, 1826, 1828,
+            1879, 1880,
+            2127, 2131,
+            2664, 2665, 2666, 2667,
+            2668, 2669, 2670, 2671, 2672, 2673,
+            2675, 2676, 2677, 2678,
+            2679, 2680, 2681, 2682, 2683, 2684,
+            2686, 2687, 2688, 2689, 2690, 2691,
+            2693, 2694,
+            2695, 2696, 2697, 2698,
+            2868, 2869, 2871, 2872,
+            3271, 3275, 3279,
+            3322, 3326
+        };
+
+        std::vector<int> quadObjects =
+        {
+            13, 21, 29,
+            159, 163,
+            315, // 5 objects
+            388, 455, 460, 486, 562, 703, 707,
+            1140, 1144, 1152, 1160, 1164, 1168, 1172, 1176, 1180, 1224,
+            1602, 1610, 1614, 1618, 1622, 1630, 1634, 1651, 1669, 1676, 1680, 1684, 1688, 1692,
+            1760, 1764, 1768, 1772,
+            2123, 2127, 2131, 2152, 2164, 2168, 2172,
+            2408, 2486, 2490, 2494, 
+            3039, 3043,
+            3271, 3275, 3279,
+            3322, 3326,
+            3344, 3348
+        };
+
+        std::vector<int> quadVerticalObjects =
+        {
+            25
+        };
+
+        std::vector<int> horizontalObjects =
+        {
+            609,
+            2969,
+            3030, 3032, 3034
+        };
+
+        std::vector<int> verticalObjects =
+        {
+            334,
+            997, 999, 1001,
+            1349, 1351,
+            2965
+        };
+
+        std::vector<int> fixDrawObjects =
+        {
+            16, // brick wall arch
+            2867, 2868, 2869, 2870, 2871, 2872 // wall inset torches
+        };
+
+        std::vector<int> animatedObjects =
+        {
+            197,198,199,
+            1489,1490,
+            1491,1492,
+            1493,1494,
+            1497,1498,
+            3158,3159,3160,3161,
+            3268,3272,3276,
+            3269,3273,3277,
+            3270,3274,3278,
+            3271,3275,3279,
+            202,367,
+            203,368,
+            204,369,
+            205,370,
+            2868,2869,
+            2871,2872,
+            2968,2970,
+            2974,2975,
+            395,396,
+            525,526,
+            443,444,
+            446,447,
+            449,450,
+            890,896,
+            891,897,
+            892,898,
+            893,899,
+            894,900,
+            895,901,
+            902,911,
+            903,912,
+            904,913,
+            905,914,
+            906,915,
+            907,916,
+            908,917,
+            909,918,
+            910,919,
+            1123,1124,
+            1153,1155,
+            1154,1156,
+            1570,1571,1572,1573,1574,
+            1582,1583,1584,1585,1586,
+            1879,1880,
+            2124,2128,
+            2125,2129,
+            2126,2130,
+            2127,2131,
+            2664,2665,2666,2667,
+            2668,2669,
+            2670,2671,
+            2672,2673,
+            2675,2676,2677,2678,
+            2679,2680,
+            2681,2682,
+            2683,2684,
+            2686,2687,2688,2689,2690,2691,
+            2693,2694,
+            2695,2696,
+            2697,2698,
+            3178,3179,3180,3181,3182,3183,
+            3319,3323,
+            3320,3324,
+            3321,3325,
+            3322,3326
         };
     }
 
@@ -408,18 +590,64 @@ namespace tibia
         human,
 
         demon,
+        demonSkeleton,
         gameMaster,
         hero,
+        monk,
+        necromancer,
         orc,
+        santaClaus,
         skeleton,
+        spider,
+        witch,
         zombie
+    };
+
+    enum CreatureSizes
+    {
+        small,
+        medium,
+        large
     };
 
     namespace CreatureSprites
     {
+        std::vector<int> demon =
+        {
+            1480, 1484, 1476, 1488,
+            1479, 1483, 1475, 1487,
+            1478, 1482, 1474, 1486,
+            1477, 1481, 1473, 1485
+        };
+
         std::vector<int> hero = {1645, 1646, 1643, 1644};
 
         std::vector<int> gameMaster = {3330, 3329, 3327, 3328};
+
+        std::vector<int> orc = {2863, 2862, 2864, 2861};
+
+        std::vector<int> skeleton = {1404, 1407, 1405, 1406};
+
+        std::vector<int> witch =
+        {
+            2884, 2888, 2882, 2886,
+            2883, 2887, 2881, 2885
+        };
+
+        std::vector<int> zombie = {1838, 1841, 1839, 1840};
+    }
+
+    namespace CreatureCorpseSprites
+    {
+        std::vector<int> human = {491, 492, 493, 494, 495, 496, 497};
+
+        std::vector<int> demon =
+        {
+            319, 318, 317, 316,
+            323, 322, 321, 320,
+            327, 326, 325, 324,
+            331, 330, 329, 328
+        };
     }
 
     //namespace AnimatedObjects
@@ -597,9 +825,22 @@ namespace tibia
         tiles,
         edges,
         walls,
-        objects,
-        objectsDrawLast,
-        offset
+        objects
+    };
+
+    enum TileFlags
+    {
+        null             = 1 << 0,
+        solid            = 1 << 1,
+        blockProjectiles = 1 << 2,
+        offset           = 1 << 3,
+        light            = 1 << 4,
+        water            = 1 << 5,
+        lava             = 1 << 6,
+        chair            = 1 << 7,
+        ladder           = 1 << 8,
+        moveAbove        = 1 << 9,
+        moveBelow        = 1 << 10
     };
 
     namespace Sounds
@@ -665,8 +906,8 @@ namespace tibia
     {
         sf::Vector2u coords;
 
-        coords.x = (tileNumber % tibia::TILE_SIZE) * tibia::TILE_SIZE;
-        coords.y = (tileNumber / tibia::TILE_SIZE) * tibia::TILE_SIZE;
+        coords.x = (tileNumber % tibia::MAP_SIZE) * tibia::TILE_SIZE;
+        coords.y = (tileNumber / tibia::MAP_SIZE) * tibia::TILE_SIZE;
 
         return coords;
     }
@@ -836,6 +1077,95 @@ namespace tibia
         }
 
         return direction;
+    }
+
+    int getSpriteTileFlags(int id)
+    {
+        int flags = 0;
+
+        for (auto spriteId : tibia::SpriteData::solid)
+        {
+            if (id == spriteId)
+            {
+                flags |= tibia::TileFlags::solid;
+                break;
+            }
+        }
+
+        for (auto spriteId : tibia::SpriteData::blockProjectiles)
+        {
+            if (id == spriteId)
+            {
+                flags |= tibia::TileFlags::blockProjectiles;
+                break;
+            }
+        }
+
+        for (auto spriteId : tibia::SpriteData::water)
+        {
+            if (id == spriteId)
+            {
+                flags |= tibia::TileFlags::water;
+                break;
+            }
+        }
+
+        for (auto spriteId : tibia::SpriteData::lava)
+        {
+            if (id == spriteId)
+            {
+                flags |= tibia::TileFlags::lava;
+                break;
+            }
+        }
+
+        for (auto spriteId : tibia::SpriteData::chairs)
+        {
+            if (id == spriteId)
+            {
+                flags |= tibia::TileFlags::chair;
+                break;
+            }
+        }
+
+        for (auto spriteId : tibia::SpriteData::offsetObjects)
+        {
+            if (id == spriteId)
+            {
+                flags |= tibia::TileFlags::offset;
+                break;
+            }
+        }
+
+        if (id == tibia::SpriteData::ladder)
+        {
+            flags |= tibia::TileFlags::ladder;
+        }
+
+        if (id == tibia::SpriteData::stairs)
+        {
+            flags |= tibia::TileFlags::moveAbove;
+        }
+
+        for (auto spriteId : tibia::SpriteData::holes)
+        {
+            if (id == spriteId)
+            {
+                flags |= tibia::TileFlags::moveBelow;
+                break;
+            }
+        }
+
+        for (auto spriteId : tibia::SpriteData::lights)
+        {
+            if (id == spriteId)
+            {
+                flags |= tibia::TileFlags::light;
+                break;
+            }
+        }
+
+        return flags;
     }
 
 }

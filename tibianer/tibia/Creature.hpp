@@ -20,11 +20,14 @@ class Creature : public tibia::Thing
 
 public:
 
-    Creature::Creature()
+    Creature::Creature(int tileX, int tileY, int z)
     {
-        m_tileOffset = tibia::TILE_DRAW_OFFSET;
+        setTileCoords(tileX, tileY);
+        setPosition(sf::Vector2f(tileX, tileY));
 
-        setZ(tibia::ZAxis::ground);
+        setZ(z);
+
+        m_tileOffset = tibia::TILE_DRAW_OFFSET;
 
         m_isPlayer = false;
 
@@ -34,15 +37,17 @@ public:
 
         m_type = tibia::CreatureTypes::human;
 
+        m_size = tibia::CreatureSizes::small;
+
         m_team = tibia::Teams::neutral;
+
+        m_movementSpeed = tibia::MovementSpeeds::default;
 
         m_hp    = 100;
         m_hpMax = 100;
 
         m_mp    = 200;
         m_mpMax = 200;
-
-        m_movementSpeed = tibia::MovementSpeeds::default;
 
         m_isDead     = false;
         m_hasDecayed = false;
@@ -55,8 +60,6 @@ public:
         m_outfitFeet = 0;
 
         setPropertiesByType();
-
-        m_clockMovement.restart();
     }
 
     void setPropertiesByType()
@@ -68,18 +71,30 @@ public:
 
         switch (m_type)
         {
-            case tibia::CreatureTypes::gameMaster:
-                m_hp = 1000;
-                m_hpMax = 1000;
+            case tibia::CreatureTypes::demon:
+                m_size        = tibia::CreatureSizes::large;
+                m_spritesList = tibia::CreatureSprites::demon;
+                break;
 
+            case tibia::CreatureTypes::gameMaster:
                 m_spritesList = tibia::CreatureSprites::gameMaster;
                 break;
 
             case tibia::CreatureTypes::hero:
-                m_hp    = 1000;
-                m_hpMax = 1000;
-
                 m_spritesList = tibia::CreatureSprites::hero;
+                break;
+
+            case tibia::CreatureTypes::skeleton:
+                m_spritesList = tibia::CreatureSprites::skeleton;
+                break;
+
+            case tibia::CreatureTypes::witch:
+                m_size        = tibia::CreatureSizes::medium;
+                m_spritesList = tibia::CreatureSprites::witch;
+                break;
+
+            case tibia::CreatureTypes::zombie:
+                m_spritesList = tibia::CreatureSprites::zombie;
                 break;
         }
     }
@@ -91,7 +106,69 @@ public:
             return;
         }
 
-        m_sprite.setId(m_spritesList[m_direction]);
+        m_sprite[0].setId(m_spritesList[m_direction]);
+
+        if (m_size == tibia::CreatureSizes::medium)
+        {
+            sf::Vector2f spriteOffset(0, 0);
+
+            switch (m_direction)
+            {
+                case tibia::Directions::up:
+                case tibia::Directions::down:
+                    spriteOffset.y -= tibia::TILE_SIZE;
+                    break;
+
+                case tibia::Directions::right:
+                case tibia::Directions::left:
+                    spriteOffset.x -= tibia::TILE_SIZE;
+                    break;
+            }
+
+            m_sprite[1].setPosition
+            (
+                sf::Vector2f
+                (
+                    m_sprite[0].getPosition().x + spriteOffset.x,
+                    m_sprite[0].getPosition().y + spriteOffset.y
+                )
+            );
+
+            m_sprite[1].setId(m_spritesList[m_direction + 4]);
+        }
+        else if (m_size == tibia::CreatureSizes::large)
+        {
+            m_sprite[1].setPosition
+            (
+                sf::Vector2f
+                (
+                    m_sprite[0].getPosition().x - tibia::TILE_SIZE,
+                    m_sprite[0].getPosition().y
+                )
+            );
+
+            m_sprite[2].setPosition
+            (
+                sf::Vector2f
+                (
+                    m_sprite[0].getPosition().x,
+                    m_sprite[0].getPosition().y - tibia::TILE_SIZE
+                )
+            );
+
+            m_sprite[3].setPosition
+            (
+                sf::Vector2f
+                (
+                    m_sprite[0].getPosition().x - tibia::TILE_SIZE,
+                    m_sprite[0].getPosition().y - tibia::TILE_SIZE
+                )
+            );
+
+            m_sprite[1].setId(m_spritesList[m_direction + 4]);
+            m_sprite[2].setId(m_spritesList[m_direction + 8]);
+            m_sprite[3].setId(m_spritesList[m_direction + 12]);
+        }
     }
 
     void setOutfit(int head, int body, int legs, int feet)
@@ -135,7 +212,10 @@ public:
         {
             int corpseId = m_spriteCorpse.getId();
 
-            if (corpseId == 0) m_spriteCorpse.setId(tibia::SpriteData::corpse[0]);
+            if (corpseId == 0)
+            {
+                m_spriteCorpse.setId(tibia::SpriteData::corpse[0]);
+            }
 
             if (corpseId >= tibia::SpriteData::corpse[0] && corpseId < tibia::SpriteData::corpse[6])
             {
@@ -159,6 +239,11 @@ public:
         if (m_isSitting == true)
         {
             tileOffset *= 2;
+        }
+
+        if (m_isDead == true || m_size == tibia::CreatureSizes::large)
+        {
+            tileOffset = 0;
         }
 
         setPosition(getTileX() - tileOffset, getTileY() - tileOffset);
@@ -323,15 +408,9 @@ public:
 
         if (m_isDead == true)
         {
-            m_tileOffset = 0;
-
             m_spriteCorpse.setId(tibia::SpriteData::corpse[0]);
 
             m_clockCorpse.restart();
-        }
-        else
-        {
-            m_tileOffset = tibia::TILE_DRAW_OFFSET;
         }
     }
 
@@ -403,6 +482,16 @@ public:
     void setType(int type)
     {
         m_type = type;
+    }
+
+    int getSize()
+    {
+        return m_size;
+    }
+
+    void setSize(int size)
+    {
+        m_size = size;
     }
 
     int getDirection()
@@ -535,9 +624,9 @@ public:
         m_outfitFeet = feet;
     }
 
-    tibia::Sprite getSpriteOutfitHead()
+    tibia::Sprite* getSpriteOutfitHead()
     {
-        return m_spriteOutfitHead;
+        return &m_spriteOutfitHead;
     }
 
     void setSpriteOutfitHead(tibia::Sprite head)
@@ -545,9 +634,9 @@ public:
         m_spriteOutfitHead = head;
     }
 
-    tibia::Sprite getSpriteOutfitBody()
+    tibia::Sprite* getSpriteOutfitBody()
     {
-        return m_spriteOutfitBody;
+        return &m_spriteOutfitBody;
     }
 
     void setSpriteOutfitBody(tibia::Sprite body)
@@ -555,9 +644,9 @@ public:
         m_spriteOutfitBody = body;
     }
 
-    tibia::Sprite getSpriteOutfitLegs()
+    tibia::Sprite* getSpriteOutfitLegs()
     {
-        return m_spriteOutfitLegs;
+        return &m_spriteOutfitLegs;
     }
 
     void setSpriteOutfitLegs(tibia::Sprite legs)
@@ -565,9 +654,9 @@ public:
         m_spriteOutfitLegs = legs;
     }
 
-    tibia::Sprite getSpriteOutfitFeet()
+    tibia::Sprite* getSpriteOutfitFeet()
     {
-        return m_spriteOutfitFeet;
+        return &m_spriteOutfitFeet;
     }
 
     void setSpriteOutfitFeet(tibia::Sprite feet)
@@ -586,6 +675,8 @@ private:
     bool m_isSitting;
 
     int m_type;
+
+    int m_size;
 
     std::string m_name;
 
@@ -621,8 +712,11 @@ private:
     sf::Clock m_clockCorpse;
     sf::Time m_timeCorpse;
 
-    tibia::Sprite m_sprite;
     std::vector<int> m_spritesList;
+    std::vector<int> m_spritesCorpseList;
+
+    tibia::Sprite m_sprite[4];
+    tibia::Sprite m_spriteCorpse;//[4];
 
     bool m_hasOutfit;
 
@@ -635,8 +729,6 @@ private:
     tibia::Sprite m_spriteOutfitBody;
     tibia::Sprite m_spriteOutfitLegs;
     tibia::Sprite m_spriteOutfitFeet;
-
-    tibia::Sprite m_spriteCorpse;
 
     sf::Clock m_clockMovement;
     sf::Time m_timeMovement;
@@ -656,7 +748,18 @@ private:
 
         if (m_hasOutfit == false)
         {
-            target.draw(m_sprite, states);
+            target.draw(m_sprite[0], states);
+
+            if (m_size == tibia::CreatureSizes::medium)
+            {
+                target.draw(m_sprite[1], states);
+            }
+            else if (m_size == tibia::CreatureSizes::large)
+            {
+                target.draw(m_sprite[1], states);
+                target.draw(m_sprite[2], states);
+                target.draw(m_sprite[3], states);
+            }
         }
         else
         {

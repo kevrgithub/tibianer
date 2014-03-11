@@ -24,6 +24,14 @@ public:
         }
     };
 
+    struct sortByTileCoords
+    {
+        bool operator()(Thing* a, Thing* b) const
+        {
+            return (a->getTileX() == b->getTileX() ? a->getTileY() < b->getTileY() : a->getTileX() < b->getTileX());
+        }
+    };
+
     void updateTileNumber()
     {
         m_tileNumber = tibia::getTileNumberByTileCoords(m_tileX, m_tileY);
@@ -88,12 +96,14 @@ public:
 
     sf::Vector2u getTilePosition()
     {
-        sf::Vector2u position;
+        //sf::Vector2u position;
 
-        position.x = m_tileX;
-        position.y = m_tileY;
+        //position.x = m_tileX;
+        //position.y = m_tileY;
 
-        return position;
+        //return position;
+
+        return sf::Vector2u(m_tileX, m_tileY);
     }
 
     int getTileNumber()
