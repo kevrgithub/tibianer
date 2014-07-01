@@ -18,6 +18,6 @@ public:
 
 };
 
-}
+} // tibia
 
 #endif // TIBIA_DRAWABLEANDTRANSFORMABLE_HPP

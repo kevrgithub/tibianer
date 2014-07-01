@@ -20,22 +20,17 @@ class TileMap
 
 public:
 
-    typedef std::shared_ptr<tibia::Tile> tileSharedPtr;
-    typedef std::vector<tileSharedPtr>::iterator tilesListIterator;
-
-    struct sortByTileNumber
+    void load(std::vector<int> tiles, const std::string& name, int type, int z)
     {
-        bool operator()(tileSharedPtr a, tileSharedPtr b) const
-        {
-            return (a.get()->getNumber() < b.get()->getNumber());
-        }
-    };
+        //m_tiles = tiles;
+        //m_tiles.swap(tiles);
+        m_tiles = std::move(tiles);
 
-    void load(std::vector<int> tiles, int type)
-    {
-        m_tiles = tiles;
+        m_name = name;
 
         m_type = type;
+
+        m_z = z;
 
         for (unsigned int i = 0; i < tibia::MAP_SIZE; ++i)
         {
@@ -51,40 +46,43 @@ public:
                     j * tibia::TILE_SIZE
                 );
 
-                int tileFlags = tibia::getSpriteTileFlags(tileId);
+                int tileFlags = tibia::spriteFlags[tileId];
 
-                int tileOffset = 0;
-
-                if (tileFlags & tibia::TileFlags::offset)
+                if (tileFlags & tibia::SpriteFlags::water && m_type == tibia::TileMapTypes::tiles && m_z == tibia::ZAxis::ground)
                 {
-                    tileOffset = tibia::TILE_DRAW_OFFSET;
+                    m_waterTileNumbers.push_back(tileNumber);
                 }
 
                 if (tileId == tibia::TILE_NULL && m_type == tibia::TileMapTypes::tiles)
                 {
-                    tileFlags |= tibia::TileFlags::null;
+                    tileFlags |= tibia::SpriteFlags::null;
                 }
 
-                tileSharedPtr tile = std::make_shared<tibia::Tile>();
+                tibia::TilePtr tile = std::make_shared<tibia::Tile>();
                 tile->setNumber(tileNumber);
                 tile->setId(tileId);
-                tile->setOffset(tileOffset);
                 tile->setPosition(tilePosition);
+                tile->setZ(z);
                 tile->setFlags(tileFlags);
-                m_tilesList.push_back(tile);
+                m_tileList.push_back(tile);
             }
         }
 
-        std::sort(m_tilesList.begin(), m_tilesList.end(), sortByTileNumber());
-
-        loadWaterTileNumbers();
+        std::sort(m_tileList.begin(), m_tileList.end(), tibia::TileSort::sortTilesByTileNumber());
     }
 
-    void updateTile(int tileNumber, int tileId)
+    void updateTileId(int tileNumber, int tileId)
     {
         m_tiles.at(tileNumber) = tileId;
 
-        m_tilesList.at(tileNumber)->setId(tileId);
+        m_tileList.at(tileNumber)->setId(tileId);
+    }
+
+    void updateTileFlags(int tileNumber, int tileId)
+    {
+        int tileFlags = tibia::spriteFlags[tileId];
+
+        m_tileList.at(tileNumber)->setFlags(tileFlags);
     }
 
     std::vector<int>* getTiles()
@@ -92,9 +90,9 @@ public:
         return &m_tiles;
     }
 
-    std::vector<tileSharedPtr>* getTilesList()
+    tibia::TileList* getTileList()
     {
-        return &m_tilesList;
+        return &m_tileList;
     }
 
     std::vector<int>* getWaterTileNumbers()
@@ -104,9 +102,11 @@ public:
 
     void loadWaterTileNumbers()
     {
-        for (auto tile : m_tilesList)
+        m_waterTileNumbers.clear();
+
+        for (auto tile : m_tileList)
         {
-            if (tile->getFlags() & tibia::TileFlags::water)
+            if (tile->getFlags() & tibia::SpriteFlags::water)
             {
                 m_waterTileNumbers.push_back(tile->getNumber());
             }
@@ -136,12 +136,12 @@ public:
                     tileId++;
                 }
 
-                updateTile(waterTileNumber, tileId);
+                updateTileId(waterTileNumber, tileId);
             }
         }
     }
 
-    std::vector<sf::Vertex> getMiniMapTiles(std::vector<sf::Vertex> &verticesList)
+    void addMiniMapTiles(std::vector<sf::Vertex>& vertexList)
     {
         for (unsigned int i = 0; i < tibia::MAP_SIZE; ++i)
         {
@@ -149,16 +149,28 @@ public:
             {
                 int tileNumber = i + j * tibia::MAP_SIZE;
 
-                if (m_tilesList.size() == 0 || m_tilesList.size() < tileNumber)
+                if (tileNumber < 0 || tileNumber > tibia::TILE_NUMBER_MAX)
                 {
                     continue;
                 }
 
-                tibia::Tile* tile = m_tilesList.at(tileNumber).get();
+                if (m_tileList.size() == 0 || m_tileList.size() < tileNumber)
+                {
+                    continue;
+                }
+
+                tibia::Tile* tile = m_tileList.at(tileNumber).get();
+
+                int tileId = tile->getId();
+
+                if (tileId == tibia::TILE_NULL || tileId == 1)
+                {
+                    continue;
+                }
 
                 int tileFlags = tile->getFlags();
 
-                if (tileFlags & (tibia::TileFlags::solid | tibia::TileFlags::ladder | tibia::TileFlags::moveAbove | tibia::TileFlags::moveBelow))
+                if (tileFlags & (tibia::SpriteFlags::solid | tibia::SpriteFlags::ladder | tibia::SpriteFlags::moveAbove | tibia::SpriteFlags::moveBelow))
                 {
                     sf::Vertex quad[4];
 
@@ -169,22 +181,22 @@ public:
 
                     sf::Color tileColor;
 
-                    if (tileFlags & tibia::TileFlags::solid)
+                    if (tileFlags & tibia::SpriteFlags::solid)
                     {
                         tileColor = tibia::Colors::tileIsSolid;
                     }
 
-                    if (tileFlags & tibia::TileFlags::water)
+                    if (tileFlags & tibia::SpriteFlags::water)
                     {
                         tileColor = tibia::Colors::tileIsWater;
                     }
 
-                    if (tileFlags & tibia::TileFlags::lava)
+                    if (tileFlags & tibia::SpriteFlags::lava)
                     {
                         tileColor = tibia::Colors::tileIsLava;
                     }
 
-                    if (tileFlags & (tibia::TileFlags::ladder | tibia::TileFlags::moveAbove | tibia::TileFlags::moveBelow))
+                    if (tileFlags & (tibia::SpriteFlags::ladder | tibia::SpriteFlags::moveAbove | tibia::SpriteFlags::moveBelow))
                     {
                         tileColor = tibia::Colors::tileIsMoveAboveOrBelow;
                     }
@@ -194,37 +206,26 @@ public:
                     quad[2].color = tileColor;
                     quad[3].color = tileColor;
 
-                    verticesList.push_back(quad[0]);
-                    verticesList.push_back(quad[1]);
-                    verticesList.push_back(quad[2]);
-                    verticesList.push_back(quad[3]);
+                    vertexList.push_back(quad[0]);
+                    vertexList.push_back(quad[1]);
+                    vertexList.push_back(quad[2]);
+                    vertexList.push_back(quad[3]);
                 }
             }
         }
-
-        return verticesList;
     }
 
     sf::Vector2u getTileCoordsByTileNumber(int tileNumber)
     {
-        int tileId = m_tiles.at(tileNumber);
+        int tileId = m_tiles.at(tileNumber) - 1;
 
-        tileId = tileId - 1;
+        //tileId = tileId - 1;
 
-        sf::Vector2u tileCoords;
-        tileCoords.x = tileId % (tibia::Textures::sprites.getSize().x / tibia::TILE_SIZE);
-        tileCoords.y = tileId / (tibia::Textures::sprites.getSize().x / tibia::TILE_SIZE);
-
-        return tileCoords;
-    }
-
-    template <class T>
-    int getTileNumberByTileCoords(T tileCoords)
-    {
-        int x = tileCoords.x / tibia::TILE_SIZE;
-        int y = tileCoords.y / tibia::TILE_SIZE;
-
-        return x + (y * tibia::MAP_SIZE);
+        return sf::Vector2u
+        (
+            tileId % (tibia::Textures::sprites.getSize().x / tibia::TILE_SIZE),
+            tileId / (tibia::Textures::sprites.getSize().x / tibia::TILE_SIZE)
+        );
     }
 
     std::string getName()
@@ -267,12 +268,12 @@ private:
 
     std::vector<int> m_tiles;
 
-    std::vector<tileSharedPtr> m_tilesList;
+    tibia::TileList m_tileList;
 
     std::vector<int> m_waterTileNumbers;
 
 };
 
-}
+} // tibia
 
 #endif // TIBIA_TILEMAP_HPP

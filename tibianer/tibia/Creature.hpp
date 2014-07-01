@@ -8,6 +8,8 @@
 
 #include <SFML/Graphics.hpp>
 
+#include "utility.hpp"
+
 #include "tibia/Tibia.hpp"
 #include "tibia/Thing.hpp"
 #include "tibia/Sprite.hpp"
@@ -20,18 +22,16 @@ class Creature : public tibia::Thing
 
 public:
 
-    Creature::Creature(int tileX, int tileY, int z)
+    Creature::Creature(int x, int y, int z)
     {
-        setTileCoords(tileX, tileY);
-        setPosition(sf::Vector2f(tileX, tileY));
+        setCoords(x, y);
+        setPosition(sf::Vector2f(getTileX(), getTileY()));
 
         setZ(z);
 
-        m_tileOffset = tibia::TILE_DRAW_OFFSET;
+        m_tileOffset = tibia::THING_DRAW_OFFSET;
 
         m_isPlayer = false;
-
-        m_distanceFromPlayer = 0;
 
         m_direction = tibia::Directions::down;
 
@@ -183,10 +183,10 @@ public:
 
     void setOutfitRandom()
     {
-        m_outfitHead = tibia::getRandomNumber(0, 9);
-        m_outfitBody = tibia::getRandomNumber(0, 10);
-        m_outfitLegs = tibia::getRandomNumber(0, 9);
-        m_outfitFeet = tibia::getRandomNumber(0, 9);
+        m_outfitHead = getRandomNumber(0, (tibia::Outfits::head.size() / 4) - 1);
+        m_outfitBody = getRandomNumber(0, (tibia::Outfits::body.size() / 4) - 1);
+        m_outfitLegs = getRandomNumber(0, (tibia::Outfits::legs.size() / 4) - 1);
+        m_outfitFeet = getRandomNumber(0, (tibia::Outfits::feet.size() / 4) - 1);
 
         updateOutfit();
     }
@@ -208,7 +208,7 @@ public:
 
         m_timeCorpse = m_clockCorpse.getElapsedTime();
 
-        if (m_timeCorpse.asSeconds() >= tibia::AnimationTimes::decal)
+        if (m_timeCorpse.asSeconds() >= tibia::AnimationTimes::corpseDecay)
         {
             int corpseId = m_spriteCorpse.getId();
 
@@ -261,7 +261,7 @@ public:
 
         if (dir > tibia::Directions::left)
         {
-            int random = tibia::getRandomNumber(1, 2);
+            int random = getRandomNumber(1, 2);
 
             switch (dir)
             {
@@ -277,15 +277,15 @@ public:
                     break;
 
                 case tibia::Directions::upRight:
-                    dir = tibia::getRandomNumber(tibia::Directions::up, tibia::Directions::right);
+                    dir = getRandomNumber(tibia::Directions::up, tibia::Directions::right);
                     break;
 
                 case tibia::Directions::downRight:
-                    dir = tibia::getRandomNumber(tibia::Directions::right, tibia::Directions::down);
+                    dir = getRandomNumber(tibia::Directions::right, tibia::Directions::down);
                     break;
 
                 case tibia::Directions::downLeft:
-                    dir = tibia::getRandomNumber(tibia::Directions::down, tibia::Directions::left);
+                    dir = getRandomNumber(tibia::Directions::down, tibia::Directions::left);
                     break;
             }
         }
@@ -295,18 +295,6 @@ public:
 
     void doMove(int direction)
     {
-        m_timeMovement = m_clockMovement.getElapsedTime();
-
-        if (m_timeMovement.asSeconds() >= m_movementSpeed)
-        {
-            m_movementReady = true;
-        }
-
-        if (m_movementReady == false)
-        {
-            return;
-        }
-
         int x = getX();
         int y = getY();
 
@@ -372,10 +360,6 @@ public:
                 }
                 break;
         }
-
-        m_movementReady = false;
-
-        m_clockMovement.restart();
     }
 
     void takeDamage(int damage)
@@ -444,16 +428,6 @@ public:
         m_isPlayer = b;
     }
 
-    float getDistanceFromPlayer()
-    {
-        return m_distanceFromPlayer;
-    }
-
-    void setDistanceFromPlayer(float distance)
-    {
-        m_distanceFromPlayer = distance;
-    }
-
     bool isSitting()
     {
         return m_isSitting;
@@ -504,14 +478,14 @@ public:
         m_direction = direction;
     }
 
-    bool getMovementReady()
+    bool getIsMovementReady()
     {
-        return m_movementReady;
+        return m_isMovementReady;
     }
 
-    void setMovementReady(bool b)
+    void setIsMovementReady(bool b)
     {
-        m_movementReady = b;
+        m_isMovementReady = b;
     }
 
     float getMovementSpeed()
@@ -664,13 +638,16 @@ public:
         m_spriteOutfitFeet = feet;
     }
 
+    sf::Clock* getClockMovement()
+    {
+        return &m_clockMovement;
+    }
+
 private:
 
     int m_tileOffset;
 
     bool m_isPlayer;
-
-    float m_distanceFromPlayer;
 
     bool m_isSitting;
 
@@ -682,7 +659,7 @@ private:
 
     int m_direction;
 
-    bool m_movementReady;
+    bool m_isMovementReady;
 
     float m_movementSpeed;
 
@@ -731,7 +708,6 @@ private:
     tibia::Sprite m_spriteOutfitFeet;
 
     sf::Clock m_clockMovement;
-    sf::Time m_timeMovement;
 
     tibia::Creature* m_attacker;
 
@@ -771,6 +747,9 @@ private:
     }
 
 };
+
+typedef std::shared_ptr<tibia::Creature> CreaturePtr;
+typedef std::vector<CreaturePtr> CreatureList;
 
 }
 

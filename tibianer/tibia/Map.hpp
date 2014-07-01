@@ -11,12 +11,13 @@
 #include <boost/range/algorithm/remove_if.hpp>
 
 #include "base64.hpp"
-
 #include "boost_zlib.hpp"
 
 #include "tinyxml2.h"
 
 #include "tibia/Tibia.hpp"
+#include "tibia/Utility.hpp"
+#include "tibia/TileMap.hpp"
 #include "tibia/Object.hpp"
 
 namespace tibia
@@ -27,27 +28,10 @@ class Map
 
 public:
 
-    typedef std::shared_ptr<tibia::Object> objectSharedPtr;
-    typedef std::vector<objectSharedPtr>::iterator objectsListIterator;
+    tibia::TileMap tileMapTiles[5];
+    tibia::TileMap tileMapTileEdges[5];
 
-    typedef std::vector<tibia::TileMap*>::iterator tileMapListIterator;
-
-    std::vector<tibia::TileMap*> tileMapList;
-    std::vector<tibia::TileMap*>::iterator tileMapList_it;
-
-    tibia::TileMap tileMapUnderGroundTiles;
-    tibia::TileMap tileMapUnderGroundEdges;
-    tibia::TileMap tileMapUnderGroundObjects;
-
-    tibia::TileMap tileMapGroundTiles;
-    tibia::TileMap tileMapGroundEdges;
-    tibia::TileMap tileMapGroundObjects;
-
-    tibia::TileMap tileMapAboveGroundTiles;
-    tibia::TileMap tileMapAboveGroundEdges;
-    tibia::TileMap tileMapAboveGroundObjects;
-
-    bool load(std::string filename)
+    bool load(const std::string& filename)
     {
         tinyxml2::XMLDocument doc;
         doc.LoadFile(filename.c_str());
@@ -58,22 +42,22 @@ public:
         {
             std::string docMapLayerName = docMapLayer->Attribute("name");
 
-            //std::cout << docMapLayerName << std::endl;
+            //std::cout << "Layer Name: " << docMapLayerName << std::endl;
 
             std::string docMapLayerData = docMapLayer->FirstChildElement("data")->GetText();
 
             docMapLayerData.erase(boost::remove_if(docMapLayerData, boost::is_any_of(" \r\n")), docMapLayerData.end());
 
             docMapLayerData = base64_decode(docMapLayerData);
-
             docMapLayerData = boost_zlib_decompress_string_fast(docMapLayerData);
 
             //std::cout << docMapLayerData << std::endl;
 
             std::istringstream docMapLayerDataStream(docMapLayerData);
-            docMapLayerDataStream.seekg(0, std::ios::beg);
+            //docMapLayerDataStream.seekg(0, std::ios::beg);
 
             std::vector<int> docMapLayerDataTiles;
+            docMapLayerDataTiles.reserve(docMapLayerData.size() / 4);
 
             for (unsigned int i = 0; i < docMapLayerData.size(); i += 4)
             {
@@ -83,81 +67,39 @@ public:
                 docMapLayerDataTiles.push_back(tileId);
             }
 
-            if (docMapLayerName == "underground tiles")
+            int tileMapZ = tibia::ZAxis::ground;
+
+            int tileMapType = tibia::TileMapTypes::tiles;
+
+            tinyxml2::XMLElement* docMapLayerProperties = docMapLayer->FirstChildElement("properties");
+
+            for (tinyxml2::XMLElement* docMapLayerProperty = docMapLayerProperties->FirstChildElement("property"); docMapLayerProperty != NULL; docMapLayerProperty = docMapLayerProperty->NextSiblingElement("property"))
             {
-                tileMapUnderGroundTiles.load(docMapLayerDataTiles, tibia::TileMapTypes::tiles);
-            }
-            else if (docMapLayerName == "underground tile edges")
-            {
-                tileMapUnderGroundEdges.load(docMapLayerDataTiles, tibia::TileMapTypes::edges);
-            }
-            else if (docMapLayerName == "underground tile objects")
-            {
-                tileMapUnderGroundObjects.load(docMapLayerDataTiles, tibia::TileMapTypes::objects);
+                std::string docMapLayerPropertyName = docMapLayerProperty->Attribute("name");
+
+                int docMapLayerPropertyValue = docMapLayerProperty->IntAttribute("value");
+
+                //std::cout << "Layer Property: " << docMapLayerPropertyName << "=" << docMapLayerPropertyValue << std::endl;
+
+                if (docMapLayerPropertyName == "z")
+                {
+                    tileMapZ = docMapLayerPropertyValue;
+                }
+                else if (docMapLayerPropertyName == "type")
+                {
+                    tileMapType = docMapLayerPropertyValue;
+                }
             }
 
-            else if (docMapLayerName == "ground tiles")
+            if (tileMapType == tibia::TileMapTypes::tiles)
             {
-                tileMapGroundTiles.load(docMapLayerDataTiles, tibia::TileMapTypes::tiles);
+                tileMapTiles[tileMapZ].load(docMapLayerDataTiles, docMapLayerName, tileMapType, tileMapZ);
             }
-            else if (docMapLayerName == "ground tile edges")
+            else if (tileMapType == tibia::TileMapTypes::tileEdges)
             {
-                tileMapGroundEdges.load(docMapLayerDataTiles, tibia::TileMapTypes::edges);
-            }
-            else if (docMapLayerName == "ground tile objects")
-            {
-                tileMapGroundObjects.load(docMapLayerDataTiles, tibia::TileMapTypes::objects);
-            }
-
-            else if (docMapLayerName == "aboveground tiles")
-            {
-                tileMapAboveGroundTiles.load(docMapLayerDataTiles, tibia::TileMapTypes::tiles);
-            }
-            else if (docMapLayerName == "aboveground tile edges")
-            {
-                tileMapAboveGroundEdges.load(docMapLayerDataTiles, tibia::TileMapTypes::edges);
-            }
-            else if (docMapLayerName == "aboveground tile objects")
-            {
-                tileMapAboveGroundObjects.load(docMapLayerDataTiles, tibia::TileMapTypes::objects);
+                tileMapTileEdges[tileMapZ].load(docMapLayerDataTiles, docMapLayerName, tileMapType, tileMapZ);
             }
         }
-
-        tileMapUnderGroundTiles.setName("underground tiles");
-        tileMapUnderGroundEdges.setName("underground tile edges");
-        tileMapUnderGroundObjects.setName("underground tile objects");
-
-        tileMapGroundTiles.setName("ground tiles");
-        tileMapGroundEdges.setName("ground tile edges");
-        tileMapGroundObjects.setName("ground tile objects");
-
-        tileMapAboveGroundTiles.setName("aboveground tiles");
-        tileMapAboveGroundEdges.setName("aboveground tile edges");
-        tileMapAboveGroundObjects.setName("aboveground tile objects");
-
-        tileMapUnderGroundTiles.setZ(tibia::ZAxis::underGround);
-        tileMapUnderGroundEdges.setZ(tibia::ZAxis::underGround);
-        tileMapUnderGroundObjects.setZ(tibia::ZAxis::underGround);
-
-        tileMapGroundTiles.setZ(tibia::ZAxis::ground);
-        tileMapGroundEdges.setZ(tibia::ZAxis::ground);
-        tileMapGroundObjects.setZ(tibia::ZAxis::ground);
-
-        tileMapAboveGroundTiles.setZ(tibia::ZAxis::aboveGround);
-        tileMapAboveGroundEdges.setZ(tibia::ZAxis::aboveGround);
-        tileMapAboveGroundObjects.setZ(tibia::ZAxis::aboveGround);
-
-        tileMapList.push_back(&tileMapUnderGroundTiles);
-        tileMapList.push_back(&tileMapUnderGroundEdges);
-        tileMapList.push_back(&tileMapUnderGroundObjects);
-
-        tileMapList.push_back(&tileMapGroundTiles);
-        tileMapList.push_back(&tileMapGroundEdges);
-        tileMapList.push_back(&tileMapGroundObjects);
-
-        tileMapList.push_back(&tileMapAboveGroundTiles);
-        tileMapList.push_back(&tileMapAboveGroundEdges);
-        tileMapList.push_back(&tileMapAboveGroundObjects);
 
         for (tinyxml2::XMLElement* docMapObjectGroup = docMap->FirstChildElement("objectgroup"); docMapObjectGroup != NULL; docMapObjectGroup = docMapObjectGroup->NextSiblingElement("objectgroup"))
         {
@@ -165,27 +107,32 @@ public:
 
             //std::cout << docMapObjectGroupName << std::endl;
 
-            std::size_t findObjectsClass = docMapObjectGroupName.find("objects");
+            std::size_t findNameWithObjects = docMapObjectGroupName.find("Objects");
 
-            if (findObjectsClass == std::string::npos)
+            if (findNameWithObjects == std::string::npos)
             {
                 continue;
             }
 
             int docMapObjectZ = tibia::ZAxis::ground;
 
-            if (docMapObjectGroupName == "ground objects")
+            tinyxml2::XMLElement* docMapObjectGroupProperties = docMapObjectGroup->FirstChildElement("properties");
+
+            for (tinyxml2::XMLElement* docMapObjectGroupProperty = docMapObjectGroupProperties->FirstChildElement("property"); docMapObjectGroupProperty != NULL; docMapObjectGroupProperty = docMapObjectGroupProperty->NextSiblingElement("property"))
             {
-                docMapObjectZ = tibia::ZAxis::ground;
+                std::string docMapObjectGroupPropertyName = docMapObjectGroupProperty->Attribute("name");
+
+                int docMapObjectGroupPropertyValue = docMapObjectGroupProperty->IntAttribute("value");
+
+                //std::cout << "Object Group Property: " << docMapObjectGroupPropertyName << "=" << docMapObjectGroupPropertyValue << std::endl;
+
+                if (docMapObjectGroupPropertyName == "z")
+                {
+                    docMapObjectZ = docMapObjectGroupPropertyValue;
+                }
             }
-            else if (docMapObjectGroupName == "underground objects")
-            {
-                docMapObjectZ = tibia::ZAxis::underGround;
-            }
-            else if (docMapObjectGroupName == "aboveground objects")
-            {
-                docMapObjectZ = tibia::ZAxis::aboveGround;
-            }
+
+            tibia::TileMap* tileMap = &tileMapTiles[docMapObjectZ];
 
             for (tinyxml2::XMLElement* docMapObject = docMapObjectGroup->FirstChildElement("object"); docMapObject != NULL; docMapObject = docMapObject->NextSiblingElement("object"))
             {
@@ -196,25 +143,25 @@ public:
                 int docMapObjectTileX = docMapObject->IntAttribute("x");
                 int docMapObjectTileY = docMapObject->IntAttribute("y") - tibia::TILE_SIZE; // y-axis bug for objects in Tiled editor?
 
-                objectSharedPtr object = std::make_shared<tibia::Object>(docMapObjectTileX, docMapObjectTileY, docMapObjectZ, docMapObjectId);
-                m_objectsList.push_back(object);
+                tibia::ObjectPtr object = std::make_shared<tibia::Object>(docMapObjectTileX, docMapObjectTileY, docMapObjectZ, docMapObjectId);
+
+                tibia::TileList* tileList = tileMap->getTileList();
+
+                int tileNumber = tibia::Utility::getTileNumberByTileCoords(sf::Vector2u(docMapObjectTileX, docMapObjectTileY));
+
+                tibia::Tile* tile = tileList->at(tileNumber).get();
+
+                tile->addObject(object);
+
+                //std::cout << "addObject to tileNumber: " << tileNumber << std::endl;
             }
         }
 
         return true;
     }
 
-    std::vector<objectSharedPtr>* getObjectsList()
-    {
-        return &m_objectsList;
-    }
-
-private:
-
-    std::vector<objectSharedPtr> m_objectsList;
-
 };
 
-}
+} // tibia
 
 #endif // TIBIA_MAP_HPP

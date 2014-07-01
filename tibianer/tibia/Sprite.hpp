@@ -6,6 +6,7 @@
 #include <SFML/Graphics.hpp>
 
 #include "tibia/Tibia.hpp"
+#include "tibia/Utility.hpp"
 
 namespace tibia
 {
@@ -33,7 +34,7 @@ public:
     {
         m_id = id;
 
-        setTextureRect(tibia::getSpriteRectById(m_id));
+        setTextureRect(tibia::Utility::getSpriteRectById(m_id));
     }
 
     unsigned int getId()
@@ -47,6 +48,6 @@ private:
 
 };
 
-}
+} // tibia
 
 #endif // TIBIA_SPRITE_HPP

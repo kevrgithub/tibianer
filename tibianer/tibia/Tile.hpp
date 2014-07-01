@@ -4,6 +4,8 @@
 #include <SFML/Graphics.hpp>
 
 #include "tibia/Tibia.hpp"
+#include "tibia/Object.hpp"
+#include "tibia/Creature.hpp"
 
 namespace tibia
 {
@@ -33,16 +35,6 @@ public:
         m_id = id;
     }
 
-    int getOffset()
-    {
-        return m_offset;
-    }
-
-    void setOffset(int offset)
-    {
-        m_offset = offset;
-    }
-
     sf::Vector2u getPosition()
     {
         return m_position;
@@ -51,6 +43,16 @@ public:
     void setPosition(sf::Vector2u position)
     {
         m_position = position;
+    }
+
+    int getZ()
+    {
+        return m_z;
+    }
+
+    void setZ(int z)
+    {
+        m_z = z;
     }
 
     int getFlags()
@@ -63,18 +65,55 @@ public:
         m_flags = flags;
     }
 
+    tibia::ObjectList* getObjectList()
+    {
+        return &m_objectList;
+    }
+
+    tibia::CreatureList* getCreatureList()
+    {
+        return &m_creatureList;
+    }
+
+    void addObject(tibia::ObjectPtr object)
+    {
+        m_objectList.push_back(std::move(object));
+    }
+
+    void addCreature(tibia::CreaturePtr creature)
+    {
+        m_creatureList.push_back(std::move(creature));
+    }
+
 private:
 
     int m_number;
     int m_id;
 
-    int m_offset;
-
     sf::Vector2u m_position;
 
+    int m_z;
+
     int m_flags;
+
+    tibia::ObjectList m_objectList;
+    tibia::CreatureList m_creatureList;
 };
 
+typedef std::shared_ptr<tibia::Tile> TilePtr;
+typedef std::vector<TilePtr> TileList;
+
+namespace TileSort
+{
+    struct sortTilesByTileNumber
+    {
+        bool operator()(tibia::TilePtr a, tibia::TilePtr b) const
+        {
+            return (a->getNumber() < b->getNumber());
+        }
+    };
 }
+
+} // tibia
 
 #endif // TIBIA_TILE_HPP

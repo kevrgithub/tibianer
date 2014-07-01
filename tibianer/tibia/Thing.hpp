@@ -6,6 +6,7 @@
 #include <SFML/Graphics.hpp>
 
 #include "tibia/Tibia.hpp"
+#include "tibia/Utility.hpp"
 #include "tibia/DrawableAndTransformable.hpp"
 
 namespace tibia
@@ -16,34 +17,9 @@ class Thing : public tibia::DrawableAndTransformable
 
 public:
 
-    struct sortByTileNumber
-    {
-        bool operator()(Thing* a, Thing* b) const
-        {
-            return (a->getTileNumber() < b->getTileNumber());
-        }
-    };
-
-    struct sortByTileCoords
-    {
-        bool operator()(Thing* a, Thing* b) const
-        {
-            return (a->getTileX() == b->getTileX() ? a->getTileY() < b->getTileY() : a->getTileX() < b->getTileX());
-        }
-    };
-
     void updateTileNumber()
     {
-        m_tileNumber = tibia::getTileNumberByTileCoords(m_tileX, m_tileY);
-    }
-
-    void updateBox()
-    {
-        m_box.left = m_tileX;
-        m_box.top  = m_tileY;
-
-        m_box.width  = tibia::TILE_SIZE;
-        m_box.height = tibia::TILE_SIZE;
+        m_tileNumber = tibia::Utility::getTileNumberByTileCoords(sf::Vector2u(m_tileX, m_tileY));
     }
 
     void setCoords(int x, int y)
@@ -70,8 +46,6 @@ public:
         m_tileY = m_y * tibia::TILE_SIZE;
 
         updateTileNumber();
-
-        updateBox();
     }
 
     int getTileX()
@@ -96,13 +70,6 @@ public:
 
     sf::Vector2u getTilePosition()
     {
-        //sf::Vector2u position;
-
-        //position.x = m_tileX;
-        //position.y = m_tileY;
-
-        //return position;
-
         return sf::Vector2u(m_tileX, m_tileY);
     }
 
@@ -146,11 +113,6 @@ public:
         return m_z;
     }
 
-    sf::FloatRect getBox()
-    {
-        return m_box;
-    }
-
 private:
 
     int m_tileX;
@@ -162,10 +124,30 @@ private:
     int m_y;
     int m_z;
 
-    sf::FloatRect m_box;
-
 };
 
+typedef std::shared_ptr<tibia::Thing> ThingPtr;
+typedef std::vector<ThingPtr> ThingList;
+
+namespace ThingSort
+{
+    struct sortByTileNumber
+    {
+        bool operator()(tibia::ThingPtr a, tibia::ThingPtr b) const
+        {
+            return (a->getTileNumber() < b->getTileNumber());
+        }
+    };
+
+    struct sortByTileCoords
+    {
+        bool operator()(tibia::ThingPtr a, tibia::ThingPtr b) const
+        {
+            return (a->getTileX() == b->getTileX() ? a->getTileY() < b->getTileY() : a->getTileX() < b->getTileX());
+        }
+    };
 }
+
+} // tibia
 
 #endif // TIBIA_THING_HPP
