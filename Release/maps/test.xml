@@ -56,7 +56,7 @@
   <object gid="455" x="800" y="512"/>
   <object gid="707" x="1760" y="256"/>
   <object gid="703" x="1504" y="256"/>
-  <object gid="455" x="1696" y="1120"/>
+  <object gid="455" x="1696" y="1152"/>
   <object gid="3271" x="960" y="1184"/>
   <object gid="3275" x="1248" y="1440"/>
   <object gid="3279" x="1248" y="1184"/>
@@ -93,8 +93,8 @@
   <object gid="1497" x="992" y="1440"/>
   <object gid="1497" x="1216" y="1440"/>
   <object gid="1497" x="1248" y="1408"/>
-  <object gid="3253" x="768" y="416"/>
-  <object gid="3253" x="1664" y="320"/>
+  <object gid="3253" x="768" y="384"/>
+  <object gid="3253" x="1664" y="288"/>
   <object gid="3253" x="2240" y="544"/>
   <object gid="49" x="704" y="512"/>
   <object gid="1603" x="1696" y="384"/>
@@ -110,7 +110,6 @@
   <object gid="1694" x="2336" y="576"/>
   <object gid="1695" x="2304" y="608"/>
   <object gid="1696" x="2336" y="608"/>
-  <object gid="1706" x="2400" y="1312"/>
   <object gid="1705" x="2080" y="1024"/>
   <object gid="1708" x="2112" y="1056"/>
   <object gid="1707" x="2080" y="1056"/>
@@ -124,7 +123,7 @@
    <property name="z" value="2"/>
   </properties>
   <data encoding="base64" compression="zlib">
-   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
+   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
   </data>
  </layer>
  <layer name="Ground Tile Edges" width="128" height="128">
@@ -337,7 +336,7 @@
   <object gid="1583" x="320" y="992"/>
   <object gid="1584" x="448" y="1024"/>
   <object gid="1585" x="544" y="992"/>
-  <object gid="607" x="1312" y="672"/>
+  <object gid="607" x="1376" y="672"/>
   <object gid="1274" x="1408" y="864"/>
   <object gid="197" x="96" y="352"/>
   <object gid="29" x="1728" y="1376"/>
@@ -440,12 +439,10 @@
   <object gid="3344" x="3168" y="1248"/>
   <object gid="3344" x="2688" y="1344"/>
   <object gid="334" x="2240" y="736"/>
-  <object gid="334" x="2240" y="640"/>
-  <object gid="334" x="2304" y="640"/>
   <object gid="334" x="2304" y="736"/>
   <object gid="334" x="2368" y="736"/>
   <object gid="334" x="2368" y="640"/>
-  <object gid="334" x="2368" y="544"/>
+  <object gid="334" x="2304" y="640"/>
   <object gid="334" x="2432" y="544"/>
   <object gid="334" x="2432" y="736"/>
   <object gid="315" x="1344" y="1632"/>
@@ -579,8 +576,8 @@
   <object gid="511" x="3392" y="320"/>
   <object gid="511" x="3264" y="320"/>
   <object gid="128" x="320" y="544"/>
-  <object gid="3184" x="2304" y="544"/>
-  <object gid="3186" x="2240" y="544"/>
+  <object gid="3184" x="2368" y="544"/>
+  <object gid="3186" x="2240" y="640"/>
   <object gid="3185" x="2432" y="640"/>
   <object gid="29" x="864" y="1536"/>
   <object gid="25" x="832" y="1536"/>
@@ -596,7 +593,7 @@
   <object gid="1286" x="3200" y="320"/>
   <object gid="1241" x="3392" y="1056"/>
   <object gid="1241" x="3264" y="1056"/>
-  <object gid="1205" x="2208" y="480"/>
+  <object gid="1205" x="2208" y="512"/>
   <object gid="1565" x="2240" y="1344"/>
   <object gid="1566" x="2272" y="1344"/>
   <object gid="1610" x="3552" y="1056"/>
@@ -751,8 +748,8 @@
   <object gid="45" x="448" y="192"/>
   <object gid="44" x="1248" y="864"/>
   <object gid="374" x="800" y="352"/>
-  <object gid="1349" x="1312" y="768"/>
-  <object gid="1273" x="1312" y="768"/>
+  <object gid="1349" x="1312" y="736"/>
+  <object gid="1273" x="1312" y="736"/>
   <object gid="1639" x="864" y="704"/>
   <object gid="1640" x="864" y="736"/>
   <object gid="1639" x="1088" y="704"/>
@@ -918,7 +915,6 @@
   <object gid="56" x="2432" y="2048"/>
   <object gid="56" x="2240" y="1728"/>
   <object gid="56" x="2240" y="2048"/>
-  <object gid="460" x="2976" y="1952"/>
   <object gid="68" x="3008" y="1920"/>
   <object gid="56" x="2976" y="1920"/>
   <object gid="178" x="3392" y="1952"/>
@@ -1044,6 +1040,13 @@
   <object gid="3043" x="2240" y="1120"/>
   <object gid="3043" x="2240" y="1216"/>
   <object gid="3375" x="448" y="512"/>
+  <object gid="455" x="2976" y="1952"/>
+  <object gid="183" x="2720" y="2176"/>
+  <object gid="182" x="2720" y="2144"/>
+  <object gid="187" x="2944" y="2176"/>
+  <object gid="186" x="2912" y="2176"/>
+  <object gid="185" x="2912" y="2144"/>
+  <object gid="181" x="2688" y="2144"/>
  </objectgroup>
  <objectgroup name="Ground Entities" width="128" height="128">
   <properties>
@@ -1075,7 +1078,7 @@
    <property name="z" value="3"/>
   </properties>
   <data encoding="base64" compression="zlib">
-   eJzt1rsNwjAARVHCKjSIimmgYjw+DZ+VqFiDNDQBRVgCE/LOkV5v68qSJxMAACDdomeMn/7Z9M+mfzb9s+mfTX8AAAAAAAAAAADgU2bNe2OcavRfdsZw6J9N/2x9za/6j57/Xzb9s+mfTf9s+gMAAAAAUNOx3aFgp98ckzesps/btFu/2MOu3bxg27pXooD+2fTPpn+2Gv0vda9EgRr9Ga5v9r81+g+d959N/2z6U+rcbt+ZPz4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA/Ic7bZ1oXw==
+   eJzt1jsKAjEARdHRrdiIlavRyuX5afxsycptOI0gKjIBjeO8c+D1CZdAmgYAAEg3ezOGT/9s+mfTP5v+2fTPpj8AAAAAAAAAAADwKZNRtzFMNfrPH0Z/6J9N/2zvmp/1Hzz/v2z6Z9M/m/7Z9AcAAAAAoKZ9u13BDr85Jh0sxs9btVu+2M2m3bRg67pXooD+2fTPpn+2Gv1Pda9EgRr96a9v9r+M9O877z+b/tn0p9Sx3fZu/vcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8D+ufdlnuA==
   </data>
  </layer>
  <layer name="Above Ground Tile Edges" width="128" height="128">
@@ -1100,11 +1103,11 @@
   <object gid="60" x="2976" y="1920"/>
   <object gid="60" x="2976" y="1888"/>
   <object gid="60" x="2976" y="1856"/>
-  <object gid="60" x="2752" y="2016"/>
-  <object gid="60" x="2752" y="1984"/>
-  <object gid="60" x="2752" y="1952"/>
-  <object gid="60" x="2752" y="1888"/>
-  <object gid="60" x="2752" y="1856"/>
+  <object gid="60" x="2720" y="2016"/>
+  <object gid="60" x="2720" y="1984"/>
+  <object gid="60" x="2720" y="1952"/>
+  <object gid="60" x="2720" y="1888"/>
+  <object gid="60" x="2720" y="1856"/>
   <object gid="56" x="2976" y="1824"/>
   <object gid="56" x="2944" y="1824"/>
   <object gid="56" x="2912" y="1824"/>
@@ -1112,7 +1115,7 @@
   <object gid="56" x="2848" y="1824"/>
   <object gid="56" x="2816" y="1824"/>
   <object gid="56" x="2784" y="1824"/>
-  <object gid="72" x="2752" y="1824"/>
+  <object gid="72" x="2720" y="1824"/>
   <object gid="56" x="2944" y="2016"/>
   <object gid="56" x="2880" y="2016"/>
   <object gid="56" x="2848" y="2016"/>
@@ -1124,17 +1127,11 @@
   <object gid="177" x="2624" y="1696"/>
   <object gid="178" x="2656" y="1696"/>
   <object gid="183" x="2688" y="2048"/>
-  <object gid="186" x="2976" y="1792"/>
   <object gid="187" x="3008" y="1728"/>
-  <object gid="182" x="2656" y="2016"/>
   <object gid="180" x="2624" y="1728"/>
   <object gid="180" x="2624" y="2016"/>
-  <object gid="186" x="2976" y="1728"/>
-  <object gid="182" x="2688" y="2016"/>
   <object gid="183" x="2656" y="2048"/>
   <object gid="178" x="2688" y="1696"/>
-  <object gid="186" x="2976" y="1760"/>
-  <object gid="182" x="2720" y="2016"/>
   <object gid="180" x="2624" y="1824"/>
   <object gid="187" x="3008" y="1760"/>
   <object gid="179" x="2624" y="1696"/>
@@ -1155,9 +1152,6 @@
   <object gid="180" x="2624" y="1920"/>
   <object gid="180" x="2624" y="1952"/>
   <object gid="180" x="2624" y="1984"/>
-  <object gid="182" x="2752" y="2016"/>
-  <object gid="183" x="2752" y="2048"/>
-  <object gid="186" x="2976" y="1824"/>
   <object gid="187" x="3008" y="1824"/>
   <object gid="286" x="2912" y="2016"/>
   <object gid="290" x="2976" y="1952"/>
@@ -1165,6 +1159,8 @@
   <object gid="3043" x="2304" y="1088"/>
   <object gid="3043" x="2208" y="1088"/>
   <object gid="3043" x="2208" y="1184"/>
+  <object gid="56" x="2752" y="2016"/>
+  <object gid="56" x="2752" y="1824"/>
  </objectgroup>
  <layer name="Ceiling Tiles" width="128" height="128">
   <properties>
@@ -1172,7 +1168,7 @@
    <property name="z" value="4"/>
   </properties>
   <data encoding="base64" compression="zlib">
-   eJzt0UENwCAAwEDQMv9ekMSfZH9C75Iq6BgAAAAAAAAAAAAAAAAAAAAAd1lHtPjf5n+b/wAAAAAAAAAAAABN3/yP9/nf5n+b/23+t/kPAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD322INEuk=
+   eJzt0TERwCAAwECqBf9ekNS9AzM0/3dRkDEAAAAAAAAAAAAAAAAAAAAAzrI+0eJ/m/9t/gMAAAAAAAAAAAD0zGcf/+Z/m/9t/rf53+Y/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADc4QWR8xPB
   </data>
  </layer>
  <layer name="Ceiling Tile Edges" width="128" height="128">
@@ -1181,7 +1177,7 @@
    <property name="z" value="4"/>
   </properties>
   <data encoding="base64" compression="zlib">
-   eJzt0UENACEAA8Hi5cC/RBzcl0BnklWwCQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJyxRvL9xNumx9X87+Z/N/+7+d/NfwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAuMMGBkYCDw==
+   eJzt0UENACEAA8Hi5cC/RCTcjwQ6k6yCTQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOC8NZLvJ941/a3mfzf/u/nfzf9u/gMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwD029HkCNA==
   </data>
  </layer>
  <objectgroup name="Ceiling Objects" width="128" height="128">

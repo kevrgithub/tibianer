@@ -149,7 +149,7 @@ public:
 
                 int tileNumber = tibia::Utility::getTileNumberByTileCoords(sf::Vector2u(docMapObjectTileX, docMapObjectTileY));
 
-                tibia::Tile* tile = tileList->at(tileNumber).get();
+                tibia::TilePtr tile = tileList->at(tileNumber);
 
                 tile->addObject(object);
 

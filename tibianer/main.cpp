@@ -213,12 +213,14 @@ int main()
         background.setPosition(0, 0);
         mainWindow.draw(background);
 
+        game.updateMouseTile(&mainWindow);
+
         game.drawGameWindow(&mainWindow);
 
-        sf::Sprite cursor;
-        cursor.setTexture(tibia::Textures::cursor);
-        cursor.setPosition(static_cast<sf::Vector2f>(sf::Mouse::getPosition(mainWindow)));
-        mainWindow.draw(cursor);
+        if (mouseUseDefaultCursor == false)
+        {
+            game.drawMouseCursor(&mainWindow);
+        }
 
         mainWindow.display();
 
@@ -248,35 +250,19 @@ int main()
                 }
             }
 
-            switch (event.type)
+            if (event.type == sf::Event::MouseButtonPressed)
             {
-                case sf::Event::KeyPressed:
+                game.handleMouseInput(event);
+            }
+
+            if (event.type == sf::Event::KeyPressed)
+            {
+                if (event.key.code == sf::Keyboard::Escape)
                 {
-                    switch (event.key.code)
-                    {
-                        case sf::Keyboard::Escape:
-                            mainWindow.close();
-                            break;
-
-/*
-                        case sf::Keyboard::Up:
-                            gameView->move(0, -tibia::TILE_SIZE);
-                            break;
-                        case sf::Keyboard::Right:
-                            gameView->move(tibia::TILE_SIZE, 0);
-                            break;
-                        case sf::Keyboard::Down:
-                            gameView->move(0, tibia::TILE_SIZE);
-                            break;
-                        case sf::Keyboard::Left:
-                            gameView->move(-tibia::TILE_SIZE, 0);
-                            break;
-*/
-                    }
-
-                    game.handleKeyboardInput(event);
+                    mainWindow.close();
                 }
-                break;
+
+                game.handleKeyboardInput(event);
             }
         }
     }

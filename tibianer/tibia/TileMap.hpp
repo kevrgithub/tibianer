@@ -159,7 +159,7 @@ public:
                     continue;
                 }
 
-                tibia::Tile* tile = m_tileList.at(tileNumber).get();
+                tibia::TilePtr tile = m_tileList.at(tileNumber);
 
                 int tileId = tile->getId();
 

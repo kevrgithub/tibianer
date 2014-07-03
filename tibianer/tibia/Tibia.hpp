@@ -97,6 +97,13 @@ namespace tibia
 
         sf::Color light(255, 255, 255, 192);
 
+        sf::Color mouseRed(255, 128, 128);
+        sf::Color mouseGreen(128, 255, 128);
+        sf::Color mouseBlue(128, 255, 255);
+        sf::Color mouseYellow(255, 255, 128);
+        sf::Color mouseTeal(128, 255, 255);
+        sf::Color mousePink(255, 128, 255);
+
         sf::Color textYellow(255, 255, 64);
 
         sf::Color mainWindowColor = white;
@@ -343,7 +350,8 @@ namespace tibia
             chair            = 1 << 7,
             ladder           = 1 << 8,
             moveAbove        = 1 << 9,
-            moveBelow        = 1 << 10
+            moveBelow        = 1 << 10,
+            interactive      = 1 << 11,
         };
     }
 
@@ -357,15 +365,24 @@ namespace tibia
 
         const int lever[] = {49, 50};
 
+        const int digHole[] = {1204, 1205};
+
+        const int digHoleIce[] = {3242, 3243};
+
         const int stepTileStone[] = {398,  399};
         const int stepTileWood[]  = {1275, 1276};
 
         const int stepTileGrassHole[] = {478, 479};
 
+        const int bedVertical[]   = {74, 75, 3260, 3261};
+        const int bedHorizontal[] = {1147, 1148, 3262, 3263};
+
         const int trough[]   = {52, 51, 685, 686, 687, 688, 689, 690};
         const int bucket[]   = {310, 678, 679, 680, 681, 682, 683, 684};
         const int cauldron[] = {1181, 1182, 1183, 1184, 1187, 1188, 1189, 1190};
         const int bottle[]   = {1556, 1557, 1558, 1559, 1560, 1561, 1562, 1563};
+
+        const int locker[] = {1264, 1265, 1266, 1267};
 
         const int parcel[] = {1268, 1269};
         const int letter[] = {1270, 1271};
@@ -374,7 +391,10 @@ namespace tibia
         const int depot   = 1273;
         const int mailBox = 1274;
 
-        const int blankRune = 1277;
+        const int bush          = 1060;
+        const int bushBlueberry = 3375;
+
+        const int runeBlank = 1277;
 
         const int fishingRod = 1470;
 
@@ -386,9 +406,13 @@ namespace tibia
 
         const int stairs = 460;
 
+        const int sewerGrate = 607;
+
+        const int ropeUp = 3253;
+
         const int treeWall = 3344;
 
-        std::vector<int> magicWalls = {3271, 3275, 3279};
+        std::vector<int> magicWall = {3271, 3275, 3279};
 
         std::vector<int> water =
         {
@@ -425,6 +449,7 @@ namespace tibia
             129, 130, 131, 132, 133, 134, 135,
             136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151,
             159, 163,
+            165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176,
             201,
             202, 203, 204, 205,
             285, 286, 288, 290,
@@ -622,7 +647,7 @@ namespace tibia
 
         std::vector<int> holes =
         {
-            47, 456, 479, 480, 481, 487,
+            47, 456, 478, 479, 480, 481, 487,
             610, 611,
             691, 692, 693, 694, 695, 696, 697, 698, 699,
             1205,
@@ -660,6 +685,42 @@ namespace tibia
             3271, 3275, 3279,
             3322, 3326,
             3380, 3381
+        };
+
+        std::vector<int> interactive =
+        {
+            tibia::SpriteData::locker[0],
+            tibia::SpriteData::locker[1],
+            tibia::SpriteData::locker[2],
+            tibia::SpriteData::locker[3],
+
+            tibia::SpriteData::depot,
+            tibia::SpriteData::mailBox,
+
+            tibia::SpriteData::lever[0],
+            tibia::SpriteData::lever[1],
+
+            tibia::SpriteData::bedVertical[0],
+            tibia::SpriteData::bedVertical[1],
+            tibia::SpriteData::bedVertical[2],
+            tibia::SpriteData::bedVertical[3],
+
+            tibia::SpriteData::bedHorizontal[0],
+            tibia::SpriteData::bedHorizontal[1],
+            tibia::SpriteData::bedHorizontal[2],
+            tibia::SpriteData::bedHorizontal[3],
+
+            tibia::SpriteData::ladder,
+            tibia::SpriteData::ropeUp,
+
+            tibia::SpriteData::sewerGrate,
+
+            tibia::SpriteData::digHole[0],
+            tibia::SpriteData::digHole[1],
+            tibia::SpriteData::digHoleIce[0],
+            tibia::SpriteData::digHoleIce[1],
+
+            tibia::SpriteData::bushBlueberry
         };
 
         // right to left, bottom then top

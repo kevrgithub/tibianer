@@ -1,6 +1,8 @@
 #ifndef TIBIA_UTILITY_HPP
 #define TIBIA_UTILITY_HPP
 
+#include <cmath>
+
 #include <SFML/Graphics.hpp>
 
 #include "tibia/Tibia.hpp"
@@ -28,6 +30,11 @@ namespace tibia
             int y = tileCoords.y / tibia::TILE_SIZE;
 
             return x + (y * tibia::MAP_SIZE);
+        }
+
+        int calculateTileDistance(int x1, int y1, int x2, int y2)
+        {
+            return std::max(std::abs(x1 - x2), std::abs(y1 - y2)) / tibia::TILE_SIZE;
         }
 
         int getSpriteFlags(int id)
@@ -116,6 +123,15 @@ namespace tibia
                 }
             }
 
+            for (auto spriteId : tibia::SpriteData::interactive)
+            {
+                if (id == spriteId)
+                {
+                    flags |= tibia::SpriteFlags::interactive;
+                    break;
+                }
+            }
+
             return flags;
         }
 
@@ -144,6 +160,52 @@ namespace tibia
 
             return direction;
         }
+
+    sf::Vector2u getVectorByDirection(int direction)
+    {
+        sf::Vector2u vec(0, 0);
+
+        switch (direction)
+        {
+            case tibia::Directions::up:
+                vec.y--;
+                break;
+
+            case tibia::Directions::right:
+                vec.x++;
+                break;
+
+            case tibia::Directions::down:
+                vec.y++;
+                break;
+
+            case tibia::Directions::left:
+                vec.x--;
+                break;
+
+            case tibia::Directions::upLeft:
+                vec.x--;
+                vec.y--;
+                break;
+
+            case tibia::Directions::upRight:
+                vec.x++;
+                vec.y--;
+                break;
+
+            case tibia::Directions::downLeft:
+                vec.x--;
+                vec.y++;
+                break;
+
+            case tibia::Directions::downRight:
+                vec.x++;
+                vec.y++;
+                break;
+        }
+
+        return vec;
+    }
 
     } // utility
 

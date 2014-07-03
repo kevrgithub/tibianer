@@ -49,8 +49,12 @@ public:
         m_mp    = 200;
         m_mpMax = 200;
 
+        m_isSitting = false;
+
         m_isDead     = false;
         m_hasDecayed = false;
+
+        m_isSleeping = false;
 
         m_hasOutfit = true;
 
@@ -293,75 +297,6 @@ public:
         setDirection(dir);
     }
 
-    void doMove(int direction)
-    {
-        int x = getX();
-        int y = getY();
-
-        switch (direction)
-        {
-            case tibia::Directions::up:
-                if (y != 0)
-                {
-                    setY(y - 1);
-                }
-                break;
-
-            case tibia::Directions::right:
-                if (x != MAP_XY_MAX - 1)
-                {
-                    setX(x + 1);
-                }
-                break;
-
-            case tibia::Directions::down:
-                if (y != MAP_XY_MAX - 1)
-                {
-                    setY(y + 1);
-                }
-                break;
-
-            case tibia::Directions::left:
-                if (x != 0)
-                {
-                    setX(x - 1);
-                }
-                break;
-
-            case tibia::Directions::upLeft:
-                if (y != 0 && x != 0)
-                {
-                    setY(y - 1);
-                    setX(x - 1);
-                }
-                break;
-
-            case tibia::Directions::upRight:
-                if (y != 0 && x != MAP_XY_MAX - 1)
-                {
-                    setY(y - 1);
-                    setX(x + 1);
-                }
-                break;
-
-            case tibia::Directions::downLeft:
-                if (y != MAP_XY_MAX - 1 && x != 0)
-                {
-                    setY(y + 1);
-                    setX(x - 1);
-                }
-                break;
-
-            case tibia::Directions::downRight:
-                if (y != MAP_XY_MAX - 1 && x != MAP_XY_MAX - 1)
-                {
-                    setY(y + 1);
-                    setX(x + 1);
-                }
-                break;
-        }
-    }
-
     void takeDamage(int damage)
     {
         m_hp = m_hp - damage;
@@ -436,6 +371,16 @@ public:
     void setIsSitting(bool b)
     {
         m_isSitting = b;
+    }
+
+    bool isSleeping()
+    {
+        return m_isSleeping;
+    }
+
+    void setIsSleeping(bool b)
+    {
+        m_isSleeping = b;
     }
 
     std::string getName()
@@ -686,6 +631,8 @@ private:
     bool m_isDead;
     bool m_hasDecayed;
 
+    bool m_isSleeping;
+
     sf::Clock m_clockCorpse;
     sf::Time m_timeCorpse;
 
@@ -719,6 +666,11 @@ private:
         {
             target.draw(m_spriteCorpse, states);
 
+            return;
+        }
+
+        if (m_isSleeping == true)
+        {
             return;
         }
 

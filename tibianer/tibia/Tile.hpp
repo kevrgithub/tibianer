@@ -77,12 +77,12 @@ public:
 
     void addObject(tibia::ObjectPtr object)
     {
-        m_objectList.push_back(std::move(object));
+        m_objectList.push_back(object);
     }
 
     void addCreature(tibia::CreaturePtr creature)
     {
-        m_creatureList.push_back(std::move(creature));
+        m_creatureList.push_back(creature);
     }
 
 private:

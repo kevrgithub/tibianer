@@ -125,6 +125,66 @@ public:
             return;
         }
 
+        // wood rail horizontal
+        if (m_id == 183)
+        {
+            m_sprite[1].setId(m_id - 1);
+            m_sprite[2].setId(m_id - 2);
+
+            m_sprite[1].setPosition
+            (
+                sf::Vector2f
+                (
+                    m_sprite[0].getPosition().x,
+                    m_sprite[0].getPosition().y - tibia::TILE_SIZE
+                )
+            );
+
+            m_sprite[2].setPosition
+            (
+                sf::Vector2f
+                (
+                    m_sprite[0].getPosition().x - tibia::TILE_SIZE,
+                    m_sprite[0].getPosition().y - tibia::TILE_SIZE
+                )
+            );
+
+            m_shouldDrawExtraSprite1 = true;
+            m_shouldDrawExtraSprite2 = true;
+
+            return;
+        }
+
+        // wood rail vertical
+        if (m_id == 187)
+        {
+            m_sprite[1].setId(m_id - 1);
+            m_sprite[2].setId(m_id - 2);
+
+            m_sprite[1].setPosition
+            (
+                sf::Vector2f
+                (
+                    m_sprite[0].getPosition().x - tibia::TILE_SIZE,
+                    m_sprite[0].getPosition().y
+                )
+            );
+
+            m_sprite[2].setPosition
+            (
+                sf::Vector2f
+                (
+                    m_sprite[0].getPosition().x - tibia::TILE_SIZE,
+                    m_sprite[0].getPosition().y - tibia::TILE_SIZE
+                )
+            );
+
+            m_shouldDrawExtraSprite1 = true;
+            m_shouldDrawExtraSprite2 = true;
+
+            return;
+        }
+
         // well
         else if (m_id == 315)
         {
