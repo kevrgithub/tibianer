@@ -9,6 +9,7 @@
 #include <SFML/Graphics.hpp>
 
 #include "tibia/Tibia.hpp"
+#include "tibia/Utility.hpp"
 #include "tibia/Tile.hpp"
 #include "tibia/Sprite.hpp"
 
@@ -46,7 +47,7 @@ public:
                     j * tibia::TILE_SIZE
                 );
 
-                int tileFlags = tibia::spriteFlags[tileId];
+                unsigned int tileFlags = tibia::spriteFlags[tileId];
 
                 if (tileFlags & tibia::SpriteFlags::water && m_type == tibia::TileMapTypes::tiles && m_z == tibia::ZAxis::ground)
                 {
@@ -80,7 +81,7 @@ public:
 
     void updateTileFlags(int tileNumber, int tileId)
     {
-        int tileFlags = tibia::spriteFlags[tileId];
+        unsigned int tileFlags = tibia::spriteFlags[tileId];
 
         m_tileList.at(tileNumber)->setFlags(tileFlags);
     }
@@ -143,18 +144,18 @@ public:
 
     void addMiniMapTiles(std::vector<sf::Vertex>& vertexList)
     {
+        if (m_tileList.size() == 0)// || m_tileList.size() < tileNumber)
+        {
+            return;
+        }
+
         for (unsigned int i = 0; i < tibia::MAP_SIZE; ++i)
         {
             for (unsigned int j = 0; j < tibia::MAP_SIZE; ++j)
             {
                 int tileNumber = i + j * tibia::MAP_SIZE;
 
-                if (tileNumber < 0 || tileNumber > tibia::TILE_NUMBER_MAX)
-                {
-                    continue;
-                }
-
-                if (m_tileList.size() == 0 || m_tileList.size() < tileNumber)
+                if (tibia::Utility::isTileNumberOutOfBounds(tileNumber) == true)
                 {
                     continue;
                 }
@@ -168,9 +169,9 @@ public:
                     continue;
                 }
 
-                int tileFlags = tile->getFlags();
+                unsigned int tileFlags = tile->getFlags();
 
-                if (tileFlags & (tibia::SpriteFlags::solid | tibia::SpriteFlags::ladder | tibia::SpriteFlags::moveAbove | tibia::SpriteFlags::moveBelow))
+                if (tileFlags & (tibia::SpriteFlags::solid | tibia::SpriteFlags::moveAbove | tibia::SpriteFlags::moveBelow))
                 {
                     sf::Vertex quad[4];
 
@@ -183,22 +184,22 @@ public:
 
                     if (tileFlags & tibia::SpriteFlags::solid)
                     {
-                        tileColor = tibia::Colors::tileIsSolid;
+                        tileColor = tibia::Colors::spriteFlagsSolid;
                     }
 
                     if (tileFlags & tibia::SpriteFlags::water)
                     {
-                        tileColor = tibia::Colors::tileIsWater;
+                        tileColor = tibia::Colors::spriteFlagsWater;
                     }
 
                     if (tileFlags & tibia::SpriteFlags::lava)
                     {
-                        tileColor = tibia::Colors::tileIsLava;
+                        tileColor = tibia::Colors::spriteFlagsLava;
                     }
 
-                    if (tileFlags & (tibia::SpriteFlags::ladder | tibia::SpriteFlags::moveAbove | tibia::SpriteFlags::moveBelow))
+                    if (tileFlags & (tibia::SpriteFlags::moveAbove | tibia::SpriteFlags::moveBelow))
                     {
-                        tileColor = tibia::Colors::tileIsMoveAboveOrBelow;
+                        tileColor = tibia::Colors::spriteFlagsMoveAboveOrBelow;
                     }
 
                     quad[0].color = tileColor;
@@ -210,6 +211,51 @@ public:
                     vertexList.push_back(quad[1]);
                     vertexList.push_back(quad[2]);
                     vertexList.push_back(quad[3]);
+                }
+
+                if (m_type == tibia::TileMapTypes::tiles)
+                {
+                    tibia::ObjectList* tileObjects = tile->getObjectList();
+
+                    if (tileObjects->size())
+                    {
+                        for (auto object : *tileObjects)
+                        {
+                            unsigned int objectFlags = object->getFlags();
+
+                            if (objectFlags & (tibia::SpriteFlags::solid | tibia::SpriteFlags::ladder | tibia::SpriteFlags::moveAbove | tibia::SpriteFlags::moveBelow))
+                            {
+                                sf::Vertex quad[4];
+
+                                quad[0].position = sf::Vector2f(i       * tibia::TILE_SIZE, j       * tibia::TILE_SIZE);
+                                quad[1].position = sf::Vector2f((i + 1) * tibia::TILE_SIZE, j       * tibia::TILE_SIZE);
+                                quad[2].position = sf::Vector2f((i + 1) * tibia::TILE_SIZE, (j + 1) * tibia::TILE_SIZE);
+                                quad[3].position = sf::Vector2f(i       * tibia::TILE_SIZE, (j + 1) * tibia::TILE_SIZE);
+
+                                sf::Color objectColor;
+
+                                if (objectFlags & tibia::SpriteFlags::solid)
+                                {
+                                    objectColor = tibia::Colors::spriteFlagsSolid;
+                                }
+
+                                if (objectFlags & (tibia::SpriteFlags::ladder | tibia::SpriteFlags::moveAbove | tibia::SpriteFlags::moveBelow))
+                                {
+                                    objectColor = tibia::Colors::spriteFlagsMoveAboveOrBelow;
+                                }
+
+                                quad[0].color = objectColor;
+                                quad[1].color = objectColor;
+                                quad[2].color = objectColor;
+                                quad[3].color = objectColor;
+
+                                vertexList.push_back(quad[0]);
+                                vertexList.push_back(quad[1]);
+                                vertexList.push_back(quad[2]);
+                                vertexList.push_back(quad[3]);
+                            }
+                        }
+                    }
                 }
             }
         }

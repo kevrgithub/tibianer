@@ -17,6 +17,13 @@ class Thing : public tibia::DrawableAndTransformable
 
 public:
 
+    Thing::Thing()
+    {
+        m_drawIndex = 0;
+
+        m_isReadyForErase = false;
+    }
+
     void updateTileNumber()
     {
         m_tileNumber = tibia::Utility::getTileNumberByTileCoords(sf::Vector2u(m_tileX, m_tileY));
@@ -113,6 +120,26 @@ public:
         return m_z;
     }
 
+    void setDrawIndex(int drawIndex)
+    {
+        m_drawIndex = drawIndex;
+    }
+
+    int getDrawIndex()
+    {
+        return m_drawIndex;
+    }
+
+    void setIsReadyForErase(bool b)
+    {
+        m_isReadyForErase = b;
+    }
+
+    bool isReadyForErase()
+    {
+        return m_isReadyForErase;
+    }
+
 private:
 
     int m_tileX;
@@ -124,6 +151,9 @@ private:
     int m_y;
     int m_z;
 
+    int m_drawIndex;
+
+    bool m_isReadyForErase;
 };
 
 typedef std::shared_ptr<tibia::Thing> ThingPtr;
@@ -143,7 +173,21 @@ namespace ThingSort
     {
         bool operator()(tibia::ThingPtr a, tibia::ThingPtr b) const
         {
-            return (a->getTileX() == b->getTileX() ? a->getTileY() < b->getTileY() : a->getTileX() < b->getTileX());
+            //return (a->getTileX() == b->getTileX() ? a->getTileY() < b->getTileY() : a->getTileX() < b->getTileX());
+
+            if (a->getTileX() == b->getTileX())
+            {
+                if (a->getTileY() == b->getTileY())
+                {
+                    return a->getDrawIndex() < b->getDrawIndex();
+                }
+                else
+                {
+                    return a->getTileY() < b->getTileY();
+                }
+            }
+
+            return a->getTileX() < b->getTileX();
         }
     };
 }

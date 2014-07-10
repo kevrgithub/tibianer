@@ -6,6 +6,7 @@
 #include "tibia/Tibia.hpp"
 #include "tibia/Object.hpp"
 #include "tibia/Creature.hpp"
+#include "tibia/Animation.hpp"
 
 namespace tibia
 {
@@ -55,12 +56,12 @@ public:
         m_z = z;
     }
 
-    int getFlags()
+    unsigned int getFlags()
     {
         return m_flags;
     }
 
-    void setFlags(int flags)
+    void setFlags(unsigned int flags)
     {
         m_flags = flags;
     }
@@ -75,6 +76,11 @@ public:
         return &m_creatureList;
     }
 
+    tibia::AnimationList* getAnimationList()
+    {
+        return &m_animationList;
+    }
+
     void addObject(tibia::ObjectPtr object)
     {
         m_objectList.push_back(object);
@@ -83,6 +89,11 @@ public:
     void addCreature(tibia::CreaturePtr creature)
     {
         m_creatureList.push_back(creature);
+    }
+
+    void addAnimation(tibia::AnimationPtr animation)
+    {
+        m_animationList.push_back(animation);
     }
 
 private:
@@ -94,10 +105,11 @@ private:
 
     int m_z;
 
-    int m_flags;
+    unsigned int m_flags;
 
     tibia::ObjectList m_objectList;
     tibia::CreatureList m_creatureList;
+    tibia::AnimationList m_animationList;
 };
 
 typedef std::shared_ptr<tibia::Tile> TilePtr;

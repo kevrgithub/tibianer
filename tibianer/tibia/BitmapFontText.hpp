@@ -20,7 +20,7 @@ public:
         m_vertexArray.setPrimitiveType(sf::Quads);
     }
 
-    void setText(tibia::BitmapFont* bf, std::string text, sf::Color textColor)
+    void setText(tibia::BitmapFont* bf, std::string text, sf::Color textColor, bool isCentered = false)
     {
         m_bitmapFont = bf;
 
@@ -29,11 +29,20 @@ public:
         int x = 0;
         int y = 0;
 
+        int textWidth = 0;
+
         for (unsigned int i = 0; i < text.size(); i++)
         {
             int asciiValue = static_cast<int>(text[i]);
 
-            asciiValue = asciiValue - 32; // first 32 ascii characters skipped
+            // skip unused characters
+            if (asciiValue < 32 || asciiValue > 127)
+            {
+                continue;
+            }
+
+            // first 32 ascii characters skipped, need to offset the value
+            asciiValue = asciiValue - 32;
 
             int tu = asciiValue % (bf->getTexture()->getSize().x / bf->getGlyphSize()->x);
             int tv = asciiValue / (bf->getTexture()->getSize().x / bf->getGlyphSize()->x);
@@ -55,7 +64,19 @@ public:
             quad[2].color = textColor;
             quad[3].color = textColor;
 
-            x += bf->getGlyphWidths()->at(asciiValue); //bf->getGlyphSize()->x;
+            int glyphWidth = bf->getGlyphWidths()->at(asciiValue); //bf->getGlyphSize()->x;
+
+            x +=         glyphWidth + bf->getGlpyhSpace();
+
+            textWidth += glyphWidth + bf->getGlpyhSpace();
+        }
+
+        if (isCentered == true)
+        {
+            for (unsigned int i = 0; i < m_vertexArray.getVertexCount(); i++)
+            {
+                m_vertexArray[i].position.x = m_vertexArray[i].position.x - (textWidth / 2);
+            }
         }
     }
 

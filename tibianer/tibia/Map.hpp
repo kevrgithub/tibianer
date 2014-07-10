@@ -73,21 +73,24 @@ public:
 
             tinyxml2::XMLElement* docMapLayerProperties = docMapLayer->FirstChildElement("properties");
 
-            for (tinyxml2::XMLElement* docMapLayerProperty = docMapLayerProperties->FirstChildElement("property"); docMapLayerProperty != NULL; docMapLayerProperty = docMapLayerProperty->NextSiblingElement("property"))
+            if (docMapLayerProperties != NULL)
             {
-                std::string docMapLayerPropertyName = docMapLayerProperty->Attribute("name");
-
-                int docMapLayerPropertyValue = docMapLayerProperty->IntAttribute("value");
-
-                //std::cout << "Layer Property: " << docMapLayerPropertyName << "=" << docMapLayerPropertyValue << std::endl;
-
-                if (docMapLayerPropertyName == "z")
+                for (tinyxml2::XMLElement* docMapLayerProperty = docMapLayerProperties->FirstChildElement("property"); docMapLayerProperty != NULL; docMapLayerProperty = docMapLayerProperty->NextSiblingElement("property"))
                 {
-                    tileMapZ = docMapLayerPropertyValue;
-                }
-                else if (docMapLayerPropertyName == "type")
-                {
-                    tileMapType = docMapLayerPropertyValue;
+                    std::string docMapLayerPropertyName = docMapLayerProperty->Attribute("name");
+
+                    int docMapLayerPropertyValue = docMapLayerProperty->IntAttribute("value");
+
+                    //std::cout << "Layer Property: " << docMapLayerPropertyName << "=" << docMapLayerPropertyValue << std::endl;
+
+                    if (docMapLayerPropertyName == "z")
+                    {
+                        tileMapZ = docMapLayerPropertyValue;
+                    }
+                    else if (docMapLayerPropertyName == "type")
+                    {
+                        tileMapType = docMapLayerPropertyValue;
+                    }
                 }
             }
 
@@ -118,17 +121,20 @@ public:
 
             tinyxml2::XMLElement* docMapObjectGroupProperties = docMapObjectGroup->FirstChildElement("properties");
 
-            for (tinyxml2::XMLElement* docMapObjectGroupProperty = docMapObjectGroupProperties->FirstChildElement("property"); docMapObjectGroupProperty != NULL; docMapObjectGroupProperty = docMapObjectGroupProperty->NextSiblingElement("property"))
+            if (docMapObjectGroupProperties != NULL)
             {
-                std::string docMapObjectGroupPropertyName = docMapObjectGroupProperty->Attribute("name");
-
-                int docMapObjectGroupPropertyValue = docMapObjectGroupProperty->IntAttribute("value");
-
-                //std::cout << "Object Group Property: " << docMapObjectGroupPropertyName << "=" << docMapObjectGroupPropertyValue << std::endl;
-
-                if (docMapObjectGroupPropertyName == "z")
+                for (tinyxml2::XMLElement* docMapObjectGroupProperty = docMapObjectGroupProperties->FirstChildElement("property"); docMapObjectGroupProperty != NULL; docMapObjectGroupProperty = docMapObjectGroupProperty->NextSiblingElement("property"))
                 {
-                    docMapObjectZ = docMapObjectGroupPropertyValue;
+                    std::string docMapObjectGroupPropertyName = docMapObjectGroupProperty->Attribute("name");
+
+                    int docMapObjectGroupPropertyValue = docMapObjectGroupProperty->IntAttribute("value");
+
+                    //std::cout << "Object Group Property: " << docMapObjectGroupPropertyName << "=" << docMapObjectGroupPropertyValue << std::endl;
+
+                    if (docMapObjectGroupPropertyName == "z")
+                    {
+                        docMapObjectZ = docMapObjectGroupPropertyValue;
+                    }
                 }
             }
 
@@ -143,7 +149,76 @@ public:
                 int docMapObjectTileX = docMapObject->IntAttribute("x");
                 int docMapObjectTileY = docMapObject->IntAttribute("y") - tibia::TILE_SIZE; // y-axis bug for objects in Tiled editor?
 
+                std::string docMapObjectType = "null";
+
+                if (docMapObject->Attribute("type") != NULL)
+                {
+                    docMapObjectType = docMapObject->Attribute("type");
+                }
+
+                int objectType = tibia::ObjectTypes::null;
+
+                if (docMapObjectType == "sign")
+                {
+                    objectType = tibia::ObjectTypes::sign;
+                }
+                else if (docMapObjectType == "teleporter")
+                {
+                    objectType = tibia::ObjectTypes::teleporter;
+                }
+                else if (docMapObjectType == "door")
+                {
+                    objectType = tibia::ObjectTypes::door;
+                }
+                else if (docMapObjectType == "bed")
+                {
+                    objectType = tibia::ObjectTypes::bed;
+                }
+                else if (docMapObjectType == "lever")
+                {
+                    objectType = tibia::ObjectTypes::lever;
+                }
+
                 tibia::ObjectPtr object = std::make_shared<tibia::Object>(docMapObjectTileX, docMapObjectTileY, docMapObjectZ, docMapObjectId);
+
+                object->setType(objectType);
+
+                tinyxml2::XMLElement* docMapObjectProperties = docMapObject->FirstChildElement("properties");
+
+                if (docMapObjectProperties != NULL)
+                {
+                    for (tinyxml2::XMLElement* docMapObjectProperty = docMapObjectProperties->FirstChildElement("property"); docMapObjectProperty != NULL; docMapObjectProperty = docMapObjectProperty->NextSiblingElement("property"))
+                    {
+                        std::string docMapObjectPropertyName = docMapObjectProperty->Attribute("name");
+
+                        if (objectType == tibia::ObjectTypes::sign)
+                        {
+                            if (docMapObjectPropertyName == "text")
+                            {
+                                std::string objectSignText = docMapObjectProperty->Attribute("value");
+
+                                boost::replace_all(objectSignText, "\\n", "\n");
+
+                                object->setSignText(objectSignText);
+                            }
+                        }
+                        else if (objectType == tibia::ObjectTypes::teleporter)
+                        {
+                            if (docMapObjectPropertyName == "x")
+                            {
+                                object->setTeleporterX(docMapObjectProperty->IntAttribute("value"));
+                            }
+                            else if (docMapObjectPropertyName == "y")
+                            {
+                                object->setTeleporterY(docMapObjectProperty->IntAttribute("value"));
+                            }
+                            else if (docMapObjectPropertyName == "z")
+                            {
+                                object->setTeleporterZ(docMapObjectProperty->IntAttribute("value"));
+                            }
+                        }
+                    }
+                }
 
                 tibia::TileList* tileList = tileMap->getTileList();
 

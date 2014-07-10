@@ -6,6 +6,10 @@
 #include <string>
 #include <fstream>
 
+void toggleBool(bool& b)
+{
+    b = !b;
+}
 
 bool fileExists(const std::string& filename)
 {

@@ -13,6 +13,8 @@
 
 namespace tibia
 {
+    const int TEXTURE_SIZE_MAX = 4096;
+
     const int SPRITES_TOTAL = 3381;
 
     const int MAP_SIZE = 128;
@@ -68,18 +70,79 @@ namespace tibia
     {
         std::string default = "images/font.png";
         std::string tiny    = "images/font2.png";
+        std::string modern  = "images/font3.png";
 
         sf::Vector2u defaultGlyphSize(18, 19);
 
+        // 16x6
         std::vector<int> defaultGlyphWidths =
         {
-            9, 4, 8, 16, 9, 18, 15, 5, 7, 7, 9, 13, 5, 8, 4, 7,
-            10, 8, 10, 10, 10, 9, 10, 10, 9, 10, 4, 5, 12, 14, 12, 9,
-            14, 15, 13, 13, 14, 13, 12, 15, 15, 8, 9, 15, 13, 18, 15, 14,
+            6,  4,  8,  16, 9,  18, 15, 5,  7,  7,  9,  13, 5,  8,  4,  7,
+            10, 8,  10, 10, 10, 9,  10, 10, 9,  10, 4,  5,  12, 14, 12, 9,
+            14, 15, 13, 13, 14, 13, 12, 15, 15, 8,  9,  15, 13, 18, 15, 14,
             12, 14, 15, 11, 14, 15, 15, 18, 15, 15, 13, 15, 14, 15, 11, 13,
-            4, 9, 11, 9, 11, 9, 10, 11, 11, 6, 7, 11, 6, 16, 11, 10,
-            11, 11, 8, 8, 7, 11, 11, 15, 11, 12, 10, 9, 10, 11, 14, 11
+            4,  9,  11, 9,  11, 9,  10, 11, 11, 6,  7,  11, 6,  16, 11, 10,
+            11, 11, 8,  8,  7,  11, 11, 15, 11, 12, 10, 9,  10, 11, 14, 11
         };
+
+        sf::Vector2u tinyGlyphSize(7, 10);
+
+        std::vector<int> tinyGlyphWidths =
+        {
+            6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 3, 6, 3, 7,
+            6, 5, 6, 6, 6, 6, 6, 6, 6, 6, 3, 3, 7, 7, 7, 7,
+            7, 6, 6, 6, 6, 6, 6, 6, 6, 3, 6, 7, 6, 7, 7, 6,
+            6, 7, 6, 6, 7, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+            7, 6, 6, 6, 6, 6, 6, 6, 6, 3, 6, 7, 6, 7, 7, 6,
+            6, 7, 6, 6, 7, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7
+        };
+
+        sf::Vector2u modernGlyphSize(16, 12);
+
+        std::vector<int> modernGlyphWidths =
+        {
+            3,  4, 7, 9, 8,  10, 10, 4,  6, 6, 9, 9, 4, 9,  4,  8,
+            8,  6, 8, 8, 8,  8,  8,  8,  8, 8, 4, 4, 9, 9,  9,  7,
+            10, 9, 8, 8, 9,  8,  8,  9,  9, 6, 7, 8, 8, 10, 9,  9,
+            8,  9, 9, 8, 10, 9,  8,  10, 8, 8, 8, 6, 8, 6,  10, 10,
+            4,  8, 8, 7, 8,  8,  7,  8,  8, 4, 6, 8, 4, 10, 8,  8,
+            8,  8, 7, 7, 7,  8,  8,  10, 8, 8, 7, 8, 4, 8,  9,  8
+        };
+    }
+
+    namespace GameTextData
+    {
+        const float time = 5.0;
+    }
+
+    namespace FloatingTextData
+    {
+        const float time  = 1.0;
+        const float speed = 1.0;
+    }
+
+    namespace StatusBarTextData
+    {
+        const float time = 5.0;
+
+        sf::Vector2f position(240, 307); // 308 - 1
+    }
+
+    namespace AnimatedObjects
+    {
+        const float time = 1.0;
+    }
+
+    namespace DecayObjects
+    {
+        const float time = 30.0;
+    }
+
+    namespace Lights
+    {
+        int numLights = 4;
+
+        sf::Vector2u size(480, 352);
     }
 
     namespace Colors
@@ -104,15 +167,19 @@ namespace tibia
         sf::Color mouseTeal(128, 255, 255);
         sf::Color mousePink(255, 128, 255);
 
+        sf::Color textWhite(255, 255, 255);
+        sf::Color textRed(255, 64, 64);
+        sf::Color textGreen(64, 255, 64);
         sf::Color textYellow(255, 255, 64);
-
+        sf::Color textOrange(255, 128, 64);
+        
         sf::Color mainWindowColor = white;
         sf::Color windowBorderColor = black;
 
-        sf::Color tileIsSolid(64, 64, 64);
-        sf::Color tileIsWater(0, 0, 192);
-        sf::Color tileIsLava(192, 0, 0);
-        sf::Color tileIsMoveAboveOrBelow(255, 255, 0);
+        sf::Color spriteFlagsSolid(64, 64, 64);
+        sf::Color spriteFlagsWater(0, 0, 192);
+        sf::Color spriteFlagsLava(192, 0, 0);
+        sf::Color spriteFlagsMoveAboveOrBelow(255, 255, 0);
     }
 
     namespace GuiData
@@ -135,6 +202,13 @@ namespace tibia
 
         const int creatureBarWidth  = 24;
         const int creatureBarHeight = 2;
+    }
+
+    namespace MiniMapWindow
+    {
+        const int zoomMin     = 1;
+        const int zoomDefault = 2;
+        const int zoomMax     = 4;
     }
 
     namespace ZAxis
@@ -163,14 +237,16 @@ namespace tibia
             downLeft,
 
             begin = up,
-            end   = downLeft
+            end   = downLeft,
+
+            null
         };
     }
 
     namespace MovementSpeeds
     {
         const float default = 0.5;
-        const float player  = 0.01; // 0.01
+        const float player  = 0.1; // 0.2
     }
 
     namespace Teams
@@ -189,6 +265,19 @@ namespace tibia
         {
             tiles,
             tileEdges
+        };
+    }
+
+    namespace ObjectTypes
+    {
+        enum
+        {
+            null,
+            sign,
+            teleporter,
+            door,
+            bed,
+            lever
         };
     }
 
@@ -256,6 +345,16 @@ namespace tibia
             2589, 2590, 2592, 2591,
             2605, 2606, 2608, 2607,
         };
+    }
+
+    namespace CreatureStatusFlags
+    {
+        //
+    }
+
+    namespace CreatureEquipmentFlags
+    {
+        //
     }
 
     namespace CreatureTypes
@@ -336,26 +435,58 @@ namespace tibia
         const float corpseDecay = 60.0;
     }
 
+    namespace Animations
+    {
+        // {id, numFrames}
+
+        int waterSplash[2] = {335, 4};
+
+        int hitBlood[2]  = {363, 4};
+        int hitMiss[2]   = {920, 4};
+        int hitBlock[2]  = {924, 3};
+        int hitBlack[2]  = {1388, 8};
+        int hitPoison[2] = {2132, 4};
+
+        int urine[2] =  {1374, 7};
+        int poison[2] = {1381, 7};
+
+        int spellBlue[2]  = {1396, 8};
+        int spellBlack[2] = {3244, 8};
+
+        int fire[2]        = {1489, 2};
+        int electricity[2] = {1497, 2};
+
+        int particlesBlue[2]  = {1499, 5};
+        int particlesRed[2]   = {1504, 5};
+        int particlesGreen[2] = {1509, 5};
+
+        int bubbleGreen[2] = {1570, 5};
+        int bubbleRed[2]   = {1582, 5};
+
+        int music[2] = {3362, 5};
+    }
+
     namespace SpriteFlags
     {
-        enum
+        enum : unsigned int
         {
-            null             = 1 << 0,
-            solid            = 1 << 1,
-            blockProjectiles = 1 << 2,
-            offset           = 1 << 3,
-            light            = 1 << 4,
-            water            = 1 << 5,
-            lava             = 1 << 6,
-            chair            = 1 << 7,
-            ladder           = 1 << 8,
-            moveAbove        = 1 << 9,
-            moveBelow        = 1 << 10,
-            interactive      = 1 << 11,
+            null             = 0x01,   //1 << 0,
+            solid            = 0x02,   //1 << 1,
+            blockProjectiles = 0x04,   //1 << 2,
+            offset           = 0x08,   //1 << 3,
+            light            = 0x10,   //1 << 4,
+            water            = 0x20,   //1 << 5,
+            lava             = 0x40,   //1 << 6,
+            chair            = 0x80,   //1 << 7,
+            ladder           = 0x100,  //1 << 8,
+            moveAbove        = 0x200,  //1 << 9,
+            moveBelow        = 0x400,  //1 << 10,
+            interactive      = 0x800,  //1 << 11,
+            drawLast         = 0x1000  //1 << 12
         };
     }
 
-    std::unordered_map<int, int> spriteFlags; // <int id, int flags>
+    std::unordered_map<unsigned int, unsigned int> spriteFlags; // <id, flags>
 
     namespace SpriteData
     {
@@ -363,10 +494,25 @@ namespace tibia
 
         const int corpse[] = {491, 492, 493, 494, 495, 496, 497};
 
+        const int sign[] = {379, 380, 381, 382, 383, 384};
+
+        const int signTall[] = {3310, 3313};
+
+        const int chalkboard[] = {609, 2965};
+
+        const int doorVertical[]   = {549, 553};
+        const int doorHorizontal[] = {555, 558};
+
+        const int doorLockedVertical[]   = {3303, 3307};
+        const int doorLockedHorizontal[] = {3295, 3299};
+
         const int lever[] = {49, 50};
 
-        const int digHole[] = {1204, 1205};
+        const int torchBig[]    = {443, 444, 445};
+        const int torchMedium[] = {446, 447, 448};
+        const int torchSmall[]  = {449, 450, 451};
 
+        const int digHole[]    = {1204, 1205};
         const int digHoleIce[] = {3242, 3243};
 
         const int stepTileStone[] = {398,  399};
@@ -377,10 +523,17 @@ namespace tibia
         const int bedVertical[]   = {74, 75, 3260, 3261};
         const int bedHorizontal[] = {1147, 1148, 3262, 3263};
 
+        const int stretcherVertical[]   = {1073, 1074, 3264, 3265};
+        const int stretcherHorizontal[] = {1071, 1072, 3266, 3267};
+
         const int trough[]   = {52, 51, 685, 686, 687, 688, 689, 690};
         const int bucket[]   = {310, 678, 679, 680, 681, 682, 683, 684};
         const int cauldron[] = {1181, 1182, 1183, 1184, 1187, 1188, 1189, 1190};
         const int bottle[]   = {1556, 1557, 1558, 1559, 1560, 1561, 1562, 1563};
+
+        const int poolRed[] = {745, 746, 747};
+
+        const int splatRed[] = {748, 749, 750};
 
         const int locker[] = {1264, 1265, 1266, 1267};
 
@@ -434,6 +587,7 @@ namespace tibia
 
         std::vector<int> solid =
         {
+            1,
             12, 13, 21, 24, 25, 27, 28, 29,
             37,
             39,
@@ -464,7 +618,7 @@ namespace tibia
             466, 467, 468, 469, 470, 471, 472, 473, 474, 475, 476, 477,
             486,
             523,
-            548, 549, 554, 559,
+            549, 555,
             562,
             565, 566, 569, 570, 574, 575, 576, 580, 582, 584, 586, 588,
             685, 686, 687, 688, 689, 690,
@@ -521,8 +675,6 @@ namespace tibia
             1639, 1640, 1641, 1642,
             1651,
             1652,
-            1655, 1659,
-            1663, 1665,
             1669,
             1670, 1671,
             1672,
@@ -682,6 +834,7 @@ namespace tibia
             2693, 2694,
             2695, 2696, 2697, 2698,
             2868, 2869, 2871, 2872,
+            3253, // rope up
             3271, 3275, 3279,
             3322, 3326,
             3380, 3381
@@ -689,6 +842,31 @@ namespace tibia
 
         std::vector<int> interactive =
         {
+            tibia::SpriteData::torchBig[0],
+            tibia::SpriteData::torchBig[1],
+            tibia::SpriteData::torchBig[2],
+
+            tibia::SpriteData::torchMedium[0],
+            tibia::SpriteData::torchMedium[1],
+            tibia::SpriteData::torchMedium[2],
+
+            tibia::SpriteData::torchSmall[0],
+            tibia::SpriteData::torchSmall[1],
+            //tibia::SpriteData::torchSmall[2], // not used
+
+            tibia::SpriteData::sign[0],
+            tibia::SpriteData::sign[1],
+            tibia::SpriteData::sign[2],
+            tibia::SpriteData::sign[3],
+            tibia::SpriteData::sign[4],
+            tibia::SpriteData::sign[5],
+
+            tibia::SpriteData::signTall[0],
+            tibia::SpriteData::signTall[1],
+
+            tibia::SpriteData::chalkboard[0],
+            tibia::SpriteData::chalkboard[1],
+
             tibia::SpriteData::locker[0],
             tibia::SpriteData::locker[1],
             tibia::SpriteData::locker[2],
@@ -700,6 +878,18 @@ namespace tibia
             tibia::SpriteData::lever[0],
             tibia::SpriteData::lever[1],
 
+            tibia::SpriteData::doorVertical[0],
+            tibia::SpriteData::doorVertical[1],
+
+            tibia::SpriteData::doorHorizontal[0],
+            tibia::SpriteData::doorHorizontal[1],
+
+            tibia::SpriteData::doorLockedVertical[0],
+            tibia::SpriteData::doorLockedVertical[1],
+
+            tibia::SpriteData::doorLockedHorizontal[0],
+            tibia::SpriteData::doorLockedHorizontal[1],
+
             tibia::SpriteData::bedVertical[0],
             tibia::SpriteData::bedVertical[1],
             tibia::SpriteData::bedVertical[2],
@@ -710,15 +900,23 @@ namespace tibia
             tibia::SpriteData::bedHorizontal[2],
             tibia::SpriteData::bedHorizontal[3],
 
+            tibia::SpriteData::stretcherVertical[0],
+            tibia::SpriteData::stretcherVertical[1],
+            tibia::SpriteData::stretcherVertical[2],
+            tibia::SpriteData::stretcherVertical[3],
+
+            tibia::SpriteData::stretcherHorizontal[0],
+            tibia::SpriteData::stretcherHorizontal[1],
+            tibia::SpriteData::stretcherHorizontal[2],
+            tibia::SpriteData::stretcherHorizontal[3],
+
             tibia::SpriteData::ladder,
             tibia::SpriteData::ropeUp,
 
             tibia::SpriteData::sewerGrate,
 
             tibia::SpriteData::digHole[0],
-            tibia::SpriteData::digHole[1],
             tibia::SpriteData::digHoleIce[0],
-            tibia::SpriteData::digHoleIce[1],
 
             tibia::SpriteData::bushBlueberry
         };
@@ -732,6 +930,7 @@ namespace tibia
             286, 290,
             315, // 5 sprites
             388, 455, 460, 486, 562, 703, 707,
+            553, 3303, 3307, // doors
             566, 570, 576, 580, 584, 588,
             1140, 1144, 1152, 1160, 1164, 1168, 1172, 1176, 1180, 1224,
             1602, 1610, 1614, 1618, 1622, 1630, 1634, 1651, 1669, 1676, 1680, 1684, 1688, 1692,
@@ -756,6 +955,7 @@ namespace tibia
             178, 182, 192,
             376,
             609,
+            909, 918,
             2497,
             2969,
             3030, 3032, 3034
@@ -775,8 +975,16 @@ namespace tibia
         // fix drawing order of objects on walls
         std::vector<int> fixDrawOrderObjects =
         {
-            16, // brick wall arch
+            1663, // wood arch
             2867, 2868, 2869, 2870, 2871, 2872 // wall inset torches
+        };
+
+        std::vector<int> drawLastObjects =
+        {
+            16, // brick arch
+            553, 558, // opened doors
+            1659, 1665, // wood arch
+            3299, 3307 // opened locked doors
         };
 
         std::vector<int> animatedObjects =
@@ -898,6 +1106,17 @@ namespace tibia
         {3271, 3275, 3279},
         {3322, 3326},
         {3380, 3381}
+    };
+
+    std::vector<std::vector<int>> decayObjectsList =
+    {
+        {443, 446, 449, 451},
+        {444, 447, 450, 451},
+        {745, 746, 747},
+        {748, 749, 750},
+        {1489, 1491, 1493},
+        {1490, 1492, 1494},
+        {3271}, {3275}, {3279}
     };
 
 } // tibia

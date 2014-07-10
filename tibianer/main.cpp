@@ -24,13 +24,16 @@
 
 #include "resource.h"
 
+tibia::Game game;
+
 std::string gameTitle = "Tibianer";
 
-std::string fileCfgConfig   = "cfg/config.cfg";
-std::string fileDataSprites = "data/sprites.ini";
-std::string fileDataNames   = "data/names.txt";
+std::string fileCfgConfig = "cfg/config.cfg";
+std::string fileDataNames = "data/names.txt";
 
-sf::Uint32 windowStyle = sf::Style::Titlebar | sf::Style::Close;
+sf::RenderWindow mainWindow;
+
+sf::Uint32 windowStyle = sf::Style::Titlebar | sf::Style::Close | sf::Style::Resize;
 
 unsigned int windowWidth  = 640;
 unsigned int windowHeight = 480;
@@ -44,6 +47,8 @@ bool mouseUseDefaultCursor = true;
 float zoomLevel  = 1;
 float zoomFactor = 0.4;
 
+std::string mapFile = "test.tmx";
+
 bool loadConfig()
 {
     if (fileExists(fileCfgConfig) == false)
@@ -54,34 +59,38 @@ bool loadConfig()
     boost::property_tree::ptree pt;
     boost::property_tree::ini_parser::read_ini(fileCfgConfig, pt);
 
-    windowIsFullscreen   = pt.get<bool>("Window.Fullscreen", windowIsFullscreen);
+    windowIsFullscreen = pt.get<bool>("Window.Fullscreen", windowIsFullscreen);
+
     windowFrameRateLimit = pt.get<unsigned int>("Window.FrameRateLimit", windowFrameRateLimit);
 
     mouseUseDefaultCursor = pt.get<bool>("Mouse.UseDefaultCursor", mouseUseDefaultCursor);
 
+    mapFile = pt.get<std::string>("Map.File", mapFile);
+
     return true;
 }
 
-int main()
+void doMainWindowFullScreen()
 {
-    std::cout << "Loading config" << std::endl;
-    if (loadConfig() == false)
+    mainWindow.setSize(sf::Vector2u(sf::VideoMode::getDesktopMode().width, sf::VideoMode::getDesktopMode().height));
+    mainWindow.setPosition(sf::Vector2i(0, 0));
+}
+
+void createMainWindow(bool fullscreen)
+{
+    sf::Uint32 tempStyle = windowStyle;
+
+    if (fullscreen == true)
     {
-        std::cout << "Error: Failed to load config" << std::endl;
+        tempStyle = sf::Style::None;
     }
 
-    std::cout << "Initializing random number seed" << std::endl;
-    std::srand(std::time(0));
+    mainWindow.create(sf::VideoMode(windowWidth, windowHeight), gameTitle, tempStyle);
 
-    std::cout << "Creating main window" << std::endl;
-
-    if (windowIsFullscreen == true)
+    if (fullscreen == true)
     {
-        windowStyle |= sf::Style::Fullscreen;
+        doMainWindowFullScreen();
     }
-
-    sf::RenderWindow mainWindow;
-    mainWindow.create(sf::VideoMode(windowWidth, windowHeight), gameTitle, windowStyle);
 
     sf::Image windowIcon;
     if (windowIcon.loadFromFile("images/icon.png") == true)
@@ -98,8 +107,52 @@ int main()
     {
         mainWindow.setMouseCursorVisible(false);
     }
+}
 
-    tibia::Game game;
+bool doSaveScreenshot()
+{
+    sf::Image screenshot = mainWindow.capture();
+
+    std::stringstream screenshotName;
+
+    for (unsigned int i = 0; i < sizeof(unsigned int); i++)
+    {
+        screenshotName.str("");
+
+        screenshotName << "screenshots/screenshot" << i << ".png";
+
+        if (fileExists(screenshotName.str()) == false)
+        {
+            return screenshot.saveToFile(screenshotName.str());
+        }
+    }
+
+    return false;
+}
+
+int main()
+{
+    unsigned int maximumTextureSize = sf::Texture::getMaximumSize();
+
+    std::cout << "Your graphics card supports a maximum texture size of " << maximumTextureSize << std::endl;
+
+    if (maximumTextureSize < tibia::TEXTURE_SIZE_MAX)
+    {
+        std::cout << "Error: This game requires at least " << tibia::TEXTURE_SIZE_MAX << " texture size" << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    std::cout << "Loading config" << std::endl;
+    if (loadConfig() == false)
+    {
+        std::cout << "Error: Failed to load config" << std::endl;
+    }
+
+    std::cout << "Initializing random number seed" << std::endl;
+    std::srand(std::time(0));
+
+    std::cout << "Creating main window" << std::endl;
+    createMainWindow(false);
 
     std::cout << "Loading fonts" << std::endl;
     if (game.loadFonts() == false)
@@ -108,52 +161,36 @@ int main()
         return EXIT_FAILURE;
     }
 
-    sf::Texture loadingTexture;
-    sf::Sprite loadingSprite;
-
-    bool useLoadingTexture = false;
-
-    if (loadingTexture.loadFromFile("images/tibia.png") == true)
+    std::cout << "Loading bitmap fonts" << std::endl;
+    if (game.loadBitmapFonts() == false)
     {
-        useLoadingTexture = true;
-
-        loadingSprite.setTexture(loadingTexture);
-
-        loadingSprite.setPosition
-        (
-            0,
-            (windowHeight / 2) - (loadingSprite.getLocalBounds().height / 2)
-        );
+        std::cout << "Error: Failed to load bitmap fonts" << std::endl;
+        return EXIT_FAILURE;
     }
 
-    sf::Text titleText(gameTitle, *game.getFontDefault(), tibia::FontSizes::title);
-    titleText.setColor(tibia::Colors::yellow);
-    titleText.setPosition
-    (
-        (windowWidth  / 2) - (titleText.getLocalBounds().width  / 2),
-        (windowHeight / 4) - (titleText.getLocalBounds().height / 2)
-    );
+    std::cout << "Drawing loading screen" << std::endl;
 
-    sf::Text loadingText("Loading...", *game.getFontDefault(), tibia::FontSizes::default);
-    loadingText.setColor(tibia::Colors::white);
+    sf::Texture loadingTexture;
+    if (loadingTexture.loadFromFile("images/tibia.png") == false)
+    {
+        std::cout << "Error: Failed to load loading texture" << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    sf::Sprite loadingSprite;
+    loadingSprite.setTexture(loadingTexture);
+
+    tibia::BitmapFontText loadingText;
+    loadingText.setText(game.getBitmapFontDefault(), "Loading...", tibia::Colors::textWhite, true);
     loadingText.setPosition
     (
-        (windowWidth  / 2)                  - (loadingText.getLocalBounds().width  / 2),
-        (windowHeight - (windowHeight / 4)) - (loadingText.getLocalBounds().height / 2)
+        mainWindow.getSize().x / 2,
+        mainWindow.getSize().y - (loadingText.getVertexArray()->getBounds().height + 4)
     );
 
     mainWindow.clear(tibia::Colors::black);
-
-    if (useLoadingTexture == true)
-    {
-        mainWindow.draw(loadingSprite);
-    }
-    else
-    {
-        mainWindow.draw(titleText);
-        mainWindow.draw(loadingText);
-    }
-
+    mainWindow.draw(loadingSprite);
+    mainWindow.draw(loadingText);
     mainWindow.display();
 
     std::cout << "Creating game windows" << std::endl;
@@ -174,7 +211,11 @@ int main()
     game.loadSpriteFlags();
 
     std::cout << "Loading map" << std::endl;
-    if (game.loadMap("maps/test.tmx") == false)
+
+    std::stringstream mapFilePath;
+    mapFilePath << "maps/" << mapFile;
+
+    if (game.loadMap(mapFilePath.str()) == false)
     {
         std::cout << "Error: Failed to load map" << std::endl;
         return EXIT_FAILURE;
@@ -187,18 +228,23 @@ int main()
     std::cout << "Creating player" << std::endl;
     game.createPlayer();
 
+    std::cout << "Updating main window" << std::endl;
+    createMainWindow(windowIsFullscreen);
+
     std::cout << "Starting main loop" << std::endl;
 
     sf::Clock* clockGame                    = game.getClock();
     sf::Clock* clockAnimatedWaterAndObjects = game.getClockAnimatedWaterAndObjects();
 
+    bool doEnterGameAnimation = true;
+
     while (mainWindow.isOpen())
     {
-        sf::Time elapsedTime = clockGame->getElapsedTime();
+        sf::Time timeGame = clockGame->getElapsedTime();
 
         sf::Time timeAnimatedWaterAndObjects = clockAnimatedWaterAndObjects->getElapsedTime();
 
-        if (timeAnimatedWaterAndObjects.asSeconds() >= 1.0)
+        if (timeAnimatedWaterAndObjects.asSeconds() >= tibia::AnimatedObjects::time)
         {
             game.doAnimatedWater();
             game.doAnimatedObjects();
@@ -213,9 +259,23 @@ int main()
         background.setPosition(0, 0);
         mainWindow.draw(background);
 
-        game.updateMouseTile(&mainWindow);
+        game.updateMouseWindowPosition(&mainWindow);
+        game.updateMouseTile();
+
+        game.handleKeyboardInput();
+        game.handleMouseInput();
 
         game.drawGameWindow(&mainWindow);
+
+        game.drawMiniMapWindow(&mainWindow);
+        game.updateMiniMapWindow();
+
+        if (doEnterGameAnimation == true)
+        {
+            game.spawnAnimation(game.getPlayer()->getTilePosition(), game.getPlayer()->getZ(), tibia::Animations::spellBlue);
+
+            doEnterGameAnimation = false;
+        }
 
         if (mouseUseDefaultCursor == false)
         {
@@ -230,6 +290,41 @@ int main()
             if (event.type == sf::Event::Closed)
             {
                 mainWindow.close();
+            }
+
+            if (event.type == sf::Event::KeyPressed)
+            {
+                // quit
+                if (event.key.code == sf::Keyboard::Escape)
+                {
+                    mainWindow.close();
+                }
+                // toggle fullscreen
+                else if (event.key.code == sf::Keyboard::F11 || (event.key.alt == true && event.key.code == sf::Keyboard::Return))
+                {
+                    toggleBool(windowIsFullscreen);
+
+                    createMainWindow(windowIsFullscreen);
+                }
+                // take screenshot
+                else if (event.key.code == sf::Keyboard::Key::F12)
+                {
+                    if (doSaveScreenshot() == true)
+                    {
+                        std::cout << "Saved screenshot successfully" << std::endl;
+                    }
+                    else
+                    {
+                        std::cout << "Save screenshot failed" << std::endl;
+                    }
+                }
+
+                game.handleKeyboardEvent(event);
+            }
+
+            if (event.type == sf::Event::MouseButtonPressed)
+            {
+                game.handleMouseEvent(event);
             }
 
             if (event.type == sf::Event::MouseWheelMoved)
@@ -248,21 +343,6 @@ int main()
 
                     gameView->setSize(sf::Vector2f(tibia::TILES_WIDTH * zoomLevel, tibia::TILES_HEIGHT * zoomLevel));
                 }
-            }
-
-            if (event.type == sf::Event::MouseButtonPressed)
-            {
-                game.handleMouseInput(event);
-            }
-
-            if (event.type == sf::Event::KeyPressed)
-            {
-                if (event.key.code == sf::Keyboard::Escape)
-                {
-                    mainWindow.close();
-                }
-
-                game.handleKeyboardInput(event);
             }
         }
     }

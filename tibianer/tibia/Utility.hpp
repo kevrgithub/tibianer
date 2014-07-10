@@ -5,6 +5,8 @@
 
 #include <SFML/Graphics.hpp>
 
+#include <Thor/Vectors/VectorAlgebra2D.hpp>
+
 #include "tibia/Tibia.hpp"
 
 namespace tibia
@@ -32,14 +34,40 @@ namespace tibia
             return x + (y * tibia::MAP_SIZE);
         }
 
+        bool isTileNumberOutOfBounds(int tileNumber)
+        {
+            if (tileNumber < 0 || tileNumber > tibia::TILE_NUMBER_MAX)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        bool isTilePositionOutOfBounds(const sf::Vector2u& tilePosition)
+        {
+            if
+            (
+                tilePosition.x < 0 ||
+                tilePosition.y < 0 ||
+                tilePosition.x > tibia::MAP_TILE_XY_MAX ||
+                tilePosition.y > tibia::MAP_TILE_XY_MAX
+            )
+            {
+                return true;
+            }
+
+            return false;
+        }
+
         int calculateTileDistance(int x1, int y1, int x2, int y2)
         {
             return std::max(std::abs(x1 - x2), std::abs(y1 - y2)) / tibia::TILE_SIZE;
         }
 
-        int getSpriteFlags(int id)
+        unsigned int getSpriteFlags(int id)
         {
-            int flags = 0;
+            unsigned int flags = 0;
 
             for (auto spriteId : tibia::SpriteData::solid)
             {
@@ -132,6 +160,15 @@ namespace tibia
                 }
             }
 
+            for (auto spriteId : tibia::SpriteData::drawLastObjects)
+            {
+                if (id == spriteId)
+                {
+                    flags |= tibia::SpriteFlags::drawLast;
+                    break;
+                }
+            }
+
             return flags;
         }
 
@@ -161,9 +198,9 @@ namespace tibia
             return direction;
         }
 
-    sf::Vector2u getVectorByDirection(int direction)
+    sf::Vector2i getVectorByDirection(int direction)
     {
-        sf::Vector2u vec(0, 0);
+        sf::Vector2i vec(0, 0);
 
         switch (direction)
         {
@@ -205,6 +242,55 @@ namespace tibia
         }
 
         return vec;
+    }
+
+    int getDirectionByVector(sf::Vector2f vec)
+    {
+        int direction = tibia::Directions::null;
+
+        if (vec.x == 0 && vec.y < 0)
+        {
+            direction = tibia::Directions::up;
+        }
+        else if (vec.x > 0 && vec.y == 0)
+        {
+            direction = tibia::Directions::right;
+        }
+        else if (vec.x == 0 && vec.y > 0)
+        {
+            direction = tibia::Directions::down;
+        }
+        else if (vec.x < 0 && vec.y == 0)
+        {
+            direction = tibia::Directions::left;
+        }
+        else if (vec.x < 0 && vec.y < 0)
+        {
+            direction = tibia::Directions::upLeft;
+        }
+        else if (vec.x > 0 && vec.y < 0)
+        {
+            direction = tibia::Directions::upRight;
+        }
+        else if (vec.x < 0 && vec.y > 0)
+        {
+            direction = tibia::Directions::downLeft;
+        }
+        else if (vec.x > 0 && vec.y > 0)
+        {
+            direction = tibia::Directions::downRight;
+        }
+
+        return direction;
+    }
+
+    sf::Vector2f getNormalByVectors(sf::Vector2f origin, sf::Vector2f destination)
+    {
+        sf::Vector2f normal = destination - origin;
+
+        normal = normal / thor::length(normal);
+
+        return normal;
     }
 
     } // utility

@@ -20,11 +20,13 @@ public:
         m_vertexArray.resize(m_numGlyphs * 4);
     }
 
-    bool load(const std::string& texture, sf::Vector2u glyphSize, std::vector<int>* glyphWidths)
+    bool load(const std::string& texture, sf::Vector2u glyphSize, std::vector<int>* glyphWidths, int glpyhSpace = 0)
     {
         m_glyphSize = glyphSize;
 
         m_glyphWidths = *glyphWidths;
+
+        m_glpyhSpace = glpyhSpace;
 
         if (m_texture.loadFromFile(texture) == false)
         {
@@ -72,6 +74,11 @@ public:
         return &m_glyphWidths;
     }
 
+    int getGlpyhSpace()
+    {
+        return m_glpyhSpace;
+    }
+
 private:
 
     sf::VertexArray m_vertexArray;
@@ -80,6 +87,8 @@ private:
     std::vector<int> m_glyphWidths;
 
     int m_numGlyphs = 96;
+
+    int m_glpyhSpace;
 };
 
 } // tibia
