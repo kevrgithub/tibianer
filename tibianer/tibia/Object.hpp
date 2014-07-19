@@ -17,6 +17,20 @@ class Object : public tibia::Thing
 
 public:
 
+    struct ObjectProperties_t
+    {
+        std::string signName = "sign";
+        std::string signText;
+
+        unsigned int teleporterX;
+        unsigned int teleporterY;
+        unsigned int teleporterZ;
+
+        std::string changeMapName;
+    };
+
+    ObjectProperties_t properties;
+
     Object::Object(int tileX, int tileY, int z, int id)
     {
         setTileCoords(tileX, tileY);
@@ -24,10 +38,6 @@ public:
         setZ(z);
 
         setId(id);
-
-        setIsOffset();
-
-        setIsAnimated();
     }
 
     void setIsOffset()
@@ -43,11 +53,8 @@ public:
         {
             m_sprite[0].setPosition
             (
-                sf::Vector2f
-                (
-                    getPosition().x - tibia::THING_DRAW_OFFSET,
-                    getPosition().y - tibia::THING_DRAW_OFFSET
-                )
+                -tibia::THING_DRAW_OFFSET,
+                -tibia::THING_DRAW_OFFSET
             );
         }
     }
@@ -56,19 +63,15 @@ public:
     {
         m_isAnimated = false;
 
-        for (auto spriteId : tibia::SpriteData::animatedObjects)
+        if (m_flags & tibia::SpriteFlags::animated)
         {
-            if (spriteId == m_id)
-            {
-                m_isAnimated = true;
-                break;
-            }
+            m_isAnimated = true;
         }
     }
 
     void setExtraSprites()
     {
-        for (unsigned int i = 1; i < 8 - 1; ++i)
+        for (unsigned int i = 1; i < tibia::NUM_OBJECT_SPRITES - 1; ++i)
         {
             m_shouldDrawExtraSprite[i] = false;
         }
@@ -511,10 +514,10 @@ public:
             m_shouldDrawExtraSprite[1] = true;
         }
 
-        // wall torch vertical
-        else if (m_id == 2973)
+        // mountain ramps
+        else if (m_id == 2097 || m_id == 2098 || m_id == 2102 || m_id == 2103)
         {
-            m_sprite[1].setId(m_id + 1);
+            m_sprite[1].setId(m_id - 2);
 
             m_sprite[1].setPosition
             (
@@ -590,6 +593,112 @@ public:
                 (
                     m_sprite[0].getPosition().x - tibia::TILE_SIZE,
                     m_sprite[0].getPosition().y
+                )
+            );
+
+            m_shouldDrawExtraSprite[1] = true;
+
+            return;
+        }
+
+        // torch hanging horizontal
+        if (m_id == 2968)
+        {
+            m_sprite[1].setId(m_id + 1);
+
+            m_sprite[1].setPosition
+            (
+                sf::Vector2f
+                (
+                    m_sprite[0].getPosition().x + tibia::TILE_SIZE,
+                    m_sprite[0].getPosition().y
+                )
+            );
+
+            m_shouldDrawExtraSprite[1] = true;
+
+            return;
+        }
+        else if (m_id == 2970)
+        {
+            m_sprite[1].setId(m_id - 1);
+
+            m_sprite[1].setPosition
+            (
+                sf::Vector2f
+                (
+                    m_sprite[0].getPosition().x + tibia::TILE_SIZE,
+                    m_sprite[0].getPosition().y
+                )
+            );
+
+            m_shouldDrawExtraSprite[1] = true;
+
+            return;
+        }
+        else if (m_id == 2971)
+        {
+            m_sprite[1].setId(m_id - 2);
+
+            m_sprite[1].setPosition
+            (
+                sf::Vector2f
+                (
+                    m_sprite[0].getPosition().x + tibia::TILE_SIZE,
+                    m_sprite[0].getPosition().y
+                )
+            );
+
+            m_shouldDrawExtraSprite[1] = true;
+
+            return;
+        }
+
+        // torch hanging vertical
+        if (m_id == 2972)
+        {
+            m_sprite[1].setId(m_id + 1);
+
+            m_sprite[1].setPosition
+            (
+                sf::Vector2f
+                (
+                    m_sprite[0].getPosition().x,
+                    m_sprite[0].getPosition().y + tibia::TILE_SIZE
+                )
+            );
+
+            m_shouldDrawExtraSprite[1] = true;
+
+            return;
+        }
+        else if (m_id == 2974)
+        {
+            m_sprite[1].setId(m_id - 1);
+
+            m_sprite[1].setPosition
+            (
+                sf::Vector2f
+                (
+                    m_sprite[0].getPosition().x,
+                    m_sprite[0].getPosition().y + tibia::TILE_SIZE
+                )
+            );
+
+            m_shouldDrawExtraSprite[1] = true;
+
+            return;
+        }
+        else if (m_id == 2975)
+        {
+            m_sprite[1].setId(m_id - 2);
+
+            m_sprite[1].setPosition
+            (
+                sf::Vector2f
+                (
+                    m_sprite[0].getPosition().x,
+                    m_sprite[0].getPosition().y + tibia::TILE_SIZE
                 )
             );
 
@@ -876,12 +985,21 @@ public:
 
         m_sprite[0].setId(m_id);
 
-        m_flags = tibia::spriteFlags[m_id];
+        m_flags = tibia::umapSpriteFlags[m_id];
 
         if (m_flags & tibia::SpriteFlags::drawLast)
         {
             setDrawIndex(1);
         }
+
+        if (m_flags & tibia::SpriteFlags::transparent)
+        {
+            m_sprite[0].setColor(tibia::Colors::transparent);
+        }
+
+        setIsAnimated();
+
+        setIsOffset();
 
         setExtraSprites();
     }
@@ -947,47 +1065,11 @@ public:
     {
         updateTileCoords();
 
-        setPosition(getTileX(), getTileY());
-    }
+        int drawOffset = getDrawOffset() * tibia::THING_DRAW_OFFSET;
 
-    void setSignText(const std::string& text)
-    {
-        m_signText = text;
-    }
+        setPosition(getTileX() - drawOffset, getTileY() - drawOffset);
 
-    std::string getSignText()
-    {
-        return m_signText;
-    }
-
-    unsigned int getTeleporterX()
-    {
-        return m_teleporterX;
-    }
-
-    void setTeleporterX(unsigned int x)
-    {
-        m_teleporterX = x;
-    }
-
-    unsigned int getTeleporterY()
-    {
-        return m_teleporterY;
-    }
-
-    void setTeleporterY(unsigned int y)
-    {
-        m_teleporterY = y;
-    }
-
-    unsigned int getTeleporterZ()
-    {
-        return m_teleporterZ;
-    }
-
-    void setTeleporterZ(unsigned int z)
-    {
-        m_teleporterZ = z;
+        //setPosition(getTileX(), getTileY());
     }
 
 private:
@@ -996,9 +1078,9 @@ private:
 
     int m_type;
 
-    tibia::Sprite m_sprite[8];
+    tibia::Sprite m_sprite[tibia::NUM_OBJECT_SPRITES];
 
-    bool m_shouldDrawExtraSprite[8];
+    bool m_shouldDrawExtraSprite[tibia::NUM_OBJECT_SPRITES];
 
     unsigned int m_flags;
 
@@ -1010,19 +1092,13 @@ private:
 
     sf::Clock m_clockDecay;
 
-    std::string m_signText;
-
-    unsigned int m_teleporterX;
-    unsigned int m_teleporterY;
-    unsigned int m_teleporterZ;
-
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const
     {
         states.transform *= getTransform();
 
         target.draw(m_sprite[0], states);
 
-        for (unsigned int i = 1; i < 8 - 1; ++i)
+        for (unsigned int i = 1; i < tibia::NUM_OBJECT_SPRITES - 1; ++i)
         {
             if (m_shouldDrawExtraSprite[i] == true)
             {

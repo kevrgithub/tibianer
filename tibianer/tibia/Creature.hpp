@@ -22,16 +22,20 @@ class Creature : public tibia::Thing
 
 public:
 
-    Creature::Creature(int x, int y, int z)
+    Creature::Creature(int tileX, int tileY, int z)
     {
-        setCoords(x, y);
-        setPosition(sf::Vector2f(getTileX(), getTileY()));
+        setTileCoords(tileX, tileY);
+        setPosition(sf::Vector2f(tileX, tileY));
 
         setZ(z);
 
         m_tileOffset = tibia::THING_DRAW_OFFSET;
 
         m_isPlayer = false;
+
+        m_name = tibia::CREATURE_NAME_DEFAULT;
+
+        m_hasCustomName = false;
 
         m_direction = tibia::Directions::down;
 
@@ -48,8 +52,6 @@ public:
 
         m_mp    = 200;
         m_mpMax = 200;
-
-        m_isSitting = false;
 
         m_isDead     = false;
         m_hasDecayed = false;
@@ -68,39 +70,28 @@ public:
 
     void setPropertiesByType()
     {
+        if (m_hasCustomName == false)
+        {
+            m_name = tibia::umapCreatureNames[m_type];
+        }
+
         if (m_type != tibia::CreatureTypes::human)
         {
             m_hasOutfit = false;
         }
 
-        switch (m_type)
+        m_size = umapCreatureSizes[m_type];
+
+        if (m_size == tibia::CreatureSizes::large)
         {
-            case tibia::CreatureTypes::demon:
-                m_size        = tibia::CreatureSizes::large;
-                m_spritesList = tibia::CreatureSprites::demon;
-                break;
-
-            case tibia::CreatureTypes::gameMaster:
-                m_spritesList = tibia::CreatureSprites::gameMaster;
-                break;
-
-            case tibia::CreatureTypes::hero:
-                m_spritesList = tibia::CreatureSprites::hero;
-                break;
-
-            case tibia::CreatureTypes::skeleton:
-                m_spritesList = tibia::CreatureSprites::skeleton;
-                break;
-
-            case tibia::CreatureTypes::witch:
-                m_size        = tibia::CreatureSizes::medium;
-                m_spritesList = tibia::CreatureSprites::witch;
-                break;
-
-            case tibia::CreatureTypes::zombie:
-                m_spritesList = tibia::CreatureSprites::zombie;
-                break;
+            m_tileOffset = 0;
         }
+        else
+        {
+            m_tileOffset = tibia::THING_DRAW_OFFSET;
+        }
+
+        m_spritesList = umapCreatureSprites[m_type];
     }
 
     void updateSprite()
@@ -238,19 +229,16 @@ public:
     {
         updateTileCoords();
 
-        int tileOffset = m_tileOffset;
+        int drawOffset = getDrawOffset() * tibia::THING_DRAW_OFFSET;
 
-        if (m_isSitting == true)
+        if (m_isDead == false)
         {
-            tileOffset *= 2;
+            drawOffset += m_tileOffset;
         }
 
-        if (m_isDead == true || m_size == tibia::CreatureSizes::large)
-        {
-            tileOffset = 0;
-        }
+        setPosition(getTileX() - drawOffset, getTileY() - drawOffset);
 
-        setPosition(getTileX() - tileOffset, getTileY() - tileOffset);
+        //setPosition(getTileX(), getTileY());
 
         updateSprite();
 
@@ -363,16 +351,6 @@ public:
         m_isPlayer = b;
     }
 
-    bool isSitting()
-    {
-        return m_isSitting;
-    }
-
-    void setIsSitting(bool b)
-    {
-        m_isSitting = b;
-    }
-
     bool isSleeping()
     {
         return m_isSleeping;
@@ -393,6 +371,16 @@ public:
         m_name = name;
     }
 
+    bool hasCustomName()
+    {
+        return m_hasCustomName;
+    }
+
+    void setHasCustomName(bool b)
+    {
+        m_hasCustomName = b;
+    }
+
     int getType()
     {
         return m_type;
@@ -401,6 +389,8 @@ public:
     void setType(int type)
     {
         m_type = type;
+
+        setPropertiesByType();
     }
 
     int getSize()
@@ -594,13 +584,13 @@ private:
 
     bool m_isPlayer;
 
-    bool m_isSitting;
-
     int m_type;
 
     int m_size;
 
     std::string m_name;
+
+    bool m_hasCustomName;
 
     int m_direction;
 

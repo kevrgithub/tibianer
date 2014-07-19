@@ -105,11 +105,11 @@ namespace tibia
                 }
             }
 
-            for (auto spriteId : tibia::SpriteData::chairs)
+            for (auto spriteId : tibia::SpriteData::hasHeight)
             {
                 if (id == spriteId)
                 {
-                    flags |= tibia::SpriteFlags::chair;
+                    flags |= tibia::SpriteFlags::hasHeight;
                     break;
                 }
             }
@@ -123,17 +123,15 @@ namespace tibia
                 }
             }
 
-            if (id == tibia::SpriteData::ladder)
+            for (auto spriteId : tibia::SpriteData::moveAbove)
             {
-                flags |= tibia::SpriteFlags::ladder;
+                if (id == spriteId)
+                {
+                    flags |= tibia::SpriteFlags::moveAbove;
+                }
             }
 
-            if (id == tibia::SpriteData::stairs)
-            {
-                flags |= tibia::SpriteFlags::moveAbove;
-            }
-
-            for (auto spriteId : tibia::SpriteData::holes)
+            for (auto spriteId : tibia::SpriteData::moveBelow)
             {
                 if (id == spriteId)
                 {
@@ -142,11 +140,11 @@ namespace tibia
                 }
             }
 
-            for (auto spriteId : tibia::SpriteData::lights)
+            for (auto spriteId : tibia::SpriteData::lightSource)
             {
                 if (id == spriteId)
                 {
-                    flags |= tibia::SpriteFlags::light;
+                    flags |= tibia::SpriteFlags::lightSource;
                     break;
                 }
             }
@@ -165,6 +163,42 @@ namespace tibia
                 if (id == spriteId)
                 {
                     flags |= tibia::SpriteFlags::drawLast;
+                    break;
+                }
+            }
+
+            for (auto spriteId : tibia::SpriteData::transparent)
+            {
+                if (id == spriteId)
+                {
+                    flags |= tibia::SpriteFlags::transparent;
+                    break;
+                }
+            }
+
+            for (auto spriteId : tibia::SpriteData::animatedObjects)
+            {
+                if (id == spriteId)
+                {
+                    flags |= tibia::SpriteFlags::animated;
+                    break;
+                }
+            }
+
+            for (auto spriteId : tibia::SpriteData::ignoreHeightObjects)
+            {
+                if (id == spriteId)
+                {
+                    flags |= tibia::SpriteFlags::ignoreHeight;
+                    break;
+                }
+            }
+
+            for (auto spriteId : tibia::SpriteData::fixDrawOrderObjects)
+            {
+                if (id == spriteId)
+                {
+                    flags |= tibia::SpriteFlags::fixDrawOrder;
                     break;
                 }
             }

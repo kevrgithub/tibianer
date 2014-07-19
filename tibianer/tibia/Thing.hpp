@@ -21,6 +21,8 @@ public:
     {
         m_drawIndex = 0;
 
+        m_drawOffset = 0;
+
         m_isReadyForErase = false;
     }
 
@@ -130,6 +132,16 @@ public:
         return m_drawIndex;
     }
 
+    void setDrawOffset(int drawOffset)
+    {
+        m_drawOffset = drawOffset;
+    }
+
+    int getDrawOffset()
+    {
+        return m_drawOffset;
+    }
+
     void setIsReadyForErase(bool b)
     {
         m_isReadyForErase = b;
@@ -152,6 +164,8 @@ private:
     int m_z;
 
     int m_drawIndex;
+
+    int m_drawOffset;
 
     bool m_isReadyForErase;
 };

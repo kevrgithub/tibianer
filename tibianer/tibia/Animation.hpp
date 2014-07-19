@@ -30,8 +30,6 @@ public:
 
         setFrameTime(tibia::AnimationTimes::default);
 
-        m_numRepeat = 0;
-
         m_clock.restart();
     }
 
@@ -40,11 +38,34 @@ public:
         m_id = id;
 
         m_sprite.setId(m_id);
+
+        m_flags = tibia::umapSpriteFlags[m_id];
+
+        m_numRepeat = 0;
+
+        if
+        (
+            id == tibia::Animations::fire[0]        ||
+            id == tibia::Animations::electricity[0]
+        )
+        {
+            setNumRepeat(1);
+        }
     }
 
     int getId()
     {
         return m_id;
+    }
+
+    unsigned int getFlags()
+    {
+        return m_flags;
+    }
+
+    void setFlags(unsigned int flags)
+    {
+        m_flags = flags;
     }
 
     void setNumFrames(int numFrames)
@@ -125,6 +146,8 @@ public:
 private:
 
     int m_id;
+
+    unsigned int m_flags;
 
     tibia::Sprite m_sprite;
 

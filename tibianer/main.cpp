@@ -28,8 +28,7 @@ tibia::Game game;
 
 std::string gameTitle = "Tibianer";
 
-std::string fileCfgConfig = "cfg/config.cfg";
-std::string fileDataNames = "data/names.txt";
+std::string configFile = "cfg/config.cfg";
 
 sf::RenderWindow mainWindow;
 
@@ -37,6 +36,8 @@ sf::Uint32 windowStyle = sf::Style::Titlebar | sf::Style::Close | sf::Style::Res
 
 unsigned int windowWidth  = 640;
 unsigned int windowHeight = 480;
+
+bool windowIsFocused = true;
 
 bool windowIsFullscreen = false;
 
@@ -51,13 +52,13 @@ std::string mapFile = "test.tmx";
 
 bool loadConfig()
 {
-    if (fileExists(fileCfgConfig) == false)
+    if (fileExists(configFile) == false)
     {
         return false;
     }
 
     boost::property_tree::ptree pt;
-    boost::property_tree::ini_parser::read_ini(fileCfgConfig, pt);
+    boost::property_tree::ini_parser::read_ini(configFile, pt);
 
     windowIsFullscreen = pt.get<bool>("Window.Fullscreen", windowIsFullscreen);
 
@@ -133,11 +134,9 @@ bool doSaveScreenshot()
 int main()
 {
     unsigned int maximumTextureSize = sf::Texture::getMaximumSize();
-
-    std::cout << "Your graphics card supports a maximum texture size of " << maximumTextureSize << std::endl;
-
     if (maximumTextureSize < tibia::TEXTURE_SIZE_MAX)
     {
+        std::cout << "Your computer supports a maximum texture size of " << maximumTextureSize << std::endl;
         std::cout << "Error: This game requires at least " << tibia::TEXTURE_SIZE_MAX << " texture size" << std::endl;
         return EXIT_FAILURE;
     }
@@ -171,7 +170,7 @@ int main()
     std::cout << "Drawing loading screen" << std::endl;
 
     sf::Texture loadingTexture;
-    if (loadingTexture.loadFromFile("images/tibia.png") == false)
+    if (loadingTexture.loadFromFile("images/loading.png") == false)
     {
         std::cout << "Error: Failed to load loading texture" << std::endl;
         return EXIT_FAILURE;
@@ -221,8 +220,7 @@ int main()
         return EXIT_FAILURE;
     }
 
-    std::cout << "Loading game window and view" << std::endl;
-    sf::RenderTexture* gameWindow = game.getGameWindow();
+    std::cout << "Loading game view" << std::endl;
     sf::View* gameView = game.getGameWindowView();
 
     std::cout << "Creating player" << std::endl;
@@ -233,10 +231,11 @@ int main()
 
     std::cout << "Starting main loop" << std::endl;
 
-    sf::Clock* clockGame                    = game.getClock();
+    sf::Clock* clockDelta                   = game.getClockDelta();
+    sf::Clock* clockGame                    = game.getClockGame();
     sf::Clock* clockAnimatedWaterAndObjects = game.getClockAnimatedWaterAndObjects();
 
-    bool doEnterGameAnimation = true;
+    bool doEnterGame = true;
 
     while (mainWindow.isOpen())
     {
@@ -252,6 +251,13 @@ int main()
             clockAnimatedWaterAndObjects->restart();
         }
 
+        if (doEnterGame == true)
+        {
+            game.doEnterGame();
+
+            doEnterGame = false;
+        }
+
         mainWindow.clear(tibia::Colors::mainWindowColor);
 
         sf::Sprite background;
@@ -262,20 +268,18 @@ int main()
         game.updateMouseWindowPosition(&mainWindow);
         game.updateMouseTile();
 
-        game.handleKeyboardInput();
-        game.handleMouseInput();
+        if (windowIsFocused == true)
+        {
+            game.handleKeyboardInput();
+            game.handleMouseInput();
+        }
+
+        game.updateLightBrightness();
 
         game.drawGameWindow(&mainWindow);
 
         game.drawMiniMapWindow(&mainWindow);
         game.updateMiniMapWindow();
-
-        if (doEnterGameAnimation == true)
-        {
-            game.spawnAnimation(game.getPlayer()->getTilePosition(), game.getPlayer()->getZ(), tibia::Animations::spellBlue);
-
-            doEnterGameAnimation = false;
-        }
 
         if (mouseUseDefaultCursor == false)
         {
@@ -292,7 +296,16 @@ int main()
                 mainWindow.close();
             }
 
-            if (event.type == sf::Event::KeyPressed)
+            else if (event.type == sf::Event::LostFocus)
+            {
+                windowIsFocused = false;
+            }
+            else if (event.type == sf::Event::GainedFocus)
+            {
+                windowIsFocused = true;
+            }
+
+            else if (event.type == sf::Event::KeyPressed)
             {
                 // quit
                 if (event.key.code == sf::Keyboard::Escape)
@@ -322,12 +335,12 @@ int main()
                 game.handleKeyboardEvent(event);
             }
 
-            if (event.type == sf::Event::MouseButtonPressed)
+            else if (event.type == sf::Event::MouseButtonPressed)
             {
                 game.handleMouseEvent(event);
             }
 
-            if (event.type == sf::Event::MouseWheelMoved)
+            else if (event.type == sf::Event::MouseWheelMoved)
             {
                 if (event.mouseWheel.delta > 0)
                 {
@@ -345,6 +358,9 @@ int main()
                 }
             }
         }
+
+        // delta time
+        game.setTimeDelta(clockDelta->restart());
     }
 
     return EXIT_SUCCESS;

@@ -19,6 +19,7 @@
 #include "tibia/Utility.hpp"
 #include "tibia/TileMap.hpp"
 #include "tibia/Object.hpp"
+#include "tibia/Creature.hpp"
 
 namespace tibia
 {
@@ -28,8 +29,22 @@ class Map
 
 public:
 
-    tibia::TileMap tileMapTiles[5];
-    tibia::TileMap tileMapTileEdges[5];
+    struct MapProperties_t
+    {
+        std::string name   = "Unknown Map";
+        std::string author = "Unknown Author";
+
+        unsigned int playerStartX = 0;
+        unsigned int playerStartY = 0;
+        unsigned int playerStartZ = tibia::ZAxis::ground;
+
+        unsigned int timeOfDay = tibia::TimeOfDay::day;
+    };
+
+    MapProperties_t properties;
+
+    tibia::TileMap tileMapTiles[tibia::NUM_Z_LEVELS];
+    tibia::TileMap tileMapTileEdges[tibia::NUM_Z_LEVELS];
 
     bool load(const std::string& filename)
     {
@@ -37,6 +52,45 @@ public:
         doc.LoadFile(filename.c_str());
 
         tinyxml2::XMLElement* docMap = doc.FirstChildElement();
+
+        tinyxml2::XMLElement* docMapProperties = docMap->FirstChildElement("properties");
+
+        if (docMapProperties == NULL)
+        {
+            return false;
+        }
+
+        for (tinyxml2::XMLElement* docMapProperty = docMapProperties->FirstChildElement("property"); docMapProperty != NULL; docMapProperty = docMapProperty->NextSiblingElement("property"))
+        {
+            std::string docMapPropertyName = docMapProperty->Attribute("name");
+
+            if (docMapPropertyName == "name")
+            {
+                properties.name = docMapProperty->Attribute("value");
+            }
+            else if (docMapPropertyName == "author")
+            {
+                properties.author = docMapProperty->Attribute("value");
+            }
+
+            else if (docMapPropertyName == "player_start_x")
+            {
+                properties.playerStartX = docMapProperty->IntAttribute("value");
+            }
+            else if (docMapPropertyName == "player_start_y")
+            {
+                properties.playerStartY = docMapProperty->IntAttribute("value");
+            }
+            else if (docMapPropertyName == "player_start_z")
+            {
+                properties.playerStartZ = docMapProperty->IntAttribute("value");
+            }
+
+            else if (docMapPropertyName == "time_of_day")
+            {
+                properties.timeOfDay = tibia::umapTimeOfDay[docMapProperty->Attribute("value")];
+            }
+        }
 
         for (tinyxml2::XMLElement* docMapLayer = docMap->FirstChildElement("layer"); docMapLayer != NULL; docMapLayer = docMapLayer->NextSiblingElement("layer"))
         {
@@ -110,14 +164,16 @@ public:
 
             //std::cout << docMapObjectGroupName << std::endl;
 
-            std::size_t findNameWithObjects = docMapObjectGroupName.find("Objects");
+            //std::size_t findNameWithObjects = docMapObjectGroupName.find("Objects");
 
-            if (findNameWithObjects == std::string::npos)
-            {
-                continue;
-            }
+            //if (findNameWithObjects == std::string::npos)
+            //{
+                //continue;
+            //}
 
             int docMapObjectZ = tibia::ZAxis::ground;
+
+            int docMapObjectLayerType = tibia::ObjectLayerTypes::objects;
 
             tinyxml2::XMLElement* docMapObjectGroupProperties = docMapObjectGroup->FirstChildElement("properties");
 
@@ -135,6 +191,10 @@ public:
                     {
                         docMapObjectZ = docMapObjectGroupPropertyValue;
                     }
+                    else if (docMapObjectGroupPropertyName == "type")
+                    {
+                        docMapObjectLayerType = docMapObjectGroupPropertyValue;
+                    }
                 }
             }
 
@@ -149,6 +209,12 @@ public:
                 int docMapObjectTileX = docMapObject->IntAttribute("x");
                 int docMapObjectTileY = docMapObject->IntAttribute("y") - tibia::TILE_SIZE; // y-axis bug for objects in Tiled editor?
 
+                tibia::TileList* tileList = tileMap->getTileList();
+
+                int tileNumber = tibia::Utility::getTileNumberByTileCoords(sf::Vector2u(docMapObjectTileX, docMapObjectTileY));
+
+                tibia::TilePtr tile = tileList->at(tileNumber);
+
                 std::string docMapObjectType = "null";
 
                 if (docMapObject->Attribute("type") != NULL)
@@ -156,79 +222,94 @@ public:
                     docMapObjectType = docMapObject->Attribute("type");
                 }
 
-                int objectType = tibia::ObjectTypes::null;
+                int objectType = tibia::umapObjectTypes[docMapObjectType];
 
-                if (docMapObjectType == "sign")
+                if (docMapObjectLayerType == tibia::ObjectLayerTypes::objects)
                 {
-                    objectType = tibia::ObjectTypes::sign;
-                }
-                else if (docMapObjectType == "teleporter")
-                {
-                    objectType = tibia::ObjectTypes::teleporter;
-                }
-                else if (docMapObjectType == "door")
-                {
-                    objectType = tibia::ObjectTypes::door;
-                }
-                else if (docMapObjectType == "bed")
-                {
-                    objectType = tibia::ObjectTypes::bed;
-                }
-                else if (docMapObjectType == "lever")
-                {
-                    objectType = tibia::ObjectTypes::lever;
-                }
+                    tibia::ObjectPtr object = std::make_shared<tibia::Object>(docMapObjectTileX, docMapObjectTileY, docMapObjectZ, docMapObjectId);
 
-                tibia::ObjectPtr object = std::make_shared<tibia::Object>(docMapObjectTileX, docMapObjectTileY, docMapObjectZ, docMapObjectId);
+                    object->setType(objectType);
 
-                object->setType(objectType);
+                    tinyxml2::XMLElement* docMapObjectProperties = docMapObject->FirstChildElement("properties");
 
-                tinyxml2::XMLElement* docMapObjectProperties = docMapObject->FirstChildElement("properties");
-
-                if (docMapObjectProperties != NULL)
-                {
-                    for (tinyxml2::XMLElement* docMapObjectProperty = docMapObjectProperties->FirstChildElement("property"); docMapObjectProperty != NULL; docMapObjectProperty = docMapObjectProperty->NextSiblingElement("property"))
+                    if (docMapObjectProperties != NULL)
                     {
-                        std::string docMapObjectPropertyName = docMapObjectProperty->Attribute("name");
-
-                        if (objectType == tibia::ObjectTypes::sign)
+                        for (tinyxml2::XMLElement* docMapObjectProperty = docMapObjectProperties->FirstChildElement("property"); docMapObjectProperty != NULL; docMapObjectProperty = docMapObjectProperty->NextSiblingElement("property"))
                         {
-                            if (docMapObjectPropertyName == "text")
-                            {
-                                std::string objectSignText = docMapObjectProperty->Attribute("value");
+                            std::string docMapObjectPropertyName = docMapObjectProperty->Attribute("name");
 
-                                boost::replace_all(objectSignText, "\\n", "\n");
+                            if (objectType == tibia::ObjectTypes::sign)
+                            {
+                                if (docMapObjectPropertyName == "name")
+                                {
+                                    std::string objectSignName = docMapObjectProperty->Attribute("value");
 
-                                object->setSignText(objectSignText);
+                                    object->properties.signName = objectSignName;
+                                }
+                                if (docMapObjectPropertyName == "text")
+                                {
+                                    std::string objectSignText = docMapObjectProperty->Attribute("value");
+
+                                    boost::replace_all(objectSignText, "\\n", "\n");
+
+                                    object->properties.signText = objectSignText;
+                                }
                             }
-                        }
-                        else if (objectType == tibia::ObjectTypes::teleporter)
-                        {
-                            if (docMapObjectPropertyName == "x")
+                            else if (objectType == tibia::ObjectTypes::teleporter)
                             {
-                                object->setTeleporterX(docMapObjectProperty->IntAttribute("value"));
-                            }
-                            else if (docMapObjectPropertyName == "y")
-                            {
-                                object->setTeleporterY(docMapObjectProperty->IntAttribute("value"));
-                            }
-                            else if (docMapObjectPropertyName == "z")
-                            {
-                                object->setTeleporterZ(docMapObjectProperty->IntAttribute("value"));
+                                if (docMapObjectPropertyName == "x")
+                                {
+                                    object->properties.teleporterX = docMapObjectProperty->IntAttribute("value");
+                                }
+                                else if (docMapObjectPropertyName == "y")
+                                {
+                                    object->properties.teleporterY = docMapObjectProperty->IntAttribute("value");
+                                }
+                                else if (docMapObjectPropertyName == "z")
+                                {
+                                    object->properties.teleporterZ = docMapObjectProperty->IntAttribute("value");
+                                }
                             }
                         }
                     }
+
+                    tile->addObject(object);
                 }
+                else if (docMapObjectLayerType == tibia::ObjectLayerTypes::creatures)
+                {
+                    tibia::CreaturePtr creature = std::make_shared<tibia::Creature>(docMapObjectTileX, docMapObjectTileY, docMapObjectZ);
 
-                tibia::TileList* tileList = tileMap->getTileList();
+                    creature->setOutfitRandom();
 
-                int tileNumber = tibia::Utility::getTileNumberByTileCoords(sf::Vector2u(docMapObjectTileX, docMapObjectTileY));
+                    tinyxml2::XMLElement* docMapObjectProperties = docMapObject->FirstChildElement("properties");
 
-                tibia::TilePtr tile = tileList->at(tileNumber);
+                    if (docMapObjectProperties != NULL)
+                    {
+                        for (tinyxml2::XMLElement* docMapObjectProperty = docMapObjectProperties->FirstChildElement("property"); docMapObjectProperty != NULL; docMapObjectProperty = docMapObjectProperty->NextSiblingElement("property"))
+                        {
+                            std::string docMapObjectPropertyName = docMapObjectProperty->Attribute("name");
 
-                tile->addObject(object);
+                            if (docMapObjectPropertyName == "name")
+                            {
+                                std::string creatureName = docMapObjectProperty->Attribute("value");
 
-                //std::cout << "addObject to tileNumber: " << tileNumber << std::endl;
+                                creature->setName(creatureName);
+
+                                creature->setHasCustomName(true);
+                            }
+                            else if (docMapObjectPropertyName == "type")
+                            {
+                                std::string creatureTypeString = docMapObjectProperty->Attribute("value");
+
+                                int creatureType = tibia::umapCreatureTypes[creatureTypeString];
+
+                                creature->setType(creatureType);
+                            }
+                        }
+                    }
+
+                    tile->addCreature(creature);
+                }
             }
         }
 
@@ -237,6 +318,6 @@ public:
 
 };
 
-} // tibia
+} // namespace tibia
 
 #endif // TIBIA_MAP_HPP

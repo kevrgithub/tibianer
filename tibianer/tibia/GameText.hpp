@@ -27,6 +27,8 @@ public:
     {
         m_texture = bitmapFont.getTexture();
 
+        m_tilePosition = tileCoords;
+
         m_z = z;
 
         std::vector<std::string> textLines;
@@ -46,6 +48,8 @@ public:
         if (textLines.size())
         {
             textPosition.y -= tibia::TILE_SIZE * (textLines.size() / 4);
+
+            m_numTextLines = textLines.size();
         }
 
         int textHeight = bitmapFont.getGlyphSize()->y;
@@ -69,6 +73,16 @@ public:
         return m_z;
     }
 
+    sf::Vector2u getTilePosition()
+    {
+        return m_tilePosition;
+    }
+
+    int getNumTextLines()
+    {
+        return m_numTextLines;
+    }
+
     sf::Clock* getClock()
     {
         return &m_clock;
@@ -78,7 +92,11 @@ private:
 
     sf::Texture* m_texture;
 
+    sf::Vector2u m_tilePosition;
+
     int m_z;
+
+    int m_numTextLines;
 
     std::vector<tibia::BitmapFontText> m_bitmapFontTextList;
 

@@ -16,6 +16,24 @@ class Tile
 
 public:
 
+    struct TileProperties_t
+    {
+        bool isSolid     = false;
+        bool isMoveAbove = false;
+        bool isMoveBelow = false;
+        bool isMountainRampLeftMoveBelow  = false;
+        bool isMountainRampRightMoveBelow = false;
+
+        bool hasSolidObject      = false;
+        bool hasSolidCreature    = false;
+        bool hasHasHeightObject  = false;
+        bool hasMoveAboveObject  = false;
+        bool hasMoveBelowObject  = false;
+        bool hasTeleporterObject = false;
+        bool hasMountainRampLeftObject  = false;
+        bool hasMountainRampRightObject = false;
+    };
+
     int getNumber()
     {
         return m_number;
@@ -54,6 +72,16 @@ public:
     void setZ(int z)
     {
         m_z = z;
+    }
+
+    int getHeight()
+    {
+        return m_height;
+    }
+
+    void setHeight(int height)
+    {
+        m_height = height;
     }
 
     unsigned int getFlags()
@@ -102,6 +130,8 @@ private:
     int m_id;
 
     sf::Vector2u m_position;
+
+    int m_height;
 
     int m_z;
 

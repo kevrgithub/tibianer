@@ -41,9 +41,9 @@ public:
         return m_z;
     }
 
-    void update()
+    void update(sf::Time timeDelta)
     {
-        m_textPosition.y -= tibia::FloatingTextData::speed;
+        m_textPosition.y -= tibia::FloatingTextData::speed * timeDelta.asSeconds();
 
         m_bitmapFontText.setPosition(m_textPosition);
     }
