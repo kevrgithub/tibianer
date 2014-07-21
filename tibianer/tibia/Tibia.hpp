@@ -191,6 +191,8 @@ namespace tibia
         const int underground = min;
         const int day         = max;
         const int night       = min * 2;
+
+        const float updateTime = 1;
     }
 
     namespace TimeOfDay
@@ -1223,14 +1225,13 @@ namespace tibia
 
         std::vector<int> offsetObjects =
         {
-            37,
-            46,
             88,
-            114,
-            334,
+            394, 395, 396, 397,
+            524, 525, 526, 527,
             1004, 1005, 1043, 1044, 1046, 1048,
             1274,
             1652,
+            1879, 1880,
             3348,
         };
 

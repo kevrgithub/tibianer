@@ -46,15 +46,15 @@ public:
 
         m_statusBarText.setPosition(tibia::StatusBarTextData::position);
 
-        m_gameWindowLayer.create(MAP_TILE_XY_MAX, MAP_TILE_XY_MAX);
+        m_gameWindowLayer.create(tibia::MAP_TILE_XY_MAX, tibia::MAP_TILE_XY_MAX);
 
         m_gameWindowLayerSprite.setPosition(0, 0);
-        m_gameWindowLayerSprite.setTextureRect(sf::IntRect(0, 0, MAP_TILE_XY_MAX, MAP_TILE_XY_MAX));
+        m_gameWindowLayerSprite.setTextureRect(sf::IntRect(0, 0, tibia::MAP_TILE_XY_MAX, tibia::MAP_TILE_XY_MAX));
 
-        m_lightLayer.create(MAP_TILE_XY_MAX, MAP_TILE_XY_MAX);
+        m_lightLayer.create(tibia::MAP_TILE_XY_MAX, tibia::MAP_TILE_XY_MAX);
 
         m_lightLayerSprite.setPosition(0, 0);
-        m_lightLayerSprite.setTextureRect(sf::IntRect(0, 0, MAP_TILE_XY_MAX, MAP_TILE_XY_MAX));
+        m_lightLayerSprite.setTextureRect(sf::IntRect(0, 0, tibia::MAP_TILE_XY_MAX, tibia::MAP_TILE_XY_MAX));
 
         m_timeOfDay = tibia::TimeOfDay::day;
 
@@ -312,12 +312,48 @@ public:
         m_mouseCursor.setTextureRect(sf::IntRect(0, type * tibia::MouseCursor::height, tibia::MouseCursor::width, tibia::MouseCursor::height));
     }
 
+    void doCreatureLogic(int z)
+    {
+        for (auto& creature : m_tileMapCreatures[z])
+        {
+            if (creature->isPlayer() == true || creature->isDead() == true || creature->isSleeping() == true)
+            {
+                continue;
+            }
+
+            sf::Time timeLogic = creature->getClockLogic()->getElapsedTime();
+
+            float randomTime = getRandomNumberFloat(1.0, 2.0);
+
+            if (timeLogic.asSeconds() >= randomTime)
+            {
+                creature->setIsLogicReady(true);
+            }
+
+            if (creature->getIsLogicReady() == false)
+            {
+                continue;
+            }
+
+            int direction = getRandomNumber(tibia::Directions::up, tibia::Directions::left);
+
+            handleCreatureMovement(creature, direction);
+
+            creature->setIsLogicReady(false);
+
+            creature->getClockLogic()->restart();
+        }
+    }
+
     void doPlayerInteractWithPlayerTileObjects()
     {
         tibia::TilePtr playerTile = getPlayerTile();
 
-        if (playerTile != nullptr)
+        if (playerTile == nullptr)
         {
+            return;
+        }
+
         if (playerTile->getObjectList()->size())
         {
             doCreatureInteractWithTileObjects(m_player, playerTile);
@@ -325,7 +361,6 @@ public:
         else
         {
             doCreatureInteractWithTileObjects(m_player, getTileByCreatureDirection(m_player));
-        }
         }
     }
 
@@ -643,9 +678,17 @@ public:
 
         if (toZ == creature->getZ())
         {
-            if (toTileProperties.isSolid == true || toTileProperties.hasSolidObject == true || toTileProperties.hasSolidCreature == true)
+            if (toTileProperties.isSolid == true || toTileProperties.hasSolidObject == true)
             {
                 return false;
+            }
+
+            if (toTileProperties.hasSolidCreature == true)
+            {
+                if (teleporterObject == nullptr)
+                {
+                    return false;
+                }
             }
 
             if (toTile->getHeight() - fromTile->getHeight() >= tibia::TILE_HEIGHT_MOVEMENT_DIFFERENCE)
@@ -1672,6 +1715,8 @@ public:
             creature->setDrawOffset(height);
         }
 
+        height = height - numOffsetObjects;
+
         tile->setHeight(height);
     }
 
@@ -1706,16 +1751,14 @@ public:
     {
         sf::Vector2u mouseTilePosition = static_cast<sf::Vector2u>(m_gameWindow.mapPixelToCoords(getMouseWindowPosition(), m_gameWindowView));
 
-        if (mouseTilePosition.x < 0) mouseTilePosition.x = 0;
-        if (mouseTilePosition.y < 0) mouseTilePosition.y = 0;
-
         // game window is offset
         mouseTilePosition.x -= tibia::GuiData::gameWindowX;
         mouseTilePosition.y -= tibia::GuiData::gameWindowY;
 
         // convert mouse tile position to actual tile position
-        while (mouseTilePosition.x > 0 && mouseTilePosition.x % tibia::TILE_SIZE != 0) mouseTilePosition.x--;
-        while (mouseTilePosition.y > 0 && mouseTilePosition.y % tibia::TILE_SIZE != 0) mouseTilePosition.y--;
+        // round down to nearest multiple of tile size
+        mouseTilePosition.x = mouseTilePosition.x - (mouseTilePosition.x % tibia::TILE_SIZE);
+        mouseTilePosition.y = mouseTilePosition.y - (mouseTilePosition.y % tibia::TILE_SIZE);
 
         return mouseTilePosition;
     }
@@ -1892,6 +1935,8 @@ public:
                     {
                         tibia::ObjectList* tileMapObjects = &m_tileMapObjects[tileMap->getZ()];
 
+                        tileMapObjects->reserve(tileObjects->size());
+
                         std::copy(tileObjects->begin(), tileObjects->end(), std::back_inserter(*tileMapObjects));
                     }
 
@@ -1901,6 +1946,8 @@ public:
                     {
                         tibia::CreatureList* tileMapCreatures = &m_tileMapCreatures[tileMap->getZ()];
 
+                        tileMapCreatures->reserve(tileCreatures->size());
+
                         std::copy(tileCreatures->begin(), tileCreatures->end(), std::back_inserter(*tileMapCreatures));
                     }
 
@@ -1909,6 +1956,8 @@ public:
                     if (tileAnimations->size())
                     {
                         tibia::AnimationList* tileMapAnimations = &m_tileMapAnimations[tileMap->getZ()];
+
+                        tileMapAnimations->reserve(tileAnimations->size());
 
                         std::copy(tileAnimations->begin(), tileAnimations->end(), std::back_inserter(*tileMapAnimations));
                     }
@@ -2052,36 +2101,6 @@ public:
         }
     }
 
-    void addObjectListToThingList(tibia::ObjectList* objectList)
-    {
-        for (auto object : *objectList)
-        {
-            tibia::ThingList* tileMapThings = &m_tileMapThings[object->getZ()];
-
-            tileMapThings->push_back(object);
-        }
-    }
-
-    void addCreatureListToThingList(tibia::CreatureList* creatureList)
-    {
-        for (auto creature : *creatureList)
-        {
-            tibia::ThingList* tileMapThings = &m_tileMapThings[creature->getZ()];
-
-            tileMapThings->push_back(creature);
-        }
-    }
-
-    void addAnimationListToThingList(tibia::AnimationList* animationList)
-    {
-        for (auto animation : *animationList)
-        {
-            tibia::ThingList* tileMapThings = &m_tileMapThings[animation->getZ()];
-
-            tileMapThings->push_back(animation);
-        }
-    }
-
     void drawThingList(tibia::ThingList* thingList)
     {
         std::stable_sort(thingList->begin(), thingList->end(), tibia::ThingSort::sortByTileCoords());
@@ -2168,9 +2187,15 @@ public:
         // this only updates things being drawn
         updateTileThings(&m_map.tileMapTiles[z]);
 
-        addObjectListToThingList(&m_tileMapObjects[z]);
-        addCreatureListToThingList(&m_tileMapCreatures[z]);
-        addAnimationListToThingList(&m_tileMapAnimations[z]);
+        tibia::ThingList* tileMapThings = &m_tileMapThings[z];
+
+        unsigned int reserveThingsSize = m_tileMapObjects[z].size() + m_tileMapCreatures[z].size() + m_tileMapAnimations[z].size();
+
+        tileMapThings->reserve(reserveThingsSize);
+
+        std::copy(m_tileMapObjects[z].begin(),    m_tileMapObjects[z].end(),    std::back_inserter(*tileMapThings));
+        std::copy(m_tileMapCreatures[z].begin(),  m_tileMapCreatures[z].end(),  std::back_inserter(*tileMapThings));
+        std::copy(m_tileMapAnimations[z].begin(), m_tileMapAnimations[z].end(), std::back_inserter(*tileMapThings));
 
         drawThingList(&m_tileMapThings[z]);
 
@@ -2184,6 +2209,8 @@ public:
         m_gameWindowLayerSprite.setTexture(m_gameWindowLayer.getTexture());
 
         m_gameWindow.draw(m_gameWindowLayerSprite);
+
+        doCreatureLogic(z);
     }
 
     void drawGameWindow(sf::RenderWindow* mainWindow)
@@ -2213,7 +2240,10 @@ public:
 
             if (findTilesAbovePlayer(&m_map.tileMapTiles[tibia::ZAxis::underGround]) == false)
             {
-                drawGameLayer(tibia::ZAxis::underGround);
+                if (isTileMapVisible(&m_map.tileMapTiles[tibia::ZAxis::underGround]) == true)
+                {
+                    drawGameLayer(tibia::ZAxis::underGround);
+                }
             }
         }
         else
@@ -2222,11 +2252,17 @@ public:
 
             if (findTilesAbovePlayer(&m_map.tileMapTiles[tibia::ZAxis::aboveGround]) == false)
             {
-                drawGameLayer(tibia::ZAxis::aboveGround);
+                if (isTileMapVisible(&m_map.tileMapTiles[tibia::ZAxis::aboveGround]) == true)
+                {
+                    drawGameLayer(tibia::ZAxis::aboveGround);
+                }
 
                 if (findTilesAbovePlayer(&m_map.tileMapTiles[tibia::ZAxis::ceiling]) == false)
                 {
-                    drawGameLayer(tibia::ZAxis::ceiling);
+                    if (isTileMapVisible(&m_map.tileMapTiles[tibia::ZAxis::ceiling]) == true)
+                    {
+                        drawGameLayer(tibia::ZAxis::ceiling);
+                    }
                 }
             }
         }
@@ -2304,6 +2340,17 @@ public:
 
     void updateLightBrightness()
     {
+        sf::Time elapsedTime = clockLightBrightness.getElapsedTime();
+
+        if (elapsedTime.asMilliseconds() > tibia::LightBrightnesses::updateTime * m_timeDelta.asMilliseconds())
+        {
+            clockLightBrightness.restart();
+        }
+        else
+        {
+            return;
+        }
+
         if (m_timeOfDay == tibia::TimeOfDay::day)
         {
             if (m_lightBrightness < tibia::LightBrightnesses::day)
@@ -2435,6 +2482,55 @@ public:
         }
     }
 
+    bool isTileMapVisible(tibia::TileMap* tileMap)
+    {
+        tibia::TileList* tileList = tileMap->getTileList();
+
+        if (tileList->size() == 0)
+        {
+            return false;
+        }
+
+        int x1 = ((m_gameWindowView.getCenter().x - (tibia::TILE_SIZE / 2)) / tibia::TILE_SIZE);
+        int y1 = ((m_gameWindowView.getCenter().y - (tibia::TILE_SIZE / 2)) / tibia::TILE_SIZE);
+
+        x1 = x1 - NUM_TILES_FROM_CENTER_X - 1;
+        y1 = y1 - NUM_TILES_FROM_CENTER_Y - 1;
+
+        if (x1 < 0) x1 = 0;
+        if (y1 < 0) y1 = 0;
+
+        int x2 = tibia::NUM_TILES_X + 2;
+        int y2 = tibia::NUM_TILES_Y + 2;
+
+        for (unsigned int i = x1; i < x1 + x2; i++)
+        {
+            for (unsigned int j = y1; j < y1 + y2; j++)
+            {
+                if (i > tibia::MAP_SIZE - 1) continue;
+                if (j > tibia::MAP_SIZE - 1) continue;
+
+                int tileNumber = i + j * tibia::MAP_SIZE;
+
+                if (tibia::Utility::isTileNumberOutOfBounds(tileNumber) == true)
+                {
+                    continue;
+                }
+
+                tibia::TilePtr tile = tileList->at(tileNumber);
+
+                int tileId = tile->getId();
+
+                if (tileId != tibia::TILE_NULL)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     bool findTilesAbovePlayer(tibia::TileMap* tileMap)
     {
         tibia::TileList* tileList = tileMap->getTileList();
@@ -2495,7 +2591,7 @@ public:
 
                 int tileNumber = i + j * tibia::MAP_SIZE;
 
-                if (tileNumber < 0 || tileNumber > tibia::TILE_NUMBER_MAX)
+                if (tibia::Utility::isTileNumberOutOfBounds(tileNumber) == true)
                 {
                     continue;
                 }
@@ -2668,6 +2764,8 @@ private:
     unsigned int m_lightBrightness;
 
     int m_timeOfDay;
+
+    sf::Clock clockLightBrightness;
 
     tibia::Map m_map;
 

@@ -27,4 +27,14 @@ int getRandomNumber(int low, int high)
     return std::rand() % ((high - low) + 1) + low;
 }
 
+float getRandomNumberFloat(float low, float high)
+{
+    //float random = ((float)std::rand()) / (float)RAND_MAX;
+    //float difference = high - low;
+    //float r = random * difference;
+    //return low + r;
+
+    return low + static_cast<float>(std::rand()) / (static_cast<float>(RAND_MAX / (high - low)));
+}
+
 #endif // UTILITY_HPP

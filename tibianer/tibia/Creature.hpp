@@ -423,6 +423,16 @@ public:
         m_isMovementReady = b;
     }
 
+    bool getIsLogicReady()
+    {
+        return m_isLogicReady;
+    }
+
+    void setIsLogicReady(bool b)
+    {
+        m_isLogicReady = b;
+    }
+
     float getMovementSpeed()
     {
         return m_movementSpeed;
@@ -578,6 +588,11 @@ public:
         return &m_clockMovement;
     }
 
+    sf::Clock* getClockLogic()
+    {
+        return &m_clockLogic;
+    }
+
 private:
 
     int m_tileOffset;
@@ -595,6 +610,7 @@ private:
     int m_direction;
 
     bool m_isMovementReady;
+    bool m_isLogicReady;
 
     float m_movementSpeed;
 
@@ -645,6 +661,7 @@ private:
     tibia::Sprite m_spriteOutfitFeet;
 
     sf::Clock m_clockMovement;
+    sf::Clock m_clockLogic;
 
     tibia::Creature* m_attacker;
 
