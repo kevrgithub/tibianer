@@ -105,7 +105,7 @@ public:
     {
         m_waterTileNumbers.clear();
 
-        for (auto tile : m_tileList)
+        for (auto& tile : m_tileList)
         {
             if (tile->getFlags() & tibia::SpriteFlags::water)
             {
@@ -230,7 +230,7 @@ public:
 
                 if (tileObjects->size())
                 {
-                    for (auto object : *tileObjects)
+                    for (auto& object : *tileObjects)
                     {
                         unsigned int objectFlags = object->getFlags();
 

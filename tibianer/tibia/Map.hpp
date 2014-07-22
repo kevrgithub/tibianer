@@ -164,13 +164,6 @@ public:
 
             //std::cout << docMapObjectGroupName << std::endl;
 
-            //std::size_t findNameWithObjects = docMapObjectGroupName.find("Objects");
-
-            //if (findNameWithObjects == std::string::npos)
-            //{
-                //continue;
-            //}
-
             int docMapObjectZ = tibia::ZAxis::ground;
 
             int docMapObjectLayerType = tibia::ObjectLayerTypes::objects;
@@ -224,6 +217,8 @@ public:
 
                 int objectType = tibia::umapObjectTypes[docMapObjectType];
 
+                int objectCount = 0;
+
                 if (docMapObjectLayerType == tibia::ObjectLayerTypes::objects)
                 {
                     tibia::ObjectPtr object = std::make_shared<tibia::Object>(docMapObjectTileX, docMapObjectTileY, docMapObjectZ, docMapObjectId);
@@ -237,6 +232,11 @@ public:
                         for (tinyxml2::XMLElement* docMapObjectProperty = docMapObjectProperties->FirstChildElement("property"); docMapObjectProperty != NULL; docMapObjectProperty = docMapObjectProperty->NextSiblingElement("property"))
                         {
                             std::string docMapObjectPropertyName = docMapObjectProperty->Attribute("name");
+
+                            if (docMapObjectPropertyName == "count")
+                            {
+                                objectCount = docMapObjectProperty->IntAttribute("value");
+                            }
 
                             if (objectType == tibia::ObjectTypes::sign)
                             {
@@ -274,6 +274,16 @@ public:
                     }
 
                     tile->addObject(object);
+
+                    if (objectCount > 0)
+                    {
+                        for (unsigned int i = 1; i < objectCount; i++)
+                        {
+                            tibia::ObjectPtr copyObject = std::make_shared<tibia::Object>(*object);
+
+                            tile->addObject(copyObject);
+                        }
+                    }
                 }
                 else if (docMapObjectLayerType == tibia::ObjectLayerTypes::creatures)
                 {

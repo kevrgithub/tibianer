@@ -44,6 +44,8 @@ namespace tibia
 
     const int TILE_HEIGHT_MOVEMENT_DIFFERENCE = 2;
 
+    const int TILE_CLIMB_HEIGHT = 3;
+
     const int THING_DRAW_OFFSET = 8;
 
     const int LIGHT_WIDTH  = 480;
@@ -176,6 +178,7 @@ namespace tibia
     {
         enum
         {
+            tiny,
             small,
             medium,
             large,
@@ -194,6 +197,13 @@ namespace tibia
 
         const float updateTime = 1;
     }
+
+    std::unordered_map<int, sf::Color> umapLightColors =
+    {
+        {3271, sf::Color(0, 255, 255, 192)},
+        {3275, sf::Color(0, 255, 255, 192)},
+        {3279, sf::Color(0, 255, 255, 192)},
+    };
 
     namespace TimeOfDay
     {
@@ -833,6 +843,7 @@ namespace tibia
             animated         = 1 << 13,
             ignoreHeight     = 1 << 14,
             fixDrawOrder     = 1 << 15,
+            moveable         = 1 << 16,
         };
     }
 
@@ -1233,6 +1244,22 @@ namespace tibia
             1652,
             1879, 1880,
             3348,
+        };
+
+        std::vector<int> moveable =
+        {
+            37,
+            46,
+            51, 52,
+            114,
+            201,
+            298, 299,
+            521, 522, 523,
+            1054, 1055,
+            1268, 1269,
+            1225,
+            3035,
+            3239, 3240,
         };
 
         std::vector<int> moveAbove =

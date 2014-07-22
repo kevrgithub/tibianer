@@ -54,7 +54,7 @@ public:
 
         int textHeight = bitmapFont.getGlyphSize()->y;
 
-        for (auto textLine : textLines)
+        for (auto& textLine : textLines)
         {
             tibia::BitmapFontText bitmapFontText;
 
@@ -108,7 +108,7 @@ private:
 
         states.texture = m_texture;
 
-        for (auto bitmapFontText : m_bitmapFontTextList)
+        for (auto& bitmapFontText : m_bitmapFontTextList)
         {
             target.draw(bitmapFontText, states);
         }

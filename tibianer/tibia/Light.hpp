@@ -42,6 +42,20 @@ public:
         return m_size;
     }
 
+    void setColorbyId(unsigned int id)
+    {
+        auto lightColorIt = umapLightColors.find(id);
+
+        if (lightColorIt != umapLightColors.end())
+        {
+            setColor(lightColorIt->second);
+        }
+        else
+        {
+            setColor(tibia::Colors::light);
+        }
+    }
+
 private:
 
     unsigned int m_size;

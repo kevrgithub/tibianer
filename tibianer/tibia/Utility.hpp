@@ -203,6 +203,15 @@ namespace tibia
                 }
             }
 
+            for (auto spriteId : tibia::SpriteData::moveable)
+            {
+                if (id == spriteId)
+                {
+                    flags |= tibia::SpriteFlags::moveable;
+                    break;
+                }
+            }
+
             return flags;
         }
 
