@@ -114,8 +114,8 @@ private:
         }
     }
 
-};
+}; // class GameText
 
-} // tibia
+} // namespace tibia
 
 #endif // TIBIA_GAMETEXT_HPP

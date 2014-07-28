@@ -59,7 +59,7 @@ public:
                     tileFlags |= tibia::SpriteFlags::null;
                 }
 
-                tibia::TilePtr tile = std::make_shared<tibia::Tile>();
+                tibia::Tile::Ptr tile = std::make_shared<tibia::Tile>();
                 tile->setNumber(tileNumber);
                 tile->setId(tileId);
                 tile->setPosition(tilePosition);
@@ -91,7 +91,7 @@ public:
         return &m_tiles;
     }
 
-    tibia::TileList* getTileList()
+    tibia::Tile::List* getTileList()
     {
         return &m_tileList;
     }
@@ -168,7 +168,7 @@ public:
                     continue;
                 }
 
-                tibia::TilePtr tile = m_tileList.at(tileNumber);
+                tibia::Tile::Ptr tile = m_tileList.at(tileNumber);
 
                 int tileId = tile->getId();
 
@@ -226,7 +226,7 @@ public:
                 vertexList.push_back(quad[3]);
 
 
-                tibia::ObjectList* tileObjects = tile->getObjectList();
+                tibia::Object::List* tileObjects = tile->getObjectList();
 
                 if (tileObjects->size())
                 {
@@ -334,12 +334,12 @@ private:
 
     std::vector<int> m_tiles;
 
-    tibia::TileList m_tileList;
+    tibia::Tile::List m_tileList;
 
     std::vector<int> m_waterTileNumbers;
 
-};
+}; // class TileMap
 
-} // tibia
+} // namespace tibia
 
 #endif // TIBIA_TILEMAP_HPP

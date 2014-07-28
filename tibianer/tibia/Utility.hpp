@@ -212,6 +212,15 @@ namespace tibia
                 }
             }
 
+            for (auto spriteId : tibia::SpriteData::modifyHpOnTouchObjects)
+            {
+                if (id == spriteId)
+                {
+                    flags |= tibia::SpriteFlags::modifyHpOnTouch;
+                    break;
+                }
+            }
+
             return flags;
         }
 
@@ -336,8 +345,8 @@ namespace tibia
         return normal;
     }
 
-    } // utility
+    } // namespace utility
 
-} // tibia
+} // namespace tibia
 
 #endif // TIBIA_UTILITY_HPP

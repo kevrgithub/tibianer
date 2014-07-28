@@ -74,8 +74,8 @@ private:
         target.draw(m_bitmapFontText, states);
     }
 
-};
+}; // class FloatingText
 
-} // tibia
+} // namespace tibia
 
 #endif // TIBIA_FLOATINGTEXT_HPP

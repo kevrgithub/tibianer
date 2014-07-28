@@ -131,8 +131,15 @@ bool doSaveScreenshot()
     return false;
 }
 
-int main()
+int main(int argc, char* argv[])
 {
+    std::cout << gameTitle << std::endl;
+
+    if (argc == 2)
+    {
+        std::cout << argv[1] << std::endl;
+    }
+
     unsigned int maximumTextureSize = sf::Texture::getMaximumSize();
     if (maximumTextureSize < tibia::TEXTURE_SIZE_MAX)
     {
@@ -164,6 +171,13 @@ int main()
     if (game.loadBitmapFonts() == false)
     {
         std::cout << "Error: Failed to load bitmap fonts" << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    std::cout << "Loading sounds" << std::endl;
+    if (game.loadSounds() == false)
+    {
+        std::cout << "Error: Failed to load sounds" << std::endl;
         return EXIT_FAILURE;
     }
 
@@ -285,6 +299,8 @@ int main()
         {
             game.drawMouseCursor(&mainWindow);
         }
+
+        game.updateSounds();
 
         mainWindow.display();
 

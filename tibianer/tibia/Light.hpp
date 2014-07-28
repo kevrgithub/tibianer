@@ -60,8 +60,8 @@ private:
 
     unsigned int m_size;
 
-};
+}; // class Light
 
-} // tibia
+} // namespace tibia
 
 #endif // TIBIA_LIGHT_HPP

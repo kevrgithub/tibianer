@@ -51,44 +51,50 @@ public:
         tinyxml2::XMLDocument doc;
         doc.LoadFile(filename.c_str());
 
+        if (doc.ErrorID() != tinyxml2::XML_NO_ERROR)
+        {
+            std::cout << "Map Document LoadFile Error: " << filename << std::endl;
+            return false;
+        }
+
+        m_filename = filename;
+
         tinyxml2::XMLElement* docMap = doc.FirstChildElement();
 
         tinyxml2::XMLElement* docMapProperties = docMap->FirstChildElement("properties");
 
-        if (docMapProperties == NULL)
+        if (docMapProperties != NULL)
         {
-            return false;
-        }
+            for (tinyxml2::XMLElement* docMapProperty = docMapProperties->FirstChildElement("property"); docMapProperty != NULL; docMapProperty = docMapProperty->NextSiblingElement("property"))
+            {
+                std::string docMapPropertyName = docMapProperty->Attribute("name");
 
-        for (tinyxml2::XMLElement* docMapProperty = docMapProperties->FirstChildElement("property"); docMapProperty != NULL; docMapProperty = docMapProperty->NextSiblingElement("property"))
-        {
-            std::string docMapPropertyName = docMapProperty->Attribute("name");
+                if (docMapPropertyName == "name")
+                {
+                    properties.name = docMapProperty->Attribute("value");
+                }
+                else if (docMapPropertyName == "author")
+                {
+                    properties.author = docMapProperty->Attribute("value");
+                }
 
-            if (docMapPropertyName == "name")
-            {
-                properties.name = docMapProperty->Attribute("value");
-            }
-            else if (docMapPropertyName == "author")
-            {
-                properties.author = docMapProperty->Attribute("value");
-            }
+                else if (docMapPropertyName == "player_start_x")
+                {
+                    properties.playerStartX = docMapProperty->IntAttribute("value");
+                }
+                else if (docMapPropertyName == "player_start_y")
+                {
+                    properties.playerStartY = docMapProperty->IntAttribute("value");
+                }
+                else if (docMapPropertyName == "player_start_z")
+                {
+                    properties.playerStartZ = docMapProperty->IntAttribute("value");
+                }
 
-            else if (docMapPropertyName == "player_start_x")
-            {
-                properties.playerStartX = docMapProperty->IntAttribute("value");
-            }
-            else if (docMapPropertyName == "player_start_y")
-            {
-                properties.playerStartY = docMapProperty->IntAttribute("value");
-            }
-            else if (docMapPropertyName == "player_start_z")
-            {
-                properties.playerStartZ = docMapProperty->IntAttribute("value");
-            }
-
-            else if (docMapPropertyName == "time_of_day")
-            {
-                properties.timeOfDay = tibia::umapTimeOfDay[docMapProperty->Attribute("value")];
+                else if (docMapPropertyName == "time_of_day")
+                {
+                    properties.timeOfDay = tibia::umapTimeOfDay[docMapProperty->Attribute("value")];
+                }
             }
         }
 
@@ -202,11 +208,11 @@ public:
                 int docMapObjectTileX = docMapObject->IntAttribute("x");
                 int docMapObjectTileY = docMapObject->IntAttribute("y") - tibia::TILE_SIZE; // y-axis bug for objects in Tiled editor?
 
-                tibia::TileList* tileList = tileMap->getTileList();
+                tibia::Tile::List* tileList = tileMap->getTileList();
 
                 int tileNumber = tibia::Utility::getTileNumberByTileCoords(sf::Vector2u(docMapObjectTileX, docMapObjectTileY));
 
-                tibia::TilePtr tile = tileList->at(tileNumber);
+                tibia::Tile::Ptr tile = tileList->at(tileNumber);
 
                 std::string docMapObjectType = "null";
 
@@ -221,7 +227,7 @@ public:
 
                 if (docMapObjectLayerType == tibia::ObjectLayerTypes::objects)
                 {
-                    tibia::ObjectPtr object = std::make_shared<tibia::Object>(docMapObjectTileX, docMapObjectTileY, docMapObjectZ, docMapObjectId);
+                    tibia::Object::Ptr object = std::make_shared<tibia::Object>(sf::Vector2u(docMapObjectTileX, docMapObjectTileY), docMapObjectZ, docMapObjectId);
 
                     object->setType(objectType);
 
@@ -279,7 +285,7 @@ public:
                     {
                         for (unsigned int i = 1; i < objectCount; i++)
                         {
-                            tibia::ObjectPtr copyObject = std::make_shared<tibia::Object>(*object);
+                            tibia::Object::Ptr copyObject = std::make_shared<tibia::Object>(*object);
 
                             tile->addObject(copyObject);
                         }
@@ -287,7 +293,7 @@ public:
                 }
                 else if (docMapObjectLayerType == tibia::ObjectLayerTypes::creatures)
                 {
-                    tibia::CreaturePtr creature = std::make_shared<tibia::Creature>(docMapObjectTileX, docMapObjectTileY, docMapObjectZ);
+                    tibia::Creature::Ptr creature = std::make_shared<tibia::Creature>(docMapObjectTileX, docMapObjectTileY, docMapObjectZ);
 
                     creature->setOutfitRandom();
 
@@ -315,6 +321,14 @@ public:
 
                                 creature->setType(creatureType);
                             }
+                            else if (docMapObjectPropertyName == "team")
+                            {
+                                std::string creatureTeamString = docMapObjectProperty->Attribute("value");
+
+                                int creatureTeam = tibia::umapTeams[creatureTeamString];
+
+                                creature->setTeam(creatureTeam);
+                            }
                         }
                     }
 
@@ -326,7 +340,16 @@ public:
         return true;
     }
 
-};
+    std::string getFilename()
+    {
+        return m_filename;
+    }
+
+private:
+
+    std::string m_filename;
+
+}; // class Map
 
 } // namespace tibia
 

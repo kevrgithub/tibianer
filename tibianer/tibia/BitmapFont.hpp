@@ -89,8 +89,9 @@ private:
     int m_numGlyphs = 96;
 
     int m_glpyhSpace;
-};
 
-} // tibia
+}; // class BitmapFont
+
+} // namespace tibia
 
 #endif // TIBIA_BITMAPFONT_HPP

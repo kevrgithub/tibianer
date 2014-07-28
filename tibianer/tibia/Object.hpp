@@ -17,6 +17,9 @@ class Object : public tibia::Thing
 
 public:
 
+    typedef std::shared_ptr<tibia::Object> Ptr;
+    typedef std::vector<tibia::Object::Ptr> List;
+
     struct ObjectProperties_t
     {
         std::string signName = "sign";
@@ -31,9 +34,9 @@ public:
 
     ObjectProperties_t properties;
 
-    Object::Object(int tileX, int tileY, int z, int id)
+    Object::Object(sf::Vector2u tileCoords, int z, int id)
     {
-        setTileCoords(tileX, tileY);
+        setTileCoords(tileCoords.x, tileCoords.y);
 
         setZ(z);
 
@@ -811,48 +814,45 @@ public:
             }
         }
 
-        // bottom to top, right then left
-        for (auto spriteId : tibia::SpriteData::quadVerticalObjects)
+        // quad object brick wall that is irregular, sprites 1 and 2 are backwards
+        if (m_id == 25)
         {
-            if (m_id == spriteId)
-            {
-                m_sprite[1].setId(m_id - 2);
-                m_sprite[2].setId(m_id - 1);
-                m_sprite[3].setId(m_id - 3);
+            m_sprite[1].setId(m_id - 2);
+            m_sprite[2].setId(m_id - 1);
+            m_sprite[3].setId(m_id - 3);
 
-                m_sprite[1].setPosition
+            m_sprite[1].setPosition
+            (
+                sf::Vector2f
                 (
-                    sf::Vector2f
-                    (
-                        m_sprite[0].getPosition().x - tibia::TILE_SIZE,
-                        m_sprite[0].getPosition().y
-                    )
-                );
+                    m_sprite[0].getPosition().x - tibia::TILE_SIZE,
+                    m_sprite[0].getPosition().y
+                )
+            );
 
-                m_sprite[2].setPosition
+            m_sprite[2].setPosition
+            (
+                sf::Vector2f
                 (
-                    sf::Vector2f
-                    (
-                        m_sprite[0].getPosition().x,
-                        m_sprite[0].getPosition().y - tibia::TILE_SIZE
-                    )
-                );
+                    m_sprite[0].getPosition().x,
+                    m_sprite[0].getPosition().y - tibia::TILE_SIZE
+                )
+            );
 
-                m_sprite[3].setPosition
+            m_sprite[3].setPosition
+            (
+                sf::Vector2f
                 (
-                    sf::Vector2f
-                    (
-                        m_sprite[0].getPosition().x - tibia::TILE_SIZE,
-                        m_sprite[0].getPosition().y - tibia::TILE_SIZE
-                    )
-                );
+                    m_sprite[0].getPosition().x - tibia::TILE_SIZE,
+                    m_sprite[0].getPosition().y - tibia::TILE_SIZE
+                )
+            );
 
-                m_shouldDrawExtraSprite[1] = true;
-                m_shouldDrawExtraSprite[2] = true;
-                m_shouldDrawExtraSprite[3] = true;
+            m_shouldDrawExtraSprite[1] = true;
+            m_shouldDrawExtraSprite[2] = true;
+            m_shouldDrawExtraSprite[3] = true;
 
-                return;
-            }
+            return;
         }
 
         // right to left
@@ -897,6 +897,55 @@ public:
 
                 return;
             }
+        }
+
+        // vertical object mountain wall that is irregular, sprite order is backwards
+        if (m_id == 1068)
+        {
+            m_sprite[1].setId(m_id + 1);
+
+            m_sprite[1].setPosition
+            (
+                sf::Vector2f
+                (
+                    m_sprite[0].getPosition().x,
+                    m_sprite[0].getPosition().y - tibia::TILE_SIZE
+                )
+            );
+
+            m_shouldDrawExtraSprite[1] = true;
+
+            return;
+        }
+
+        // mountain wall corner piece
+        if (m_id == 1070)
+        {
+            m_sprite[1].setId(m_id - 4);
+            m_sprite[2].setId(m_id - 1);
+
+            m_sprite[1].setPosition
+            (
+                sf::Vector2f
+                (
+                    m_sprite[0].getPosition().x - tibia::TILE_SIZE,
+                    m_sprite[0].getPosition().y
+                )
+            );
+
+            m_sprite[2].setPosition
+            (
+                sf::Vector2f
+                (
+                    m_sprite[0].getPosition().x,
+                    m_sprite[0].getPosition().y - tibia::TILE_SIZE
+                )
+            );
+
+            m_shouldDrawExtraSprite[1] = true;
+            m_shouldDrawExtraSprite[2] = true;
+
+            return;
         }
     }
 
@@ -989,7 +1038,7 @@ public:
 
         if (m_flags & tibia::SpriteFlags::drawLast)
         {
-            setDrawIndex(1);
+            setDrawIndex(tibia::DRAW_INDEX_LAST);
         }
 
         if (m_flags & tibia::SpriteFlags::transparent)
@@ -1068,8 +1117,6 @@ public:
         int drawOffset = getDrawOffset() * tibia::THING_DRAW_OFFSET;
 
         setPosition(getTileX() - drawOffset, getTileY() - drawOffset);
-
-        //setPosition(getTileX(), getTileY());
     }
 
 private:
@@ -1107,11 +1154,8 @@ private:
         }
     }
 
-};
+}; // class Object
 
-typedef std::shared_ptr<tibia::Object> ObjectPtr;
-typedef std::vector<ObjectPtr> ObjectList;
-
-} // tibia
+} // namespace tibia
 
 #endif // TIBIA_OBJECT_HPP

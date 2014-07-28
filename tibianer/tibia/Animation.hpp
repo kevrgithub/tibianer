@@ -17,6 +17,9 @@ class Animation : public tibia::Thing
 
 public:
 
+    typedef std::shared_ptr<tibia::Animation> Ptr;
+    typedef std::vector<tibia::Animation::Ptr> List;
+
     Animation::Animation(int tileX, int tileY, int z, int id, int numFrames)
     {
         setTileCoords(tileX, tileY);
@@ -138,7 +141,9 @@ public:
     {
         updateTileCoords();
 
-        setPosition(getTileX(), getTileY());
+        int drawOffset = getDrawOffset() * tibia::THING_DRAW_OFFSET;
+
+        setPosition(getTileX() - drawOffset, getTileY() - drawOffset);
 
         advanceFrame();
     }
@@ -168,11 +173,8 @@ private:
         target.draw(m_sprite, states);
     }
 
-};
+}; // class Animation
 
-typedef std::shared_ptr<tibia::Animation> AnimationPtr;
-typedef std::vector<AnimationPtr> AnimationList;
-
-} // tibia
+} // namespace tibia
 
 #endif // TIBIA_ANIMATION_HPP

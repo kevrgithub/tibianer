@@ -16,20 +16,22 @@ class Tile
 
 public:
 
+    typedef std::shared_ptr<tibia::Tile> Ptr;
+    typedef std::vector<tibia::Tile::Ptr> List;
+
     struct TileProperties_t
     {
         bool isSolid     = false;
         bool isMoveAbove = false;
         bool isMoveBelow = false;
-        bool isMountainRampLeftMoveBelow  = false;
-        bool isMountainRampRightMoveBelow = false;
 
-        bool hasSolidObject      = false;
-        bool hasSolidCreature    = false;
-        bool hasHasHeightObject  = false;
-        bool hasMoveAboveObject  = false;
-        bool hasMoveBelowObject  = false;
-        bool hasTeleporterObject = false;
+        bool hasSolidObject             = false;
+        bool hasSolidCreature           = false;
+        bool hasHasHeightObject         = false;
+        bool hasMoveAboveObject         = false;
+        bool hasMoveBelowObject         = false;
+        bool hasModifyHpOnTouchObject   = false;
+        bool hasTeleporterObject        = false;
         bool hasMountainRampLeftObject  = false;
         bool hasMountainRampRightObject = false;
     };
@@ -94,32 +96,32 @@ public:
         m_flags = flags;
     }
 
-    tibia::ObjectList* getObjectList()
+    tibia::Object::List* getObjectList()
     {
         return &m_objectList;
     }
 
-    tibia::CreatureList* getCreatureList()
+    tibia::Creature::List* getCreatureList()
     {
         return &m_creatureList;
     }
 
-    tibia::AnimationList* getAnimationList()
+    tibia::Animation::List* getAnimationList()
     {
         return &m_animationList;
     }
 
-    void addObject(tibia::ObjectPtr object)
+    void addObject(tibia::Object::Ptr object)
     {
         m_objectList.push_back(object);
     }
 
-    void addCreature(tibia::CreaturePtr creature)
+    void addCreature(tibia::Creature::Ptr creature)
     {
         m_creatureList.push_back(creature);
     }
 
-    void addAnimation(tibia::AnimationPtr animation)
+    void addAnimation(tibia::Animation::Ptr animation)
     {
         m_animationList.push_back(animation);
     }
@@ -137,25 +139,23 @@ private:
 
     unsigned int m_flags;
 
-    tibia::ObjectList m_objectList;
-    tibia::CreatureList m_creatureList;
-    tibia::AnimationList m_animationList;
-};
+    tibia::Object::List m_objectList;
+    tibia::Creature::List m_creatureList;
+    tibia::Animation::List m_animationList;
 
-typedef std::shared_ptr<tibia::Tile> TilePtr;
-typedef std::vector<TilePtr> TileList;
+}; // class Tile
 
 namespace TileSort
 {
     struct sortTilesByTileNumber
     {
-        bool operator()(tibia::TilePtr a, tibia::TilePtr b) const
+        bool operator()(tibia::Tile::Ptr a, tibia::Tile::Ptr b) const
         {
             return (a->getNumber() < b->getNumber());
         }
     };
 }
 
-} // tibia
+} // namespace tibia
 
 #endif // TIBIA_TILE_HPP

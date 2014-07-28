@@ -16,8 +16,8 @@ public:
         //
     }
 
-};
+}; // class DrawableAndTransformable
 
-} // tibia
+} // namespace tibia
 
 #endif // TIBIA_DRAWABLEANDTRANSFORMABLE_HPP

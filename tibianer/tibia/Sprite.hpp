@@ -46,8 +46,8 @@ private:
 
     unsigned int m_id;
 
-};
+}; // class Sprite
 
-} // tibia
+} // namespace tibia
 
 #endif // TIBIA_SPRITE_HPP

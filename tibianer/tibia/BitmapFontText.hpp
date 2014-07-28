@@ -98,8 +98,9 @@ private:
 
     sf::VertexArray m_vertexArray;
     tibia::BitmapFont* m_bitmapFont;
-};
 
-} // tibia
+}; // class BitmapFontText
+
+} // namespace tibia
 
 #endif // TIBIA_BITMAPFONTTEXT_HPP

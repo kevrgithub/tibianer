@@ -22,6 +22,9 @@ class Creature : public tibia::Thing
 
 public:
 
+    typedef std::shared_ptr<tibia::Creature> Ptr;
+    typedef std::vector<tibia::Creature::Ptr> List;
+
     Creature::Creature(int tileX, int tileY, int z)
     {
         setTileCoords(tileX, tileY);
@@ -31,39 +34,46 @@ public:
 
         m_tileOffset = tibia::THING_DRAW_OFFSET;
 
-        m_isPlayer = false;
+        m_isPlayer      = false;
+        m_hasCustomName = false;
+        m_isDead        = false;
+        m_isSleeping    = false;
+        m_hasOutfit     = true;
 
         m_name = tibia::CREATURE_NAME_DEFAULT;
 
-        m_hasCustomName = false;
-
         m_direction = tibia::Directions::down;
+
+        m_team = tibia::Teams::good;
 
         m_type = tibia::CreatureTypes::human;
 
         m_size = tibia::CreatureSizes::small;
 
-        m_team = tibia::Teams::neutral;
+        m_corpseSize = tibia::CreatureCorpseSizes::small;
+
+        m_bloodType = tibia::CreatureBloodTypes::red;
 
         m_movementSpeed = tibia::MovementSpeeds::default;
+
+        m_numAnimations = 1;
+
+        m_currentAnimation = 0;
+
+        m_spritesList = tibia::CreatureSprites::human;
+
+        m_spritesCorpseList = tibia::CreatureCorpseSprites::human;
+
+        m_outfit[0] = tibia::Outfits::default[0];
+        m_outfit[1] = tibia::Outfits::default[1];
+        m_outfit[2] = tibia::Outfits::default[2];
+        m_outfit[3] = tibia::Outfits::default[3];
 
         m_hp    = 100;
         m_hpMax = 100;
 
         m_mp    = 200;
         m_mpMax = 200;
-
-        m_isDead     = false;
-        m_hasDecayed = false;
-
-        m_isSleeping = false;
-
-        m_hasOutfit = true;
-
-        m_outfitHead = 0;
-        m_outfitBody = 0;
-        m_outfitLegs = 0;
-        m_outfitFeet = 0;
 
         setPropertiesByType();
     }
@@ -91,7 +101,84 @@ public:
             m_tileOffset = tibia::THING_DRAW_OFFSET;
         }
 
+        m_numAnimations = umapCreatureNumAnimations[m_type];
+
+        m_corpseSize = umapCreatureCorpseSizes[m_type];
+
         m_spritesList = umapCreatureSprites[m_type];
+
+        m_spritesCorpseList = umapCreatureCorpseSprites[m_type];
+
+        m_spriteCorpse[0].setId(m_spritesCorpseList[0]);
+
+        if (m_corpseSize == tibia::CreatureCorpseSizes::medium)
+        {
+            // move corpse so it doesn't overlap creatures
+            m_spriteCorpse[0].move
+            (
+                sf::Vector2f
+                (
+                    tibia::TILE_SIZE,
+                    0
+                )
+            );
+
+            m_spriteCorpse[1].setId(m_spritesCorpseList[1]);
+
+            m_spriteCorpse[1].setPosition
+            (
+                sf::Vector2f
+                (
+                    m_spriteCorpse[0].getPosition().x - tibia::TILE_SIZE,
+                    m_spriteCorpse[0].getPosition().y
+                )
+            );
+        }
+        else if (m_corpseSize == tibia::CreatureCorpseSizes::large)
+        {
+            // move corpse so it doesn't overlap creatures
+            m_spriteCorpse[0].move
+            (
+                sf::Vector2f
+                (
+                    tibia::TILE_SIZE,
+                    tibia::TILE_SIZE
+                )
+            );
+
+            m_spriteCorpse[1].setId(m_spritesCorpseList[1]);
+            m_spriteCorpse[2].setId(m_spritesCorpseList[2]);
+            m_spriteCorpse[3].setId(m_spritesCorpseList[3]);
+
+            m_spriteCorpse[1].setPosition
+            (
+                sf::Vector2f
+                (
+                    m_spriteCorpse[0].getPosition().x - tibia::TILE_SIZE,
+                    m_spriteCorpse[0].getPosition().y
+                )
+            );
+
+            m_spriteCorpse[2].setPosition
+            (
+                sf::Vector2f
+                (
+                    m_spriteCorpse[0].getPosition().x,
+                    m_spriteCorpse[0].getPosition().y - tibia::TILE_SIZE
+                )
+            );
+
+            m_spriteCorpse[3].setPosition
+            (
+                sf::Vector2f
+                (
+                    m_spriteCorpse[0].getPosition().x - tibia::TILE_SIZE,
+                    m_spriteCorpse[0].getPosition().y - tibia::TILE_SIZE
+                )
+            );
+        }
+
+        m_bloodType = umapCreatureBloodTypes[m_type];
     }
 
     void updateSprite()
@@ -101,10 +188,15 @@ public:
             return;
         }
 
-        m_sprite[0].setId(m_spritesList[m_direction]);
-
-        if (m_size == tibia::CreatureSizes::medium)
+        if (m_size == tibia::CreatureSizes::small)
         {
+            m_sprite[0].setId(m_spritesList[m_direction + (4 * m_currentAnimation)]);
+        }
+        else if (m_size == tibia::CreatureSizes::medium)
+        {
+            m_sprite[0].setId(m_spritesList[m_direction +     (8 * m_currentAnimation)]);
+            m_sprite[1].setId(m_spritesList[m_direction + 4 + (8 * m_currentAnimation)]);
+
             sf::Vector2f spriteOffset(0, 0);
 
             switch (m_direction)
@@ -128,11 +220,14 @@ public:
                     m_sprite[0].getPosition().y + spriteOffset.y
                 )
             );
-
-            m_sprite[1].setId(m_spritesList[m_direction + 4]);
         }
         else if (m_size == tibia::CreatureSizes::large)
         {
+            m_sprite[0].setId(m_spritesList[m_direction      + (16 * m_currentAnimation)]);
+            m_sprite[1].setId(m_spritesList[m_direction + 4  + (16 * m_currentAnimation)]);
+            m_sprite[2].setId(m_spritesList[m_direction + 8  + (16 * m_currentAnimation)]);
+            m_sprite[3].setId(m_spritesList[m_direction + 12 + (16 * m_currentAnimation)]);
+
             m_sprite[1].setPosition
             (
                 sf::Vector2f
@@ -159,39 +254,52 @@ public:
                     m_sprite[0].getPosition().y - tibia::TILE_SIZE
                 )
             );
-
-            m_sprite[1].setId(m_spritesList[m_direction + 4]);
-            m_sprite[2].setId(m_spritesList[m_direction + 8]);
-            m_sprite[3].setId(m_spritesList[m_direction + 12]);
         }
     }
 
     void setOutfit(int head, int body, int legs, int feet)
     {
-        m_outfitHead = head;
-        m_outfitBody = body;
-        m_outfitLegs = legs;
-        m_outfitFeet = feet;
+        m_outfit[0] = head;
+        m_outfit[1] = body;
+        m_outfit[2] = legs;
+        m_outfit[3] = feet;
 
         updateOutfit();
     }
 
     void setOutfitRandom()
     {
-        m_outfitHead = getRandomNumber(0, (tibia::Outfits::head.size() / 4) - 1);
-        m_outfitBody = getRandomNumber(0, (tibia::Outfits::body.size() / 4) - 1);
-        m_outfitLegs = getRandomNumber(0, (tibia::Outfits::legs.size() / 4) - 1);
-        m_outfitFeet = getRandomNumber(0, (tibia::Outfits::feet.size() / 4) - 1);
+        m_outfit[0] = getRandomNumber(0, (tibia::Outfits::head.size() / 4) - 1);
+        m_outfit[1] = getRandomNumber(0, (tibia::Outfits::body.size() / 4) - 1);
+        m_outfit[2] = getRandomNumber(0, (tibia::Outfits::legs.size() / 4) - 1);
+        m_outfit[3] = getRandomNumber(0, (tibia::Outfits::feet.size() / 4) - 1);
 
         updateOutfit();
     }
 
     void updateOutfit()
     {
-        m_spriteOutfitHead.setId(tibia::Outfits::head[(m_outfitHead * 4) + m_direction]);
-        m_spriteOutfitBody.setId(tibia::Outfits::body[(m_outfitBody * 4) + m_direction]);
-        m_spriteOutfitLegs.setId(tibia::Outfits::legs[(m_outfitLegs * 4) + m_direction]);
-        m_spriteOutfitFeet.setId(tibia::Outfits::feet[(m_outfitFeet * 4) + m_direction]);
+        m_spriteOutfit[0].setId(tibia::Outfits::head[(m_outfit[0] * 4) + m_direction]);
+        m_spriteOutfit[1].setId(tibia::Outfits::body[(m_outfit[1] * 4) + m_direction]);
+        m_spriteOutfit[2].setId(tibia::Outfits::legs[(m_outfit[2] * 4) + m_direction]);
+        m_spriteOutfit[3].setId(tibia::Outfits::feet[(m_outfit[3] * 4) + m_direction]);
+    }
+
+    void updateAnimation()
+    {
+        m_timeAnimation = m_clockAnimation.getElapsedTime();
+
+        if (m_timeAnimation.asSeconds() >= tibia::AnimationTimes::creatureAnimation)
+        {
+            m_currentAnimation++;
+
+            if (m_currentAnimation > m_numAnimations - 1)
+            {
+                m_currentAnimation = 0;
+            }
+
+            m_clockAnimation.restart();
+        }
     }
 
     void updateCorpse()
@@ -205,23 +313,51 @@ public:
 
         if (m_timeCorpse.asSeconds() >= tibia::AnimationTimes::corpseDecay)
         {
-            int corpseId = m_spriteCorpse.getId();
+            int corpseId = m_spriteCorpse[0].getId();
 
-            if (corpseId == 0)
+            for (unsigned int i = 0; i < m_spritesCorpseList.size(); i++)
             {
-                m_spriteCorpse.setId(tibia::SpriteData::corpse[0]);
+                int spriteId = m_spritesCorpseList.at(i);
+
+                if (corpseId == spriteId)
+                {
+                    if (m_corpseSize == tibia::CreatureCorpseSizes::medium)
+                    {
+                        i = i + 2;
+                    }
+                    else if (m_corpseSize == tibia::CreatureCorpseSizes::large)
+                    {
+                        i = i + 4;
+                    }
+                    else
+                    {
+                        i++;
+                    }
+
+                    if (i > m_spritesCorpseList.size() - 1)
+                    {
+                        setIsReadyForErase(true);
+                        return;
+                    }
+
+                    m_spriteCorpse[0].setId(m_spritesCorpseList.at(i));
+
+                    if (m_corpseSize == tibia::CreatureCorpseSizes::medium)
+                    {
+                        m_spriteCorpse[1].setId(m_spritesCorpseList.at(i + 1));
+                    }
+                    else if (m_corpseSize == tibia::CreatureCorpseSizes::large)
+                    {
+                        m_spriteCorpse[1].setId(m_spritesCorpseList.at(i + 1));
+                        m_spriteCorpse[2].setId(m_spritesCorpseList.at(i + 2));
+                        m_spriteCorpse[3].setId(m_spritesCorpseList.at(i + 3));
+                    }
+
+                    break;
+                }
             }
 
-            if (corpseId >= tibia::SpriteData::corpse[0] && corpseId < tibia::SpriteData::corpse[6])
-            {
-                m_spriteCorpse.setId(corpseId + 1);
-            }
-            else if (corpseId == tibia::SpriteData::corpse[6])
-            {
-                setHasDecayed(true);
-            }
-
-            m_clockCorpse.restart();
+           m_clockCorpse.restart();
         }
     }
 
@@ -238,17 +374,19 @@ public:
 
         setPosition(getTileX() - drawOffset, getTileY() - drawOffset);
 
-        //setPosition(getTileX(), getTileY());
-
         updateSprite();
-
         updateOutfit();
-
+        updateAnimation();
         updateCorpse();
     }
 
     void doTurn(int direction)
     {
+        if (direction == tibia::Directions::null)
+        {
+            return;
+        }
+
         int dir = direction;
 
         if (dir > tibia::Directions::left)
@@ -285,9 +423,14 @@ public:
         setDirection(dir);
     }
 
-    void takeDamage(int damage)
+    void modifyHp(int hpChange)
     {
-        m_hp = m_hp - damage;
+        m_hp = m_hp + hpChange;
+
+        if (m_hp > m_hpMax)
+        {
+            m_hp = m_hpMax;
+        }
 
         if (m_hp <= 0)
         {
@@ -297,11 +440,14 @@ public:
         }
     }
 
-    void takeDamageFromCreature(tibia::Creature* creature, int damage)
+    void setLastAttacker(tibia::Creature::Ptr creature)
     {
-        m_attacker = creature;
+        m_lastAttacker = creature;
+    }
 
-        takeDamage(damage);
+    tibia::Creature::Ptr getLastAttacker()
+    {
+        return m_lastAttacker;
     }
 
     bool isDead()
@@ -315,20 +461,8 @@ public:
 
         if (m_isDead == true)
         {
-            m_spriteCorpse.setId(tibia::SpriteData::corpse[0]);
-
             m_clockCorpse.restart();
         }
-    }
-
-    bool hasDecayed()
-    {
-        return m_hasDecayed;
-    }
-
-    void setHasDecayed(bool b)
-    {
-        m_hasDecayed = b;
     }
 
     int getTileOffset()
@@ -453,6 +587,11 @@ public:
         m_team = team;
     }
 
+    int getBloodType()
+    {
+        return m_bloodType;
+    }
+
     int getHp()
     {
         return m_hp;
@@ -505,82 +644,62 @@ public:
 
     int getOutfitHead()
     {
-        return m_outfitHead;
+        return m_outfit[0];
     }
 
     void setOutfitHead(int head)
     {
-        m_outfitHead = head;
+        m_outfit[0] = head;
     }
 
     int getOutfitBody()
     {
-        return m_outfitBody;
+        return m_outfit[1];
     }
 
     void setOutfitBody(int body)
     {
-        m_outfitBody = body;
+        m_outfit[1] = body;
     }
 
     int getOutfitLegs()
     {
-        return m_outfitLegs;
+        return m_outfit[2];
     }
 
     void setOutfitLegs(int legs)
     {
-        m_outfitLegs = legs;
+        m_outfit[2] = legs;
     }
 
     int getOutfitFeet()
     {
-        return m_outfitFeet;
+        return m_outfit[3];
     }
 
     void setOutfitFeet(int feet)
     {
-        m_outfitFeet = feet;
+        m_outfit[3] = feet;
     }
 
     tibia::Sprite* getSpriteOutfitHead()
     {
-        return &m_spriteOutfitHead;
-    }
-
-    void setSpriteOutfitHead(tibia::Sprite head)
-    {
-        m_spriteOutfitHead = head;
+        return &m_spriteOutfit[0];
     }
 
     tibia::Sprite* getSpriteOutfitBody()
     {
-        return &m_spriteOutfitBody;
-    }
-
-    void setSpriteOutfitBody(tibia::Sprite body)
-    {
-        m_spriteOutfitBody = body;
+        return &m_spriteOutfit[1];
     }
 
     tibia::Sprite* getSpriteOutfitLegs()
     {
-        return &m_spriteOutfitLegs;
-    }
-
-    void setSpriteOutfitLegs(tibia::Sprite legs)
-    {
-        m_spriteOutfitLegs = legs;
+        return &m_spriteOutfit[2];
     }
 
     tibia::Sprite* getSpriteOutfitFeet()
     {
-        return &m_spriteOutfitFeet;
-    }
-
-    void setSpriteOutfitFeet(tibia::Sprite feet)
-    {
-        m_spriteOutfitFeet = feet;
+        return &m_spriteOutfit[3];
     }
 
     sf::Clock* getClockMovement()
@@ -593,6 +712,16 @@ public:
         return &m_clockLogic;
     }
 
+    sf::Clock* getClockCorpse()
+    {
+        return &m_clockCorpse;
+    }
+
+    sf::Clock* getClockAnimation()
+    {
+        return &m_clockAnimation;
+    }
+
 private:
 
     int m_tileOffset;
@@ -602,6 +731,13 @@ private:
     int m_type;
 
     int m_size;
+
+    int m_corpseSize;
+
+    int m_bloodType;
+
+    int m_numAnimations;
+    int m_currentAnimation;
 
     std::string m_name;
 
@@ -632,12 +768,12 @@ private:
 
     int m_cap;
 
-    bool m_isAnimated;
-
     bool m_isDead;
-    bool m_hasDecayed;
 
     bool m_isSleeping;
+
+    sf::Clock m_clockAnimation;
+    sf::Time m_timeAnimation;
 
     sf::Clock m_clockCorpse;
     sf::Time m_timeCorpse;
@@ -645,25 +781,20 @@ private:
     std::vector<int> m_spritesList;
     std::vector<int> m_spritesCorpseList;
 
-    tibia::Sprite m_sprite[4];
-    tibia::Sprite m_spriteCorpse;//[4];
+    tibia::Sprite m_sprite[tibia::NUM_CREATURE_SPRITES];
+    tibia::Sprite m_spriteCorpse[tibia::NUM_CREATURE_SPRITES];
 
     bool m_hasOutfit;
 
-    int m_outfitHead;
-    int m_outfitBody;
-    int m_outfitLegs;
-    int m_outfitFeet;
+    // head, body, legs, feet
+    int m_outfit[tibia::NUM_CREATURE_SPRITES];
 
-    tibia::Sprite m_spriteOutfitHead;
-    tibia::Sprite m_spriteOutfitBody;
-    tibia::Sprite m_spriteOutfitLegs;
-    tibia::Sprite m_spriteOutfitFeet;
+    tibia::Sprite m_spriteOutfit[tibia::NUM_CREATURE_SPRITES];
 
     sf::Clock m_clockMovement;
     sf::Clock m_clockLogic;
 
-    tibia::Creature* m_attacker;
+    tibia::Creature::Ptr m_lastAttacker;
 
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const
     {
@@ -671,7 +802,18 @@ private:
 
         if (m_isDead == true)
         {
-            target.draw(m_spriteCorpse, states);
+            target.draw(m_spriteCorpse[0], states);
+
+            if (m_corpseSize == tibia::CreatureCorpseSizes::medium)
+            {
+                target.draw(m_spriteCorpse[1], states);
+            }
+            else if (m_corpseSize == tibia::CreatureCorpseSizes::large)
+            {
+                target.draw(m_spriteCorpse[1], states);
+                target.draw(m_spriteCorpse[2], states);
+                target.draw(m_spriteCorpse[3], states);
+            }
 
             return;
         }
@@ -698,18 +840,27 @@ private:
         }
         else
         {
-            target.draw(m_spriteOutfitFeet, states);
-            target.draw(m_spriteOutfitLegs, states);
-            target.draw(m_spriteOutfitBody, states);
-            target.draw(m_spriteOutfitHead, states);
+            // draw in reverse: feet, legs, body, head
+            target.draw(m_spriteOutfit[3], states);
+            target.draw(m_spriteOutfit[2], states);
+            target.draw(m_spriteOutfit[1], states);
+            target.draw(m_spriteOutfit[0], states);
         }
     }
 
-};
+}; // class Creature
 
-typedef std::shared_ptr<tibia::Creature> CreaturePtr;
-typedef std::vector<CreaturePtr> CreatureList;
-
+namespace CreatureSort
+{
+    struct sortByIsDead
+    {
+        bool operator()(tibia::Creature::Ptr a, tibia::Creature::Ptr b) const
+        {
+            return (a->isDead() < b->isDead());
+        }
+    };
 }
+
+} // namespace tibia
 
 #endif // TIBIA_CREATURE_HPP

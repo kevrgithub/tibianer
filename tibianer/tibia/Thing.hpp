@@ -17,6 +17,9 @@ class Thing : public tibia::DrawableAndTransformable
 
 public:
 
+    typedef std::shared_ptr<tibia::Thing> Ptr;
+    typedef std::vector<tibia::Thing::Ptr> List;
+
     Thing::Thing()
     {
         m_drawIndex = 0;
@@ -168,16 +171,14 @@ private:
     int m_drawOffset;
 
     bool m_isReadyForErase;
-};
 
-typedef std::shared_ptr<tibia::Thing> ThingPtr;
-typedef std::vector<ThingPtr> ThingList;
+}; // class Thing
 
 namespace ThingSort
 {
     struct sortByTileNumber
     {
-        bool operator()(tibia::ThingPtr a, tibia::ThingPtr b) const
+        bool operator()(tibia::Thing::Ptr a, tibia::Thing::Ptr b) const
         {
             return (a->getTileNumber() < b->getTileNumber());
         }
@@ -185,7 +186,7 @@ namespace ThingSort
 
     struct sortByTileCoords
     {
-        bool operator()(tibia::ThingPtr a, tibia::ThingPtr b) const
+        bool operator()(tibia::Thing::Ptr a, tibia::Thing::Ptr b) const
         {
             //return (a->getTileX() == b->getTileX() ? a->getTileY() < b->getTileY() : a->getTileX() < b->getTileX());
 
@@ -204,8 +205,8 @@ namespace ThingSort
             return a->getTileX() < b->getTileX();
         }
     };
-}
+} // namespace Sort
 
-} // tibia
+} // namespace tibia
 
 #endif // TIBIA_THING_HPP

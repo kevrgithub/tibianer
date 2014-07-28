@@ -15,7 +15,7 @@ namespace tibia
 {
     const int TEXTURE_SIZE_MAX = 4096;
 
-    const int SPRITES_TOTAL = 3390;
+    const int SPRITES_TOTAL = 4096;
 
     const int NUM_Z_LEVELS = 5;
 
@@ -44,6 +44,8 @@ namespace tibia
 
     const int TILE_HEIGHT_MOVEMENT_DIFFERENCE = 2;
 
+    const int TILE_HEIGHT_MAX = 4; // 5 - 1
+
     const int TILE_CLIMB_HEIGHT = 3;
 
     const int THING_DRAW_OFFSET = 8;
@@ -51,7 +53,10 @@ namespace tibia
     const int LIGHT_WIDTH  = 480;
     const int LIGHT_HEIGHT = 352;
 
-    const int NUM_OBJECT_SPRITES = 8;
+    const int NUM_CREATURE_SPRITES = 4;
+    const int NUM_OBJECT_SPRITES   = 8;
+
+    const int DRAW_INDEX_LAST = 256;
 
     const std::string CREATURE_NAME_DEFAULT = "Creature";
     const std::string CREATURE_NAME_PLAYER  = "Player";
@@ -63,6 +68,14 @@ namespace tibia
         sf::Texture background;
         sf::Texture cursor;
     }
+
+    std::unordered_map<std::string, sf::Texture&> umapTextureFiles =
+    {
+        {"images/sprites.png",    tibia::Textures::sprites},
+        {"images/lights.png",     tibia::Textures::lights},
+        {"images/background.png", tibia::Textures::background},
+        {"images/cursor.png",     tibia::Textures::cursor},
+    };
 
     namespace Fonts
     {
@@ -264,6 +277,7 @@ namespace tibia
         sf::Color miniMapLava(255, 128, 0);
         sf::Color miniMapSwamp(0, 255, 0);
         sf::Color miniMapIce(128, 255, 255);
+        sf::Color miniMapSnow(192, 192, 192);
         sf::Color miniMapSand(255, 255, 128);
         sf::Color miniMapMoveAboveOrBelow(255, 255, 0);
     }
@@ -355,6 +369,7 @@ namespace tibia
         {1565, tibia::Colors::miniMapCave},
         {1566, tibia::Colors::miniMapCave},
         {1567, tibia::Colors::miniMapCave},
+        {1606, tibia::Colors::miniMapSnow},
         {1610, tibia::Colors::miniMapTree},
         {1614, tibia::Colors::miniMapTree},
         {1618, tibia::Colors::miniMapTree},
@@ -454,6 +469,7 @@ namespace tibia
         {3257, tibia::Colors::miniMapMountain},
         {3322, tibia::Colors::miniMapTree},
         {3326, tibia::Colors::miniMapTree},
+        {3337, tibia::Colors::miniMapSnow},
         {3344, tibia::Colors::miniMapWood},
         {3375, tibia::Colors::miniMapTree},
     };
@@ -581,25 +597,28 @@ namespace tibia
             changeMap,
             creature,
             book,
+            changeMusic,
         };
     }
 
     std::unordered_map<std::string, int> umapObjectTypes
     {
-        {"null",       tibia::ObjectTypes::null},
-        {"sign",       tibia::ObjectTypes::sign},
-        {"teleporter", tibia::ObjectTypes::teleporter},
-        {"door",       tibia::ObjectTypes::door},
-        {"bed",        tibia::ObjectTypes::bed},
-        {"lever",      tibia::ObjectTypes::lever},
-        {"changemap",  tibia::ObjectTypes::changeMap},
-        {"creature",   tibia::ObjectTypes::creature},
-        {"book",       tibia::ObjectTypes::book},
+        {"null",        tibia::ObjectTypes::null},
+        {"sign",        tibia::ObjectTypes::sign},
+        {"teleporter",  tibia::ObjectTypes::teleporter},
+        {"door",        tibia::ObjectTypes::door},
+        {"bed",         tibia::ObjectTypes::bed},
+        {"lever",       tibia::ObjectTypes::lever},
+        {"changemap",   tibia::ObjectTypes::changeMap},
+        {"creature",    tibia::ObjectTypes::creature},
+        {"book",        tibia::ObjectTypes::book},
+        {"changemusic", tibia::ObjectTypes::changeMusic},
     };
 
     namespace Outfits
     {
-        std::vector<int> newbie = {0, 0, 0, 0};
+        // newbie outfit
+        std::vector<int> default = {1, 1, 0, 0};
 
         // 10
         std::vector<int> head = 
@@ -663,14 +682,67 @@ namespace tibia
         };
     }
 
-    namespace CreatureStatusFlags
+    namespace OutfitPieces
     {
-        //
+        enum
+        {
+            head,
+            body,
+            legs,
+            feet,
+        };
     }
 
-    namespace CreatureEquipmentFlags
+    namespace ModifyHpTypes
     {
-        //
+        enum
+        {
+            black,
+            blood,
+            fire,
+            electricity,
+            poison,
+            spellBlue,
+            spellBlack,
+            heal,
+        };
+    }
+
+    std::unordered_map<int, int> umapModifyHpOnTouchTypes =
+    {
+        {1489, tibia::ModifyHpTypes::fire},
+        {1490, tibia::ModifyHpTypes::fire},
+        {1491, tibia::ModifyHpTypes::fire},
+        {1492, tibia::ModifyHpTypes::fire},
+        //{1493, tibia::ModifyHpTypes::fire},
+        //{1494, tibia::ModifyHpTypes::fire},
+
+        {1497, tibia::ModifyHpTypes::electricity},
+        {1498, tibia::ModifyHpTypes::electricity},
+
+        {3158, tibia::ModifyHpTypes::poison},
+        {3159, tibia::ModifyHpTypes::poison},
+        {3160, tibia::ModifyHpTypes::poison},
+        {3161, tibia::ModifyHpTypes::poison},
+    };
+
+    namespace CreatureStatusFlags
+    {
+        enum
+        {
+            burning,
+            cursed,
+            dazzled,
+            drowning,
+            drunk,
+            electrified,
+            freezing,
+            hasted,
+            magicShielded,
+            poisoned,
+            slowed,
+            strengthened,
+        };
     }
 
     namespace CreatureTypes
@@ -679,32 +751,49 @@ namespace tibia
         {
             human,
 
+            bear,
+            cacodemon, // doom
+            citizenMale,
+            citizenFemale,
             demon,
             demonSkeleton,
             gameMaster,
+            ghoul,
             hero,
             monk,
             necromancer,
             orc,
+            poisonSpider,
             santaClaus,
             skeleton,
             spider,
             witch,
-            zombie,
         };
     }
 
     std::unordered_map<std::string, int> umapCreatureTypes =
     {
         {"human", tibia::CreatureTypes::human},
+
+        {"bear", tibia::CreatureTypes::bear},
+        {"cacodemon", tibia::CreatureTypes::cacodemon},
+        {"citizen_male", tibia::CreatureTypes::citizenMale},
+        {"citizen_female", tibia::CreatureTypes::citizenFemale},
         {"demon", tibia::CreatureTypes::demon},
+        {"poison_spider", tibia::CreatureTypes::poisonSpider},
         {"santa_claus", tibia::CreatureTypes::santaClaus},
     };
 
     std::unordered_map<int, std::string> umapCreatureNames =
     {
-        {tibia::CreatureTypes::human, "Human"},
-        {tibia::CreatureTypes::demon, "Demon"},
+        {tibia::CreatureTypes::human, "human"},
+
+        {tibia::CreatureTypes::bear, "bear"},
+        {tibia::CreatureTypes::cacodemon, "cacodemon"},
+        {tibia::CreatureTypes::citizenMale, "citizen"},
+        {tibia::CreatureTypes::citizenFemale, "citizen"},
+        {tibia::CreatureTypes::demon, "demon"},
+        {tibia::CreatureTypes::poisonSpider, "poison spider"},
         {tibia::CreatureTypes::santaClaus, "Santa Claus"},
     };
 
@@ -720,13 +809,69 @@ namespace tibia
 
     std::unordered_map<int, int> umapCreatureSizes =
     {
-        {tibia::CreatureTypes::human,      tibia::CreatureSizes::small},
-        {tibia::CreatureTypes::demon,      tibia::CreatureSizes::large},
+        {tibia::CreatureTypes::human, tibia::CreatureSizes::small},
+        {tibia::CreatureTypes::bear, tibia::CreatureSizes::medium},
+        {tibia::CreatureTypes::cacodemon, tibia::CreatureSizes::large},
+        {tibia::CreatureTypes::citizenMale, tibia::CreatureSizes::small},
+        {tibia::CreatureTypes::citizenFemale, tibia::CreatureSizes::small},
+        {tibia::CreatureTypes::demon, tibia::CreatureSizes::large},
+        {tibia::CreatureTypes::poisonSpider, tibia::CreatureSizes::small},
         {tibia::CreatureTypes::santaClaus, tibia::CreatureSizes::medium},
     };
 
     namespace CreatureSprites
     {
+        // {up, right, down, left}
+
+        std::vector<int> human = {3390, 3390, 3390, 3390};
+
+        std::vector<int> bear =
+        {
+            // animation 1
+            1802, 1794, 1806, 1798,
+            1801, 1793, 1805, 1797,
+
+            // animation 2
+            1804, 1796, 1808, 1800,
+            1803, 1795, 1807, 1799,
+        };
+
+        std::vector<int> cacodemon =
+        {
+            // animation 1
+            3396, 3416, 3436, 3456,
+            3395, 3415, 3435, 3455,
+            3394, 3414, 3434, 3454,
+            3393, 3413, 3433, 3453,
+
+            // animation 2
+            3400, 3420, 3440, 3460,
+            3399, 3419, 3439, 3459,
+            3398, 3418, 3438, 3458,
+            3397, 3417, 3437, 3457,
+
+            // animation 3
+            3404, 3424, 3444, 3464,
+            3403, 3423, 3443, 3463,
+            3402, 3422, 3442, 3462,
+            3401, 3421, 3441, 3461,
+
+            // animation 4
+            3408, 3428, 3448, 3468,
+            3407, 3427, 3447, 3467,
+            3406, 3426, 3446, 3466,
+            3405, 3425, 3445, 3465,
+
+            // animation 5
+            3412, 3432, 3452, 3472,
+            3411, 3431, 3451, 3471,
+            3410, 3430, 3450, 3470,
+            3409, 3429, 3449, 3469,
+        };
+
+        std::vector<int> citizenMale   = {3350, 3351, 3349, 3352};
+        std::vector<int> citizenFemale = {3354, 3355, 3353, 3356};
+
         std::vector<int> demon =
         {
             1480, 1484, 1476, 1488,
@@ -739,7 +884,24 @@ namespace tibia
 
         std::vector<int> gameMaster = {3330, 3329, 3327, 3328};
 
+        std::vector<int> ghoul = {1838, 1841, 1839, 1840};
+
         std::vector<int> orc = {2863, 2862, 2864, 2861};
+
+        std::vector<int> poisonSpider =
+        {
+            //animation 1
+            1514, 1518, 1522, 302,
+
+            //animation 2
+            1515, 1519, 1523, 303,
+
+            //animation 3
+            1516, 1520, 1524, 304,
+
+            //animation 4
+            1517, 1521, 1525, 305,
+        };
 
         std::vector<int> santaClaus =
         {
@@ -754,19 +916,81 @@ namespace tibia
             2884, 2888, 2882, 2886,
             2883, 2887, 2881, 2885,
         };
-
-        std::vector<int> zombie = {1838, 1841, 1839, 1840};
     }
 
     std::unordered_map<int, std::vector<int>> umapCreatureSprites =
     {
-        {tibia::CreatureTypes::demon,      tibia::CreatureSprites::demon},
+        {tibia::CreatureTypes::human, tibia::CreatureSprites::human},
+
+        {tibia::CreatureTypes::bear, tibia::CreatureSprites::bear},
+        {tibia::CreatureTypes::cacodemon, tibia::CreatureSprites::cacodemon},
+        {tibia::CreatureTypes::citizenMale, tibia::CreatureSprites::citizenMale},
+        {tibia::CreatureTypes::citizenFemale, tibia::CreatureSprites::citizenFemale},
+        {tibia::CreatureTypes::demon, tibia::CreatureSprites::demon},
+        {tibia::CreatureTypes::poisonSpider, tibia::CreatureSprites::poisonSpider},
         {tibia::CreatureTypes::santaClaus, tibia::CreatureSprites::santaClaus},
+    };
+
+    std::unordered_map<int, int> umapCreatureNumAnimations =
+    {
+        {tibia::CreatureTypes::human, 1},
+
+        {tibia::CreatureTypes::bear, 2},
+        {tibia::CreatureTypes::cacodemon, 5},
+        {tibia::CreatureTypes::citizenMale, 1},
+        {tibia::CreatureTypes::citizenFemale, 1},
+        {tibia::CreatureTypes::demon, 1},
+        {tibia::CreatureTypes::poisonSpider, 4},
+        {tibia::CreatureTypes::santaClaus, 1},
+    };
+
+    namespace CreatureCorpseSizes
+    {
+        enum
+        {
+            small,
+            medium,
+            large,
+        };
+    }
+
+    std::unordered_map<int, int> umapCreatureCorpseSizes =
+    {
+        {tibia::CreatureTypes::human, tibia::CreatureCorpseSizes::small},
+
+        {tibia::CreatureTypes::bear, tibia::CreatureCorpseSizes::medium},
+        {tibia::CreatureTypes::cacodemon, tibia::CreatureCorpseSizes::large},
+        {tibia::CreatureTypes::citizenMale, tibia::CreatureCorpseSizes::small},
+        {tibia::CreatureTypes::citizenFemale, tibia::CreatureCorpseSizes::small},
+        {tibia::CreatureTypes::demon, tibia::CreatureCorpseSizes::large},
+        {tibia::CreatureTypes::poisonSpider, tibia::CreatureCorpseSizes::small},
+        {tibia::CreatureTypes::santaClaus, tibia::CreatureCorpseSizes::small},
     };
 
     namespace CreatureCorpseSprites
     {
         std::vector<int> human = {491, 492, 493, 494, 495, 496, 497};
+
+        std::vector<int> bear =
+        {
+            1810, 1809,
+            1812, 1811,
+            1814, 1813,
+            1816, 1815,
+        };
+
+        std::vector<int> cacodemon =
+        {
+            3476, 3475, 3474, 3473,
+            3480, 3479, 3478, 3477,
+            3484, 3483, 3482, 3481,
+            3488, 3487, 3486, 3485,
+            3492, 3491, 3490, 3489,
+            3496, 3495, 3494, 3493,
+        };
+
+        std::vector<int> citizenMale   = {3357, 3358, 3359};
+        std::vector<int> citizenFemale = {3360, 3361, 3359};
 
         std::vector<int> demon =
         {
@@ -775,24 +999,58 @@ namespace tibia
             327, 326, 325, 324,
             331, 330, 329, 328,
         };
+
+        std::vector<int> poisonSpider = {3068, 3069, 3070};
     }
 
     std::unordered_map<int, std::vector<int>> umapCreatureCorpseSprites =
     {
         {tibia::CreatureTypes::human, tibia::CreatureCorpseSprites::human},
+        
+        {tibia::CreatureTypes::bear, tibia::CreatureCorpseSprites::bear},
+        {tibia::CreatureTypes::cacodemon, tibia::CreatureCorpseSprites::cacodemon},
+        {tibia::CreatureTypes::citizenMale, tibia::CreatureCorpseSprites::citizenMale},
+        {tibia::CreatureTypes::citizenFemale, tibia::CreatureCorpseSprites::citizenFemale},
         {tibia::CreatureTypes::demon, tibia::CreatureCorpseSprites::demon},
+        {tibia::CreatureTypes::poisonSpider, tibia::CreatureCorpseSprites::poisonSpider},
+        {tibia::CreatureTypes::santaClaus, tibia::CreatureCorpseSprites::human},
+    };
+
+    namespace CreatureBloodTypes
+    {
+        enum
+        {
+            none,
+            red,
+            green,
+        };
+    }
+
+    std::unordered_map<int, int> umapCreatureBloodTypes =
+    {
+        {tibia::CreatureTypes::human, tibia::CreatureBloodTypes::red},
+
+        {tibia::CreatureTypes::bear, tibia::CreatureBloodTypes::red},
+        {tibia::CreatureTypes::cacodemon, tibia::CreatureBloodTypes::red},
+        {tibia::CreatureTypes::citizenMale, tibia::CreatureBloodTypes::red},
+        {tibia::CreatureTypes::citizenFemale, tibia::CreatureBloodTypes::red},
+        {tibia::CreatureTypes::demon, tibia::CreatureBloodTypes::red},
+        {tibia::CreatureTypes::poisonSpider, tibia::CreatureBloodTypes::green},
+        {tibia::CreatureTypes::santaClaus, tibia::CreatureBloodTypes::red},
     };
 
     namespace AnimationTimes
     {
-        const float default     = 0.1;
-        const float decal       = 60.0;
-        const float corpseDecay = 60.0;
+        const float default           = 0.1;
+        const float corpseDecay       = 5.0; //60.0;
+        const float creatureAnimation = 1.0;
     }
 
     namespace Animations
     {
         // {id, numFrames}
+
+        std::vector<int> corpse = {491, 7};
 
         std::vector<int> waterSplash = {335, 4};
 
@@ -820,7 +1078,90 @@ namespace tibia
 
         std::vector<int> music = {3362, 5};
 
-        std::vector<int>sparkle = {3376, 4};
+        std::vector<int> sparkle = {3376, 4};
+    }
+
+    std::unordered_map<int, std::vector<int>> umapModifyHpOnTouchAnimations =
+    {
+        {1489, tibia::Animations::fire},
+        {1490, tibia::Animations::fire},
+        {1491, tibia::Animations::fire},
+        {1492, tibia::Animations::fire},
+        //{1493, tibia::Animations::fire},
+        //{1494, tibia::Animations::fire},
+
+        {1497, tibia::Animations::electricity},
+        {1498, tibia::Animations::electricity},
+
+        {3158, tibia::Animations::poison},
+        {3159, tibia::Animations::poison},
+        {3160, tibia::Animations::poison},
+        {3161, tibia::Animations::poison},
+    };
+
+    std::unordered_map<int, std::vector<int>> umapModifyHpAnimations =
+    {
+        {tibia::ModifyHpTypes::black,       tibia::Animations::hitBlack},
+        {tibia::ModifyHpTypes::blood,       tibia::Animations::hitBlood},
+        {tibia::ModifyHpTypes::fire,        tibia::Animations::fire},
+        {tibia::ModifyHpTypes::electricity, tibia::Animations::electricity},
+        {tibia::ModifyHpTypes::poison,      tibia::Animations::hitPoison},
+        {tibia::ModifyHpTypes::spellBlue,   tibia::Animations::spellBlue},
+        {tibia::ModifyHpTypes::spellBlack,  tibia::Animations::spellBlack},
+        {tibia::ModifyHpTypes::heal,        tibia::Animations::particlesRed},
+    };
+
+    std::unordered_map<int, std::vector<int>> umapCreatureBloodTypeAnimations =
+    {
+        {tibia::CreatureBloodTypes::none,  tibia::Animations::hitBlack},
+        {tibia::CreatureBloodTypes::red,   tibia::Animations::hitBlood},
+        {tibia::CreatureBloodTypes::green, tibia::Animations::hitPoison},
+    };
+
+    namespace Projectiles
+    {
+        int spellBlue  = 1829;
+        int spellBlack = 3252;
+
+        std::vector<int> spellFire = {1831, 1834, 1836, 1833, 1830, 1832, 1837, 1835};
+
+        std::vector<int> spear = {963, 965, 967, 969, 970, 964, 966, 968};
+
+        std::vector<int> bolt = {972, 974, 976, 978, 979, 973, 975, 977};
+
+        std::vector<int> arrow       = {980, 982, 984, 986, 987, 981, 983, 985};
+        std::vector<int> arrowFire   = {1855, 1857, 1859, 1861, 1854, 1856, 1858, 1860};
+        std::vector<int> arrowPoison = {1847, 1849, 1851, 1853, 1846, 1848, 1850, 1852};
+    }
+
+    namespace ProjectileTypes
+    {
+        enum
+        {
+            spellBlue,
+            spellBlack,
+            spellFire,
+            spear,
+            bolt,
+            arrow,
+            arrowFire,
+            arrowPoison
+        };
+    }
+
+    namespace ProjectileRanges
+    {
+        const float default = 6.0;
+    }
+
+    namespace ProjectileSpeeds
+    {
+        const float default = 8.0;
+    }
+
+    namespace ProjectileDamages
+    {
+        const float default = 5.0;
     }
 
     namespace SpriteFlags
@@ -844,6 +1185,10 @@ namespace tibia
             ignoreHeight     = 1 << 14,
             fixDrawOrder     = 1 << 15,
             moveable         = 1 << 16,
+            modifyHpOnTouch  = 1 << 17,
+            food             = 1 << 18,
+            instrument       = 1 << 19,
+            currency         = 1 << 20,
         };
     }
 
@@ -913,9 +1258,11 @@ namespace tibia
         std::vector<int> cauldron = {1181, 1182, 1183, 1184, 1187, 1188, 1189, 1190};
         std::vector<int> bottle   = {1556, 1557, 1558, 1559, 1560, 1561, 1562, 1563};
 
-        std::vector<int> poolRed = {745, 746, 747};
+        std::vector<int> poolRed   = {745, 746, 747};
+        std::vector<int> poolGreen = {757, 758, 759};
 
-        std::vector<int> splatRed = {748, 749, 750};
+        std::vector<int> splatRed =   {748, 749, 750};
+        std::vector<int> splatGreen = {760, 761, 762};
 
         std::vector<int> locker = {1264, 1265, 1266, 1267};
 
@@ -951,9 +1298,6 @@ namespace tibia
 
         const int mountainRampLeft  = 2103;
         const int mountainRampRight = 2097;
-
-        const int mountainRampLeftMoveBelow  = 3386;
-        const int mountainRampRightMoveBelow = 3387;
 
         std::vector<int> water =
         {
@@ -1243,23 +1587,63 @@ namespace tibia
             1274,
             1652,
             1879, 1880,
+            1938,
             3348,
         };
 
         std::vector<int> moveable =
         {
-            37,
-            46,
-            51, 52,
-            114,
-            201,
-            298, 299,
-            521, 522, 523,
-            1054, 1055,
-            1268, 1269,
-            1225,
-            3035,
-            3239, 3240,
+            3, 4, 5, 6, 7, 8, 9, 37, 41, 45, 46, 51, 52,
+            73, 114, 115, 117, 128,
+            152, 153, 154, 164,
+            200, 201, 206, 207,
+            259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 280, 281, 282, 295, 296, 297, 298, 299, 300, 301, 306, 307, 308, 309, 310, 319,
+            323, 327, 331, 332, 374,
+            389, 394, 395, 396, 397, 410, 411, 412, 413, 414, 415, 416, 417, 418, 419, 420, 421, 440, 443, 444, 445, 446, 447, 448,
+            449, 450, 451, 488, 489, 490, 491, 492, 493, 494, 495, 496, 497, 498, 499, 500, 501, 502, 503, 504, 505, 506, 507, 508, 509, 510, 511,
+            514, 515, 516, 517, 518, 519, 520, 521, 522, 523, 524, 525, 526, 527, 528, 535,
+            //
+            668, 669, 678, 679, 680, 681, 682, 683, 684, 685, 686, 687, 688, 689, 690,
+            708, 709, 710, 711, 712, 713, 714, 715, 732, 733, 734, 735, 744,
+            787, 792, 793,
+            //
+            927, 928, 929,
+            971, 988, 989, 990, 991, 992, 993, 994, 995, 1010, 1011, 1016, 1017,
+            1034, 1049, 1050, 1051, 1052, 1053, 1054, 1055, 1056, 1057, 1058, 1059, 1061, 1062, 1063, 1064, 1065, 1088,
+            1089, 1090, 1091, 1108, 1109, 1118, 1119, 1120, 1121, 1122, 1123, 1124, 1125, 1126, 1127, 1128, 1129, 1130, 1131, 1132, 1133, 1134, 1135, 1136,
+            1181, 1182, 1183, 1184, 1187, 1188, 1189, 1190, 1200, 1201, 1202, 1214, 1215, 1216,
+            1217, 1218, 1219, 1220, 1224, 1225, 1226, 1227, 1228, 1229, 1230, 1231, 1232, 1233, 1234, 1235, 1236, 1237, 1238, 1239, 1240, 1242, 1244, 1245, 1246, 1247, 1248, 1249, 1250, 1251, 1252, 1263, 1268, 1269, 1270, 1271, 1272, 1277, 1278, 1279, 1280,
+            1281, 1282, 1283, 1284, 1285, 1286, 1287, 1288, 1289, 1290, 1291, 1292, 1293, 1294, 1295, 1296, 1297, 1298, 1299, 1300, 1301, 1302, 1303, 1304, 1305, 1306, 1307, 1308, 1309, 1310, 1311, 1312, 1313, 1314, 1315, 1316, 1317, 1318, 1319, 1320, 1321, 1322, 1323, 1324, 1325, 1326, 1327, 1328, 1329, 1330, 1331, 1332, 1333, 1334, 1335, 1336, 1337, 1338, 1339, 1340, 1341, 1342, 1343, 1344,
+            1345, 1346, 1347, 1354, 1408,
+            1417, 1418, 1419, 1420, 1429, 1430, 1431, 1432, 1452, 1456, 1460, 1464, 1469, 1470, 1471,
+            //
+            1556, 1557, 1558, 1559, 1560, 1561, 1562, 1563, 1568, 1569, 1575, 1576, 1577, 1578, 1579, 1580, 1581, 1587, 1588, 1589, 1590,
+            1605, 1647, 1652,
+            1670, 1671,
+            //
+            1810, 1812, 1814, 1816, 1842, 1843, 1844, 1845,
+            1862, 1863, 1864, 1865, 1866, 1867, 1868, 1869, 1870, 1871, 1872, 1873, 1874, 1875, 1876, 1877, 1878, 1879, 1880, 1881, 1882, 1883, 1884, 1885, 1886, 1887, 1888, 1889, 1890, 1891, 1892, 1893, 1894, 1895, 1896, 1897, 1898, 1899, 1900, 1901, 1902, 1903, 1904, 1917, 1918, 1919, 1920,
+            1921, 1922, 1923, 1928, 1929, 1930, 1931, 1932, 1933, 1934, 1935, 1936, 1937, 1938,
+            2086, 2090, 2094,
+            2119, 2160,
+            2182, 2183, 2184, 2195, 2196, 2197, 2198, 2199, 2200, 2201, 2202, 2203, 2204, 2205, 2206, 2207, 2208, 2209, 2210, 2211, 2212, 2213, 2214, 2215, 2216, 2217, 2218, 2219, 2220, 2221, 2222, 2223, 2224, 2225, 2226, 2227, 2228, 2229, 2230, 2231, 2232, 2233, 2234, 2235, 2236, 2237, 2238, 2239, 2240,
+            2241, 2242, 2243, 2244, 2245, 2246, 2247, 2248, 2269, 2270, 2272, 2276, 2280, 2284, 2287, 2288, 2293, 2294, 2295,
+            2317, 2319, 2321, 2323, 2332, 2333, 2334, 2335, 2336, 2345, 2346, 2347, 2348, 2349, 2358, 2359, 2360, 2361, 2362,
+            2371, 2372, 2377, 2378, 2383, 2384, 2402, 2404, 2413, 2414, 2427, 2428, 2429,
+            2450, 2451, 2452, 2465, 2466, 2467, 2468, 2469, 2470, 2471, 2472, 2473, 2474, 2475, 2476, 2477, 2478, 2479, 2480, 2481, 2482, 2495,
+            2500, 2501, 2502, 2503, 2504, 2505, 2506, 2507, 2508, 2509, 2510, 2511, 2512, 2513, 2514, 2515, 2516, 2517, 2518, 2519, 2520, 2521, 2522, 2523, 2524, 2525, 2535, 2536, 2537, 2538, 2539, 2540, 2541, 2542, 2543, 2544, 2545, 2546,
+            2609, 2610, 2611, 2612, 2613, 2614, 2615, 2616, 2617, 2618, 2619, 2620, 2621, 2622,
+            //
+            2719, 2720, 2721, 2722, 2723, 2724,
+            2760, 2764, 2768, 2773, 2806, 2807, 2808, 2809,
+            2818, 2819, 2828, 2829, 2830, 2835, 2836, 2845, 2846, 2847, 2848, 2865, 2866,
+            2889, 2890, 2891, 2892, 2893, 2894, 2895, 2896, 2932, 2936, 2940, 2944,
+            2951, 2952, 2953, 2954, 2955, 2960, 2961, 2962, 2963, 2976, 2977, 2978, 2979, 2980, 2981, 2982, 2983, 2984, 2985, 2994, 2995, 3004, 3005, 3006, 3007, 3008,
+            3009, 3010, 3011, 3012, 3013, 3014, 3015, 3016, 3017, 3018, 3019, 3020, 3021, 3022, 3023, 3024, 3035, 3048, 3049, 3050, 3051, 3068, 3069, 3070, 3071, 3072,
+            3073, 3074, 3075, 3076, 3077, 3078, 3085, 3090, 3095, 3096, 3097, 3098, 3111, 3112, 3113, 3137, 3141, 3145, 3149, 3154, 3155, 3156, 3157, 3166, 3167, 3168, 3169, 3187, 3188, 3189, 3190, 3191, 3192, 3193, 3194, 3195, 3196, 3197, 3198, 3199, 3200,
+            3201, 3202, 3203, 3204, 3205, 3206, 3207, 3208, 3209, 3230, 3231, 3238, 3239, 3240,
+            3280, 3281, 3282, 3283, 3284, 3285, 3286, 3287, 3288, 3289, 3290, 3291, 3314, 3315, 3316, 3317, 3318, 3322, 3326,
+            3331, 3332, 3333, 3334, 3335, 3336, 3357, 3358, 3359, 3360, 3361, 3367, 3368, 3369, 3370, 3371, 3372, 3373, 3374, 3380, 3381,
         };
 
         std::vector<int> moveAbove =
@@ -1275,7 +1659,6 @@ namespace tibia
             691, 692, 693, 694, 695, 696, 697, 698, 699,
             1205,
             3241, 3243,
-            3386, 3387,
         };
 
         std::vector<int> lightSource =
@@ -1455,8 +1838,8 @@ namespace tibia
         std::vector<int> transparent =
         {
             1, // pink square
-            3386, 3387, // mountain ramps
-            3389, // invisible
+            1087, // pink square
+            3388, // invisible
         };
 
         // right to left, bottom then top
@@ -1466,7 +1849,7 @@ namespace tibia
             56, 60, 68, 72,
             159, 163,
             286, 290,
-            315, // 5 sprites
+            315, // 5 sprites for well
             388, 455, 460, 486, 562, 703, 707,
             553, 3303, 3307, // doors
             566, 570, 576, 580, 584, 588,
@@ -1484,12 +1867,6 @@ namespace tibia
             3385,
         };
 
-        // bottom to top, right then left
-        std::vector<int> quadVerticalObjects =
-        {
-            25,
-        };
-
         // right to left
         std::vector<int> horizontalObjects =
         {
@@ -1499,7 +1876,7 @@ namespace tibia
             909, 918,
             940,
             1046,
-            1067, 1069,
+            1067,
             1824, 1826, 1828,
             2497,
             2548,
@@ -1531,6 +1908,7 @@ namespace tibia
             1663, // wood arch
             2867, 2868, 2869, 2870, 2871, 2872, // torch inset
             2968, 2970, 2971, 2972, 2974, 2975, // torch hanging
+            3254, 3255, 3256, 3257, // mountain wall tops
         };
 
         std::vector<int> drawLastObjects =
@@ -1543,7 +1921,21 @@ namespace tibia
 
         std::vector<int> ignoreHeightObjects =
         {
-            1043, 1044, 1046, 1048, // counters
+            1043, 1044, 1046, 1048, // counter tops
+        };
+
+        std::vector<int> modifyHpOnTouchObjects =
+        {
+            // fire field
+            1489, 1490,
+            1491, 1492,
+            //1493, 1494,
+
+            // electricity field
+            1497, 1498,
+
+            // poison field
+            3158, 3159, 3160, 3161,
         };
 
         std::vector<int> animatedObjects =
@@ -1611,12 +2003,13 @@ namespace tibia
             3271, 3275, 3279,
             3322, 3326,
             3380, 3381,
+            3391,
         };
     }
 
     std::vector<std::vector<int>> animatedObjectsList =
     {
-        {197, 198, 199},
+        {197, 198, 199, 3391},
         {202, 367},
         {203, 368},
         {204, 369},
@@ -1716,8 +2109,70 @@ namespace tibia
 
         // tree wall
         {3344},
+
+        // corpse
+        {491, 492, 493, 494, 495, 496, 497},
     };
 
-} // tibia
+    std::unordered_map<int, std::vector<int>> umapCreatureBloodTypesSplats =
+    {
+        {tibia::CreatureBloodTypes::red,   tibia::SpriteData::splatRed},
+        {tibia::CreatureBloodTypes::green, tibia::SpriteData::splatGreen},
+    };
+
+    std::unordered_map<int, std::vector<int>> umapCreatureBloodTypesPools =
+    {
+        {tibia::CreatureBloodTypes::red,   tibia::SpriteData::poolRed},
+        {tibia::CreatureBloodTypes::green, tibia::SpriteData::poolGreen},
+    };
+
+    namespace Sounds
+    {
+        sf::SoundBuffer teleport;
+
+        namespace Creatures
+        {
+            namespace Human
+            {
+                sf::SoundBuffer death;
+            }
+
+            namespace Cacodemon
+            {
+                sf::SoundBuffer death;
+            }
+        }
+
+        namespace Instruments
+        {
+            sf::SoundBuffer harp;
+        }
+    }
+
+    std::unordered_map<std::string, sf::SoundBuffer&> umapSoundFiles =
+    {
+        {"sounds/teleport.wav", tibia::Sounds::teleport},
+
+        {"sounds/creatures/human/death.wav", tibia::Sounds::Creatures::Human::death},
+
+        {"sounds/creatures/cacodemon/death.wav", tibia::Sounds::Creatures::Cacodemon::death},
+
+        {"sounds/instruments/harp.wav", tibia::Sounds::Instruments::harp},
+    };
+
+    std::unordered_map<int, sf::SoundBuffer&> umapCreatureDeathSounds =
+    {
+        {tibia::CreatureTypes::human, tibia::Sounds::Creatures::Human::death},
+
+        {tibia::CreatureTypes::bear, tibia::Sounds::Creatures::Human::death},
+        {tibia::CreatureTypes::cacodemon, tibia::Sounds::Creatures::Cacodemon::death},
+        {tibia::CreatureTypes::citizenMale, tibia::Sounds::Creatures::Human::death},
+        {tibia::CreatureTypes::citizenFemale, tibia::Sounds::Creatures::Human::death},
+        {tibia::CreatureTypes::demon, tibia::Sounds::Creatures::Human::death},
+        {tibia::CreatureTypes::poisonSpider, tibia::Sounds::Creatures::Human::death},
+        {tibia::CreatureTypes::santaClaus, tibia::Sounds::Creatures::Human::death},
+    };
+
+} // namespace tibia
 
 #endif // TIBIA_TIBIA_HPP
