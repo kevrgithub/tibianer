@@ -55,6 +55,8 @@ public:
 
         setPropertiesByType(m_type);
 
+        setId(m_id);
+
         m_sprite.setId(m_id);
 
         setPosition(origin.x, origin.y);
@@ -108,26 +110,42 @@ public:
 
     void doMovement(sf::Time timeDelta)
     {
-        sf::Time timeElapsed = m_clock.getElapsedTime();
+        float moveX = m_vectorMovement.x;
+        float moveY = m_vectorMovement.y;
 
-        if (timeElapsed.asSeconds() >= 0.01)
+        //std::cout << "timeDelta: " << timeDelta.asSeconds() << std::endl;
+
+        float moveSpeed = m_speed * timeDelta.asSeconds();
+
+        moveSpeed = std::roundf(moveSpeed);
+
+        //std::cout << "moveSpeed: " << moveSpeed << std::endl;
+
+        m_sprite.move(moveX * moveSpeed, moveY * moveSpeed);
+
+        m_distanceTravelled += moveSpeed;
+
+        //std::cout << "m_distanceTravelled: " << m_distanceTravelled << std::endl;
+
+        m_distanceTravelledRoundedToTileSize = m_distanceTravelled - (m_distanceTravelled % tibia::TILE_SIZE);
+
+        if (m_distanceTravelledRoundedToTileSize == m_distanceTravelledPrevious)
         {
-            float moveX = m_vectorMovement.x;
-            float moveY = m_vectorMovement.y;
+            return;
+        }
 
-            m_sprite.move(moveX * m_speed, moveY * m_speed); // * timeDelta.asSeconds()
+        m_distanceTravelledPrevious = m_distanceTravelledRoundedToTileSize;
 
-            m_distanceTravelled += m_speed;
+        //std::cout << "m_distanceTravelledRoundedToTileSize: " << m_distanceTravelledRoundedToTileSize << std::endl;
 
-            if (m_distanceTravelled > 0 && m_distanceTravelled % tibia::TILE_SIZE == 0)
-            {
-                m_spriteTileX = m_spriteTileX + (moveX * tibia::TILE_SIZE);
-                m_spriteTileY = m_spriteTileY + (moveY * tibia::TILE_SIZE);
+        if (m_distanceTravelledRoundedToTileSize > 0 && m_distanceTravelledRoundedToTileSize % tibia::TILE_SIZE == 0)
+        {
+            m_spriteTileX = m_spriteTileX + (moveX * tibia::TILE_SIZE);
+            m_spriteTileY = m_spriteTileY + (moveY * tibia::TILE_SIZE);
 
-                m_tileDistanceTravelled += 1;
-            }
+            m_tileDistanceTravelled += 1;
 
-            m_clock.restart();
+            //std::cout << "m_tileDistanceTravelled: " << m_tileDistanceTravelled << std::endl;
         }
     }
 
@@ -135,7 +153,9 @@ public:
     {
         //updateTileCoords();
 
-        //setPosition(getTileX(), getTileY());
+        //int drawOffset = getDrawOffset() * tibia::THING_DRAW_OFFSET;
+
+        //setPosition(getTileX() - drawOffset, getTileY() - drawOffset);
 
         doMovement(timeDelta);
 
@@ -147,6 +167,8 @@ public:
     void setId(int id)
     {
         m_id = id;
+
+        m_flags = tibia::umapSpriteFlags[m_id];
     }
 
     int getId()
@@ -167,6 +189,16 @@ public:
     int getModifyHpType()
     {
         return m_modifyHpType;
+    }
+
+    unsigned int getFlags()
+    {
+        return m_flags;
+    }
+
+    void setFlags(unsigned int flags)
+    {
+        m_flags = flags;
     }
 
     void setRange(int range)
@@ -199,9 +231,9 @@ public:
         return m_speed;
     }
 
-    int setDistanceTravelled(int distanceTravelled)
+    void setDistanceTravelled(int distance)
     {
-        m_distanceTravelled = distanceTravelled;
+        m_distanceTravelled = distance;
     }
 
     int getDistanceTravelled()
@@ -209,9 +241,29 @@ public:
         return m_distanceTravelled;
     }
 
+    int getDistanceTravelledRoundedToTileSize()
+    {
+        return m_distanceTravelledRoundedToTileSize;
+    }
+
+    int getDistanceTravelledPrevious()
+    {
+        return m_distanceTravelledPrevious;
+    }
+
     int getTileDistanceTravelled()
     {
         return m_tileDistanceTravelled;
+    }
+
+    void setTileDistanceTravelledPrevious(int distance)
+    {
+        m_tileDistanceTravelledPrevious = distance;
+    }
+
+    int getTileDistanceTravelledPrevious()
+    {
+        return m_tileDistanceTravelledPrevious;
     }
 
     sf::Vector2f getVectorOrigin()
@@ -239,7 +291,7 @@ public:
         return m_sprite.getPosition();
     }
 
-    sf::Vector2f getSpriteTilePosition()
+    sf::Vector2u getSpriteTilePosition()
     {
         float integralX;
         float fractionalX = std::modf(m_spriteTileX, &integralX);
@@ -268,7 +320,7 @@ public:
         x = x - (x % tibia::TILE_SIZE);
         y = y - (y % tibia::TILE_SIZE);
 
-        return sf::Vector2f(x, y);
+        return sf::Vector2u(x, y);
     }
 
     tibia::Creature::Ptr getCreatureOwner()
@@ -308,6 +360,8 @@ private:
     int m_type;
     int m_modifyHpType;
 
+    unsigned int m_flags;
+
     float m_spriteTileX;
     float m_spriteTileY;
 
@@ -317,7 +371,11 @@ private:
     float m_speed;
 
     int m_distanceTravelled;
+    int m_distanceTravelledRoundedToTileSize;
+    int m_distanceTravelledPrevious;
+
     int m_tileDistanceTravelled;
+    int m_tileDistanceTravelledPrevious;
 
     bool m_isPrecise;
     bool m_isChild;
@@ -327,8 +385,6 @@ private:
     sf::Vector2f m_vectorMovement;
 
     tibia::Sprite m_sprite;
-
-    sf::Clock m_clock;
 
     tibia::Creature::Ptr m_creatureOwner;
 

@@ -27,6 +27,7 @@ public:
 
         bool hasSolidObject             = false;
         bool hasSolidCreature           = false;
+        bool hasBlockProjectilesObject  = false;
         bool hasHasHeightObject         = false;
         bool hasMoveAboveObject         = false;
         bool hasMoveBelowObject         = false;

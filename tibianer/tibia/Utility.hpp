@@ -65,6 +65,20 @@ namespace tibia
             return std::max(std::abs(x1 - x2), std::abs(y1 - y2)) / tibia::TILE_SIZE;
         }
 
+        float calculateVolumeByTileDistance(float volume, int distance)
+        {
+            volume = volume - (distance * tibia::VOLUME_MULTIPLIER);
+
+            if (volume < 0)
+            {
+                volume = 0;
+            }
+
+            //std::cout << "volume: " << volume << std::endl;
+
+            return volume;
+        }
+
         unsigned int getSpriteFlags(int id)
         {
             unsigned int flags = 0;

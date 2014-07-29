@@ -856,7 +856,7 @@ namespace CreatureSort
     {
         bool operator()(tibia::Creature::Ptr a, tibia::Creature::Ptr b) const
         {
-            return (a->isDead() < b->isDead());
+            return (a->isDead() > b->isDead());
         }
     };
 }

@@ -283,6 +283,22 @@ public:
                 m_player->modifyHp(-m_player->getHp());
                 break;
             }
+
+            case sf::Keyboard::X:
+                spawnProjectile
+                (
+                    m_player,
+                    tibia::ProjectileTypes::spellFire,
+                    m_player->getDirection(),
+                    sf::Vector2f(m_player->getTileX(), m_player->getTileY()),
+                    sf::Vector2f
+                    (
+                        m_player->getTileX() + (tibia::Utility::getVectorByDirection(m_player->getDirection()).x * tibia::TILE_SIZE),
+                        m_player->getTileY() + (tibia::Utility::getVectorByDirection(m_player->getDirection()).y * tibia::TILE_SIZE)
+                    ),
+                    m_player->getZ()
+                );
+                break;
         }
     }
 
@@ -496,6 +512,11 @@ public:
             if (object->getFlags() & tibia::SpriteFlags::solid)
             {
                 tileProperties.hasSolidObject = true;
+            }
+
+            if (object->getFlags() & tibia::SpriteFlags::blockProjectiles)
+            {
+                tileProperties.hasBlockProjectilesObject = true;
             }
 
             if (object->getFlags() & tibia::SpriteFlags::hasHeight)
@@ -2356,36 +2377,177 @@ public:
 
     void spawnSound(sf::Vector2u tilePosition, int z, sf::SoundBuffer& soundBuffer)
     {
-        if
+        int soundTileDistance = tibia::Utility::calculateTileDistance
         (
-            tibia::Utility::calculateTileDistance
-            (
-                m_player->getTileX(),
-                m_player->getTileY(),
-                tilePosition.x,
-                tilePosition.y
-            )
-            > tibia::NUM_TILES_X
-        )
+            m_player->getTileX(),
+            m_player->getTileY(),
+            tilePosition.x,
+            tilePosition.y
+        );
+
+        if (soundTileDistance > tibia::NUM_TILES_X)
+        {
+            return;
+        }
+
+        float soundVolume = 100;
+
+        if (z != m_player->getZ())
+        {
+            soundVolume = 50;
+        }
+
+        soundVolume = tibia::Utility::calculateVolumeByTileDistance(soundVolume, soundTileDistance);
+
+        if (soundVolume <= 0)
         {
             return;
         }
 
         tibia::Sound::Ptr sound = std::make_shared<tibia::Sound>();
         sound->setBuffer(soundBuffer);
-
-        if (z != m_player->getZ())
-        {
-            sound->setVolume(25);
-        }
-        else
-        {
-            sound->setVolume(100);
-        }
+        sound->setVolume(soundVolume);
 
         sound->play();
 
+        //std::cout << "spawnSound volume: " << sound->getVolume() << std::endl;
+
         m_soundList.push_back(sound);
+    }
+
+    void updateProjectiles(int z)
+    {
+        tibia::Projectile::List* projectileList = &m_projectileList[z];
+
+        for (auto projectileList_it = projectileList->begin(); projectileList_it != projectileList->end(); projectileList_it++)
+        {
+            tibia::Projectile* projectile = projectileList_it->get();
+
+            if (projectile == nullptr)
+            {
+                continue;
+            }
+
+            projectile->update(m_timeDelta);
+
+            if (projectile->isReadyForErase() == true)
+            {
+                projectileList_it = projectileList->erase(projectileList_it);
+                projectileList_it--;
+                continue;
+            }
+
+            sf::Vector2u projectileSpriteTilePosition = projectile->getSpriteTilePosition();
+
+            // out of bounds of map
+            if
+            (
+                projectileSpriteTilePosition.x < 0                      ||
+                projectileSpriteTilePosition.y < 0                      ||
+                projectileSpriteTilePosition.x > tibia::MAP_TILE_XY_MAX ||
+                projectileSpriteTilePosition.y > tibia::MAP_TILE_XY_MAX
+            )
+            {
+                projectileList_it = projectileList->erase(projectileList_it);
+                projectileList_it--;
+                continue;
+            }
+
+            int projectileTileDistanceTravelled = projectile->getTileDistanceTravelled();
+
+            int projectileTileDistanceTravelledPrevious = projectile->getTileDistanceTravelledPrevious();
+
+            if (projectileTileDistanceTravelled == projectileTileDistanceTravelledPrevious)
+            {
+                continue;
+            }
+
+            projectile->setTileDistanceTravelledPrevious(projectileTileDistanceTravelled);
+
+            projectileTileDistanceTravelledPrevious = projectileTileDistanceTravelled;
+
+            tibia::Tile::Ptr projectileTile = getTile(projectileSpriteTilePosition, projectile->getZ());
+
+            if (projectileTile->getPosition() == projectile->getCreatureOwner()->getTilePosition())
+            {
+                continue;
+            }
+
+            tibia::Tile::TileProperties_t projectileTileProperties = getTileProperties(projectileTile);
+
+            tibia::Creature::List* creatureList = projectileTile->getCreatureList();
+
+            if (creatureList->size())
+            {
+                tibia::Creature::Ptr defender = creatureList->back();
+
+                tibia::Creature::Ptr attacker = projectile->getCreatureOwner();
+
+                handleCreatureModifyHp(attacker, defender, -projectile->getDamage(), projectile->getModifyHpType());
+            }
+
+            if
+            (
+                projectileTileProperties.isSolid                   == true            ||
+                projectileTileProperties.hasBlockProjectilesObject == true            ||
+                projectileTile->getHeight() >= tibia::TILE_HEIGHT_MOVEMENT_DIFFERENCE
+            )
+            {
+                if
+                (
+                    (projectileTile->getFlags() & tibia::SpriteFlags::water) == false &&
+                    (projectileTile->getFlags() & tibia::SpriteFlags::lava)  == false
+                )
+                {
+                    spawnAnimation
+                    (
+                        projectileSpriteTilePosition,
+                        projectile->getZ(),
+                        tibia::Animations::hitBlock
+                    );
+
+                    projectileList_it = projectileList->erase(projectileList_it);
+                    projectileList_it--;
+                    continue;
+                }
+            }
+
+            if (projectile->getTileDistanceTravelled() >= projectile->getRange())
+            {
+                if (projectileTile->getFlags() & tibia::SpriteFlags::water)
+                {
+                    spawnAnimation
+                    (
+                        projectileSpriteTilePosition,
+                        projectile->getZ(),
+                        tibia::Animations::waterSplash
+                    );
+                }
+                else
+                {
+                    spawnAnimation
+                    (
+                        projectileSpriteTilePosition,
+                        projectile->getZ(),
+                        tibia::Animations::hitMiss
+                    );
+                }
+
+                projectileList_it = projectileList->erase(projectileList_it);
+                projectileList_it--;
+                continue;
+            }
+        }
+    }
+
+    void spawnProjectile(tibia::Creature::Ptr creature, int projectileType, int direction, sf::Vector2f origin, sf::Vector2f destination, int z, bool isPrecise = false, bool isChild = false)
+    {
+        tibia::Projectile::Ptr projectile = std::make_shared<tibia::Projectile>(projectileType, direction, origin, destination, isPrecise, isChild);
+        projectile->setTileCoords(origin.x, origin.y);
+        projectile->setZ(creature->getZ());
+        projectile->setCreatureOwner(creature);
+
+        m_projectileList[creature->getZ()].push_back(projectile);
     }
 
     void updateMouseWindowPosition(sf::RenderWindow* mainWindow)
@@ -2632,16 +2794,22 @@ public:
                         std::copy(tileObjects->begin(), tileObjects->end(), std::back_inserter(*tileMapObjects));
                     }
 
+                    //
+
                     tibia::Creature::List* tileCreatures = tile->getCreatureList();
 
                     if (tileCreatures->size())
                     {
+                        //std::stable_sort(tileCreatures->begin(), tileCreatures->end(), tibia::CreatureSort::sortByIsDead());
+
                         tibia::Creature::List* tileMapCreatures = &m_tileMapCreatures[tileMap->getZ()];
 
                         tileMapCreatures->reserve(tileCreatures->size());
 
                         std::copy(tileCreatures->begin(), tileCreatures->end(), std::back_inserter(*tileMapCreatures));
                     }
+
+                    //
 
                     tibia::Animation::List* tileAnimations = tile->getAnimationList();
 
@@ -2797,13 +2965,6 @@ public:
 
         for (auto& thing : *thingList)
         {
-            //tibia::Creature::Ptr creature = std::dynamic_pointer_cast<tibia::Creature>(thing);
-            //if (creature != nullptr)
-            //{
-                //std::cout << "Creature Name: " << creature->getName() << std::endl;
-                //break;
-            //}
-
             m_gameWindowLayer.draw(*thing);
         }
     }
@@ -2855,7 +3016,7 @@ public:
             {
                 if (object->getId() == tibia::SpriteData::stairs || object->getId() == tibia::SpriteData::ladder || object->getId() == tibia::SpriteData::ropeUp)
                 {
-                    light.setColor(tibia::Colors::light);
+                    //light.setColor(tibia::Colors::light);
 
                     drawLightAtTilePosition(light, object->getTilePosition());
                 }
@@ -2869,6 +3030,14 @@ public:
             if (animation->getFlags() & tibia::SpriteFlags::lightSource)
             {
                 drawLightAtTilePosition(light, animation->getTilePosition());
+            }
+        }
+
+       for (auto& projectile : m_tileMapProjectiles[z])
+        {
+            if (projectile->getFlags() & tibia::SpriteFlags::lightSource)
+            {
+                drawLightAtTilePosition(light, projectile->getTilePosition());
             }
         }
 
@@ -2889,15 +3058,34 @@ public:
         // this only updates things being drawn
         updateTileThings(&m_map.tileMapTiles[z]);
 
+        tibia::Projectile::List* projectileList = &m_projectileList[z];
+
+        if (projectileList->size())
+        {
+            // TODO: do not draw projectiles that are offscreen
+
+            tibia::Projectile::List* tileMapProjectiles = &m_tileMapProjectiles[z];
+
+            tileMapProjectiles->reserve(projectileList->size());
+
+            std::copy(projectileList->begin(), projectileList->end(), std::back_inserter(*tileMapProjectiles));
+        }
+
+        updateProjectiles(z);
+
         tibia::Thing::List* tileMapThings = &m_tileMapThings[z];
 
-        unsigned int reserveThingsSize = m_tileMapObjects[z].size() + m_tileMapCreatures[z].size() + m_tileMapAnimations[z].size();
+        unsigned int reserveThingsSize = m_tileMapObjects[z].size()    +
+                                         m_tileMapCreatures[z].size()  +
+                                         m_tileMapAnimations[z].size() +
+                                         m_tileMapProjectiles[z].size();
 
         tileMapThings->reserve(reserveThingsSize);
 
-        std::copy(m_tileMapObjects[z].begin(),    m_tileMapObjects[z].end(),    std::back_inserter(*tileMapThings));
-        std::copy(m_tileMapCreatures[z].begin(),  m_tileMapCreatures[z].end(),  std::back_inserter(*tileMapThings));
-        std::copy(m_tileMapAnimations[z].begin(), m_tileMapAnimations[z].end(), std::back_inserter(*tileMapThings));
+        std::copy(m_tileMapObjects[z].begin(),     m_tileMapObjects[z].end(),     std::back_inserter(*tileMapThings));
+        std::copy(m_tileMapCreatures[z].begin(),   m_tileMapCreatures[z].end(),   std::back_inserter(*tileMapThings));
+        std::copy(m_tileMapAnimations[z].begin(),  m_tileMapAnimations[z].end(),  std::back_inserter(*tileMapThings));
+        std::copy(m_tileMapProjectiles[z].begin(), m_tileMapProjectiles[z].end(), std::back_inserter(*tileMapThings));
 
         drawThingList(&m_tileMapThings[z]);
 
@@ -2906,13 +3094,13 @@ public:
             drawTileMapLights(z);
         }
 
+        doCreatureLogic(z);
+
         m_gameWindowLayer.display();
 
         m_gameWindowLayerSprite.setTexture(m_gameWindowLayer.getTexture());
 
         m_gameWindow.draw(m_gameWindowLayerSprite);
-
-        doCreatureLogic(z);
     }
 
     void drawGameWindow(sf::RenderWindow* mainWindow)
@@ -2931,6 +3119,7 @@ public:
             m_tileMapObjects[i].clear();
             m_tileMapCreatures[i].clear();
             m_tileMapAnimations[i].clear();
+            m_tileMapProjectiles[i].clear();
             m_tileMapThings[i].clear();
 
             //updateTileThings(&m_map.tileMapTiles[i]);
@@ -3518,7 +3707,10 @@ private:
     tibia::Object::List m_tileMapObjects[tibia::NUM_Z_LEVELS];
     tibia::Creature::List m_tileMapCreatures[tibia::NUM_Z_LEVELS];
     tibia::Animation::List m_tileMapAnimations[tibia::NUM_Z_LEVELS];
+    tibia::Projectile::List m_tileMapProjectiles[tibia::NUM_Z_LEVELS];
     tibia::Thing::List m_tileMapThings[tibia::NUM_Z_LEVELS];
+
+    tibia::Projectile::List m_projectileList[tibia::NUM_Z_LEVELS];
 
     tibia::Creature::Ptr m_player;
 

@@ -58,6 +58,8 @@ namespace tibia
 
     const int DRAW_INDEX_LAST = 256;
 
+    const float VOLUME_MULTIPLIER = 12.0;
+
     const std::string CREATURE_NAME_DEFAULT = "Creature";
     const std::string CREATURE_NAME_PLAYER  = "Player";
 
@@ -1156,7 +1158,7 @@ namespace tibia
 
     namespace ProjectileSpeeds
     {
-        const float default = 8.0;
+        const float default = 240.0;
     }
 
     namespace ProjectileDamages
@@ -1678,6 +1680,8 @@ namespace tibia
             1582, 1583, 1584, 1585, 1586,
             1785, 1786, 1787, 1788, 1789, 1790, 1791, 1792,
             1818, 1819, 1821, 1822, 1826, 1828,
+            1829,
+            1830, 1831, 1832, 1833, 1834, 1835, 1836, 1837,
             1879, 1880,
             2127, 2131,
             2664, 2665, 2666, 2667,
@@ -1691,6 +1695,7 @@ namespace tibia
             2968, 2970,
             2974, 2975,
             3178, 3179, 3180, 3181, 3182, 3183,
+            3252,
             3271, 3275, 3279,
             3322, 3326,
             3380, 3381,
