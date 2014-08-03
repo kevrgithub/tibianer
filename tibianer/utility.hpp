@@ -6,6 +6,9 @@
 #include <string>
 #include <fstream>
 
+namespace utility
+{
+
 void toggleBool(bool& b)
 {
     b = !b;
@@ -36,5 +39,7 @@ float getRandomNumberFloat(float low, float high)
 
     return low + static_cast<float>(std::rand()) / (static_cast<float>(RAND_MAX / (high - low)));
 }
+
+} // namespace utility
 
 #endif // UTILITY_HPP

@@ -25,7 +25,7 @@
 
 #include "resource.h"
 
-tibia::Game game;
+static tibia::Game g_game;
 
 std::string gameTitle = "Tibianer";
 
@@ -53,7 +53,7 @@ std::string mapFile = "test.tmx";
 
 bool loadConfig()
 {
-    if (fileExists(configFile) == false)
+    if (utility::fileExists(configFile) == false)
     {
         return false;
     }
@@ -123,7 +123,7 @@ bool doSaveScreenshot()
 
         screenshotName << "screenshots/screenshot" << i << ".png";
 
-        if (fileExists(screenshotName.str()) == false)
+        if (utility::fileExists(screenshotName.str()) == false)
         {
             return screenshot.saveToFile(screenshotName.str());
         }
@@ -162,21 +162,21 @@ int main(int argc, char* argv[])
     createMainWindow(false);
 
     std::cout << "Loading fonts" << std::endl;
-    if (game.loadFonts() == false)
+    if (g_game.loadFonts() == false)
     {
         std::cout << "Error: Failed to load fonts" << std::endl;
         return EXIT_FAILURE;
     }
 
     std::cout << "Loading bitmap fonts" << std::endl;
-    if (game.loadBitmapFonts() == false)
+    if (g_game.loadBitmapFonts() == false)
     {
         std::cout << "Error: Failed to load bitmap fonts" << std::endl;
         return EXIT_FAILURE;
     }
 
     std::cout << "Loading sounds" << std::endl;
-    if (game.loadSounds() == false)
+    if (g_game.loadSounds() == false)
     {
         std::cout << "Error: Failed to load sounds" << std::endl;
         return EXIT_FAILURE;
@@ -195,7 +195,7 @@ int main(int argc, char* argv[])
     loadingSprite.setTexture(loadingTexture);
 
     tibia::BitmapFontText loadingText;
-    loadingText.setText(game.getBitmapFontDefault(), "Loading...", tibia::Colors::textWhite, true);
+    loadingText.setText(g_game.getBitmapFontDefault(), "Loading...", tibia::Colors::textWhite, true);
     loadingText.setPosition
     (
         mainWindow.getSize().x / 2,
@@ -208,47 +208,47 @@ int main(int argc, char* argv[])
     mainWindow.display();
 
     std::cout << "Creating game windows" << std::endl;
-    if (game.createWindows() == false)
+    if (g_game.createWindows() == false)
     {
         std::cout << "Error: Failed to create game windows" << std::endl;
         return EXIT_FAILURE;
     }
 
     std::cout << "Loading textures" << std::endl;
-    if (game.loadTextures() == false)
+    if (g_game.loadTextures() == false)
     {
         std::cout << "Error: Failed to load textures" << std::endl;
         return EXIT_FAILURE;
     }
 
     std::cout << "Loading sprite flags" << std::endl;
-    game.loadSpriteFlags();
+    g_game.loadSpriteFlags();
 
     std::cout << "Loading map" << std::endl;
 
     std::stringstream mapFilePath;
     mapFilePath << "maps/" << mapFile;
 
-    if (game.loadMap(mapFilePath.str()) == false)
+    if (g_game.loadMap(mapFilePath.str()) == false)
     {
         std::cout << "Error: Failed to load map" << std::endl;
         return EXIT_FAILURE;
     }
 
     std::cout << "Loading game view" << std::endl;
-    sf::View* gameView = game.getGameWindowView();
+    sf::View* gameView = g_game.getGameWindowView();
 
     std::cout << "Creating player" << std::endl;
-    game.createPlayer();
+    g_game.createPlayer();
 
     std::cout << "Updating main window" << std::endl;
     createMainWindow(windowIsFullscreen);
 
     std::cout << "Starting main loop" << std::endl;
 
-    sf::Clock* clockDelta                   = game.getClockDelta();
-    sf::Clock* clockGame                    = game.getClockGame();
-    sf::Clock* clockAnimatedWaterAndObjects = game.getClockAnimatedWaterAndObjects();
+    sf::Clock* clockDelta                   = g_game.getClockDelta();
+    sf::Clock* clockGame                    = g_game.getClockGame();
+    sf::Clock* clockAnimatedWaterAndObjects = g_game.getClockAnimatedWaterAndObjects();
 
     bool doEnterGame = true;
 
@@ -260,15 +260,15 @@ int main(int argc, char* argv[])
 
         if (timeAnimatedWaterAndObjects.asSeconds() >= tibia::AnimatedObjects::time)
         {
-            game.doAnimatedWater();
-            game.doAnimatedObjects();
+            g_game.doAnimatedWater();
+            g_game.doAnimatedObjects();
 
             clockAnimatedWaterAndObjects->restart();
         }
 
         if (doEnterGame == true)
         {
-            game.doEnterGame();
+            g_game.doEnterGame();
 
             doEnterGame = false;
         }
@@ -280,28 +280,28 @@ int main(int argc, char* argv[])
         background.setPosition(0, 0);
         mainWindow.draw(background);
 
-        game.updateMouseWindowPosition(&mainWindow);
-        game.updateMouseTile();
+        g_game.updateMouseWindowPosition(&mainWindow);
+        g_game.updateMouseTile();
 
         if (windowIsFocused == true)
         {
-            game.handleKeyboardInput();
-            game.handleMouseInput();
+            g_game.handleKeyboardInput();
+            g_game.handleMouseInput();
         }
 
-        game.updateLightBrightness();
+        g_game.updateLightBrightness();
 
-        game.drawGameWindow(&mainWindow);
+        g_game.drawGameWindow(&mainWindow);
 
-        game.drawMiniMapWindow(&mainWindow);
-        game.updateMiniMapWindow();
+        g_game.drawMiniMapWindow(&mainWindow);
+        g_game.updateMiniMapWindow();
 
         if (mouseUseDefaultCursor == false)
         {
-            game.drawMouseCursor(&mainWindow);
+            g_game.drawMouseCursor(&mainWindow);
         }
 
-        game.updateSounds();
+        g_game.updateSounds();
 
         mainWindow.display();
 
@@ -332,7 +332,7 @@ int main(int argc, char* argv[])
                 // toggle fullscreen
                 else if (event.key.code == sf::Keyboard::F11 || (event.key.alt == true && event.key.code == sf::Keyboard::Return))
                 {
-                    toggleBool(windowIsFullscreen);
+                    utility::toggleBool(windowIsFullscreen);
 
                     createMainWindow(windowIsFullscreen);
                 }
@@ -349,12 +349,12 @@ int main(int argc, char* argv[])
                     }
                 }
 
-                game.handleKeyboardEvent(event);
+                g_game.handleKeyboardEvent(event);
             }
 
             else if (event.type == sf::Event::MouseButtonPressed)
             {
-                game.handleMouseEvent(event);
+                g_game.handleMouseEvent(event);
             }
 
             else if (event.type == sf::Event::MouseWheelMoved)
@@ -377,7 +377,16 @@ int main(int argc, char* argv[])
         }
 
         // delta time
-        game.setTimeDelta(clockDelta->restart());
+        sf::Time timeDelta = clockDelta->restart();
+
+        if (timeDelta.asSeconds() < 0.01)
+        {
+            timeDelta = sf::seconds(0.005);
+        }
+
+        //std::cout << "timeDelta: " << timeDelta.asSeconds() << std::endl;
+
+        g_game.setTimeDelta(timeDelta);
     }
 
     return EXIT_SUCCESS;
