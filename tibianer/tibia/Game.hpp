@@ -7,6 +7,7 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <algorithm>
 
 #include <boost/algorithm/string.hpp>
 
@@ -54,10 +55,10 @@ public:
 
     Game::Game()
     :
-        m_gameWindowView(sf::FloatRect(0, 0, tibia::GuiData::gameWindowWidth, tibia::GuiData::gameWindowHeight)),
-        m_miniMapWindowView(sf::FloatRect(0, 0, tibia::GuiData::gameWindowWidth * tibia::MiniMapWindow::zoomDefault, tibia::GuiData::gameWindowHeight * tibia::MiniMapWindow::zoomDefault))
+        m_gameWindowView(sf::FloatRect(0, 0, tibia::GuiData::GameWindow::width, tibia::GuiData::GameWindow::height)),
+        m_miniMapWindowView(sf::FloatRect(0, 0, tibia::TILES_WIDTH * tibia::GuiData::MiniMapWindow::zoomDefault, tibia::TILES_HEIGHT * tibia::GuiData::MiniMapWindow::zoomDefault))
     {
-        m_miniMapWindowZoom = tibia::MiniMapWindow::zoomDefault;
+        m_miniMapWindowZoom = tibia::GuiData::MiniMapWindow::zoomDefault;
 
         m_tileMapTileVertices.setPrimitiveType(sf::Quads);
 
@@ -80,12 +81,12 @@ public:
 
     bool createWindows()
     {
-        if (m_gameWindow.create(tibia::GuiData::gameWindowWidth, tibia::GuiData::gameWindowHeight) == false)
+        if (m_gameWindow.create(tibia::GuiData::GameWindow::width, tibia::GuiData::GameWindow::height) == false)
         {
             return false;
         }
 
-        if (m_miniMapWindow.create(tibia::GuiData::miniMapWindowWidth, tibia::GuiData::miniMapWindowHeight) == false)
+        if (m_miniMapWindow.create(tibia::GuiData::MiniMapWindow::width, tibia::GuiData::MiniMapWindow::height) == false)
         {
             return false;
         }
@@ -221,6 +222,10 @@ public:
                 doPlayerInteractWithPlayerTileObjects();
                 break;
 
+            case sf::Keyboard::L:
+                tibia::Textures::lights.loadFromFile("images/lights2.png");
+                break;
+
             case sf::Keyboard::B:
                 spawnAnimation(m_player->getTilePosition(), m_player->getZ(), tibia::Animations::spellBlue);
                 break;
@@ -273,7 +278,7 @@ public:
             }
 
             case sf::Keyboard::Z:
-                m_player->setZ(getRandomNumber(tibia::ZAxis::floor, tibia::ZAxis::ceiling));
+                m_player->setZ(utility::getRandomNumber(tibia::ZAxis::floor, tibia::ZAxis::ceiling));
 
                 std::cout << "Player Z: " << m_player->getZ() << std::endl;
                 break;
@@ -330,20 +335,20 @@ public:
         {
             if (isMouseInsideMiniMapWindow() == true)
             {
-                if (m_miniMapWindowZoom == tibia::MiniMapWindow::zoomDefault)
+                if (m_miniMapWindowZoom == tibia::GuiData::MiniMapWindow::zoomDefault)
                 {
-                    m_miniMapWindowZoom = tibia::MiniMapWindow::zoomMax;
+                    m_miniMapWindowZoom = tibia::GuiData::MiniMapWindow::zoomMax;
                 }
-                else if (m_miniMapWindowZoom == tibia::MiniMapWindow::zoomMax)
+                else if (m_miniMapWindowZoom == tibia::GuiData::MiniMapWindow::zoomMax)
                 {
-                    m_miniMapWindowZoom = tibia::MiniMapWindow::zoomMin;
+                    m_miniMapWindowZoom = tibia::GuiData::MiniMapWindow::zoomMin;
                 }
-                else if (m_miniMapWindowZoom == tibia::MiniMapWindow::zoomMin)
+                else if (m_miniMapWindowZoom == tibia::GuiData::MiniMapWindow::zoomMin)
                 {
-                    m_miniMapWindowZoom = tibia::MiniMapWindow::zoomDefault;
+                    m_miniMapWindowZoom = tibia::GuiData::MiniMapWindow::zoomDefault;
                 }
 
-                m_miniMapWindowView.setSize(sf::Vector2f(tibia::GuiData::gameWindowWidth * m_miniMapWindowZoom, tibia::GuiData::gameWindowHeight * m_miniMapWindowZoom));
+                m_miniMapWindowView.setSize(sf::Vector2f(tibia::TILES_WIDTH * m_miniMapWindowZoom, tibia::TILES_HEIGHT * m_miniMapWindowZoom));
             }
         }
         else if (event.mouseButton.button == sf::Mouse::Right)
@@ -418,7 +423,7 @@ public:
 
             sf::Time timeLogic = creature->getClockLogic()->getElapsedTime();
 
-            float randomTime = getRandomNumberFloat(1.0, 2.0);
+            float randomTime = utility::getRandomNumberFloat(1.0, 2.0);
 
             if (timeLogic.asSeconds() >= randomTime)
             {
@@ -430,7 +435,7 @@ public:
                 continue;
             }
 
-            int direction = getRandomNumber(tibia::Directions::up, tibia::Directions::left);
+            int direction = utility::getRandomNumber(tibia::Directions::up, tibia::Directions::left);
 
             handleCreatureMovement(creature, direction);
 
@@ -846,7 +851,7 @@ public:
                 {
                     tibia::Tile::TileProperties_t climbUpToTileProperties = getTileProperties(climbUpToTile);
 
-                    if (climbUpToTileProperties.hasSolidObject == false)
+                    if(climbUpToTileProperties.hasSolidObject == false) // && climbUpToTile->getHeight() < tibia::TILE_HEIGHT_MOVEMENT_DIFFERENCE
                     {
                         toZ = climbUpToZ;
 
@@ -864,7 +869,8 @@ public:
 
         if
         (
-            isTileClimbDown == false && isTileClimbUp == false &&
+            isTileClimbDown == false &&
+            isTileClimbUp   == false &&
 
             toTile->getId() == tibia::TILE_NULL
         )
@@ -1018,15 +1024,6 @@ public:
                         }
                     }
                 }
-
-                tibia::Object::Ptr damageOnTouchObject = getTileObjectByFlag(toTile->getPosition(), toTile->getZ(), tibia::SpriteFlags::modifyHpOnTouch);
-
-                if (damageOnTouchObject != nullptr && toTileProperties.hasModifyHpOnTouchObject == true)
-                {
-                    std::vector<int> animationId = umapModifyHpOnTouchAnimations[damageOnTouchObject->getId()];
-
-                    spawnAnimation(toTile->getPosition(), toTile->getZ(), animationId);
-                }
             }
         }
 
@@ -1034,7 +1031,7 @@ public:
         {
             spawnAnimation(thing->getTilePosition(), thing->getZ(), tibia::Animations::spellBlue);
 
-            if (thingCreature != nullptr && thingCreature != m_player) // prevent player hearing the sound twice
+            if (thingCreature != m_player) // prevent player hearing the sound twice
             {
                 spawnSound(thing->getTilePosition(), thing->getZ(), tibia::Sounds::teleport);
             }
@@ -1086,6 +1083,48 @@ public:
             spawnAnimation(toTile->getPosition(), toZ, tibia::Animations::spellBlue);
 
             spawnSound(toTile->getPosition(), toZ, tibia::Sounds::teleport);
+        }
+
+        if (thingCreature != nullptr)
+        {
+            tibia::Object::Ptr damageOnTouchObject = getTileObjectByFlag(toTile->getPosition(), toTile->getZ(), tibia::SpriteFlags::modifyHpOnTouch);
+
+            if (damageOnTouchObject != nullptr && toTileProperties.hasModifyHpOnTouchObject == true)
+            {
+                handleCreatureModifyHp
+                (
+                    nullptr,
+                    thingCreature,
+                    -(umapModifyHpOnTouchDamages[damageOnTouchObject->getId()]),
+                    umapModifyHpOnTouchTypes[damageOnTouchObject->getId()]
+                );
+
+                int statusEffectType = umapModifyHpOnTouchStatusEffects[damageOnTouchObject->getId()];
+
+                thingCreature->addStatusEffect
+                (
+                    umapModifyHpOnTouchStatusEffects[damageOnTouchObject->getId()],
+                    umapCreatureStatusEffectsDamages[statusEffectType],
+                    umapCreatureStatusEffectsTicks[statusEffectType],
+                    umapCreatureStatusEffectsTimesPerTick[statusEffectType]
+                );
+
+                std::vector<int> animationId = umapModifyHpOnTouchAnimations[damageOnTouchObject->getId()];
+
+                spawnAnimation(toTile->getPosition(), toTile->getZ(), animationId);
+
+                if (thingCreature == m_player)
+                {
+                    std::string statusEffectName = umapCreatureStatusEffectsNames[statusEffectType];
+
+                    std::transform(statusEffectName.begin(), statusEffectName.end(), statusEffectName.begin(), std::tolower);
+
+                    std::stringstream ss;
+                    ss << "You are " << statusEffectName << ".";
+
+                    showStatusBarText(ss.str());
+                }
+            }
         }
 
         return true;
@@ -1960,6 +1999,25 @@ public:
             return true;
         }
 
+        // chair (rotates)
+        auto chairIt = std::find(tibia::SpriteData::chair.begin(), tibia::SpriteData::chair.end(), object->getId());
+
+        if (chairIt != tibia::SpriteData::chair.end())
+        {
+            size_t chairIndex = std::distance(tibia::SpriteData::chair.begin(), chairIt);
+
+            chairIndex++;
+
+            if (chairIndex == tibia::SpriteData::chair.size())
+            {
+                chairIndex = 0;
+            }
+
+            object->setId(tibia::SpriteData::chair[chairIndex]);
+
+            return true;
+        }
+
         return false;
     }
 
@@ -2105,12 +2163,21 @@ public:
 
     bool handleCreatureModifyHp(tibia::Creature::Ptr attacker, tibia::Creature::Ptr defender, int hpChange, int modifyHpType)
     {
-        if (attacker == nullptr || defender == nullptr)
+        if (defender == nullptr)
         {
             return false;
         }
 
-        if (attacker->isDead() == true || attacker->isSleeping() == true)
+        if (attacker != nullptr)
+        {
+            if (attacker->isDead() == true || attacker->isSleeping() == true)
+            {
+                return false;
+            }
+        }
+
+        // neutral team cannot be damaged or healed
+        if (defender->getTeam() == tibia::Teams::neutral)
         {
             return false;
         }
@@ -2127,44 +2194,46 @@ public:
             isDamage = true;
         }
 
-        if (isDamage == true)
+        if (attacker != nullptr)
         {
-            // do not let creature damage itself
-            if (attacker == defender)
+            if (isDamage == true)
             {
-                return false;
-            }
-        }
+                // do not let creature damage itself
+                if (attacker == defender)
+                {
+                    return false;
+                }
 
-        if (isDamage == true)
-        {
-            // friendly fire
-            if (attacker->getTeam() == defender->getTeam())
+                // friendly fire
+                if (attacker->getTeam() == defender->getTeam())
+                {
+                    return false;
+                }
+
+                defender->setLastAttacker(attacker);
+            }
+            else
             {
-                return false;
+                // cannot heal the other team
+                if (attacker->getTeam() != defender->getTeam())
+                {
+                    return false;
+                }
             }
-        }
-        else
-        {
-            // cannot heal the other team
-            if (attacker->getTeam() != defender->getTeam())
-            {
-                return false;
-            }
-        }
-
-        // neutral team cannot be damaged or healed
-        if (defender->getTeam() == tibia::Teams::neutral)
-        {
-            return false;
-        }
-
-        if (isDamage == true)
-        {
-            defender->setLastAttacker(attacker);
         }
 
         defender->modifyHp(hpChange);
+
+        if (hpChange != 0)
+        {
+            spawnFloatingText
+            (
+                defender->getTilePosition(),
+                defender->getZ(),
+                std::to_string(hpChange),
+                tibia::Colors::textWhite
+            );
+        }
 
         std::vector<int> animation;
 
@@ -2184,23 +2253,47 @@ public:
             animation
         );
 
-        std::cout << attacker->getName();
-
-        if (isDamage == true)
+        if (attacker != nullptr)
         {
-            std::cout << " damaged ";
+            std::cout << attacker->getName();
+
+            if (isDamage == true)
+            {
+                std::cout << " damaged ";
+            }
+            else
+            {
+                std::cout << " healed ";
+            }
+
+            std::cout
+                << defender->getName()
+                << "for "
+                << std::abs(hpChange)
+                << " points of health."
+                << std::endl;
         }
         else
         {
-            std::cout << " healed ";
-        }
+            std::cout << defender->getName();
 
-        std::cout
-            << defender->getName()
-            << " for "
-            << std::abs(hpChange)
-            << " points of health."
-            << std::endl;
+            std::cout << " was";
+
+            if (isDamage == true)
+            {
+                std::cout << " damaged ";
+            }
+            else
+            {
+                std::cout << " healed ";
+            }
+
+            std::cout
+                << "for "
+                << std::abs(hpChange)
+                << " points of health."
+                << std::endl;
+        }
 
         if (isDamage == true)
         {
@@ -2208,12 +2301,15 @@ public:
             {
                 if (defender->getBloodType() != tibia::CreatureBloodTypes::none)
                 {
-                    spawnDecayObject
-                    (
-                        defender->getTilePosition(),
-                        defender->getZ(),
-                        umapCreatureBloodTypesSplats[defender->getBloodType()]
-                    );
+                    if (modifyHpType == tibia::ModifyHpTypes::blood) // prevents spells,etc from creating blood splats
+                    {
+                        spawnDecayObject
+                        (
+                            defender->getTilePosition(),
+                            defender->getZ(),
+                            umapCreatureBloodTypesSplats[defender->getBloodType()]
+                        );
+                    }
                 }
             }
             else
@@ -2246,11 +2342,18 @@ public:
                     spawnSound(defender->getTilePosition(), defender->getZ(), itDeathSound->second);
                 }
 
-                std::cout
-                    << attacker->getName()
-                    << " killed "
-                    << defender->getName()
-                    << std::endl;
+                if (attacker != nullptr)
+                {
+                    std::cout
+                        << attacker->getName()
+                        << " killed "
+                        << defender->getName()
+                        << std::endl;
+                }
+                else
+                {
+                    std::cout << defender->getName() << " died." << std::endl;
+                }
             }
         }
 
@@ -2421,7 +2524,7 @@ public:
 
         for (auto projectileList_it = projectileList->begin(); projectileList_it != projectileList->end(); projectileList_it++)
         {
-            tibia::Projectile* projectile = projectileList_it->get();
+            tibia::Projectile::Ptr projectile = *projectileList_it;
 
             if (projectile == nullptr)
             {
@@ -2448,8 +2551,7 @@ public:
                 projectileSpriteTilePosition.y > tibia::MAP_TILE_XY_MAX
             )
             {
-                projectileList_it = projectileList->erase(projectileList_it);
-                projectileList_it--;
+                projectile->setIsReadyForErase(true);
                 continue;
             }
 
@@ -2468,12 +2570,28 @@ public:
 
             tibia::Tile::Ptr projectileTile = getTile(projectileSpriteTilePosition, projectile->getZ());
 
+            // do not let projectile hit it's owner
             if (projectileTile->getPosition() == projectile->getCreatureOwner()->getTilePosition())
             {
                 continue;
             }
 
             tibia::Tile::TileProperties_t projectileTileProperties = getTileProperties(projectileTile);
+
+            tibia::Object::Ptr teleporterObject = getTileObjectByType(projectileTile->getPosition(), projectileTile->getZ(), tibia::ObjectTypes::teleporter);
+
+            if (teleporterObject != nullptr)
+            {
+                spawnAnimation
+                (
+                    projectileSpriteTilePosition,
+                    projectile->getZ(),
+                    tibia::Animations::electricity
+                );
+
+                projectile->setIsReadyForErase(true);
+                continue;
+            }
 
             tibia::Creature::List* creatureList = projectileTile->getCreatureList();
 
@@ -2483,7 +2601,13 @@ public:
 
                 tibia::Creature::Ptr attacker = projectile->getCreatureOwner();
 
-                handleCreatureModifyHp(attacker, defender, -projectile->getDamage(), projectile->getModifyHpType());
+                bool result = handleCreatureModifyHp(attacker, defender, -projectile->getDamage(), projectile->getModifyHpType());
+
+                if (result == true)
+                {
+                    projectile->setIsReadyForErase(true);
+                    continue;
+                }
             }
 
             if
@@ -2506,8 +2630,7 @@ public:
                         tibia::Animations::hitBlock
                     );
 
-                    projectileList_it = projectileList->erase(projectileList_it);
-                    projectileList_it--;
+                    projectile->setIsReadyForErase(true);
                     continue;
                 }
             }
@@ -2533,8 +2656,7 @@ public:
                     );
                 }
 
-                projectileList_it = projectileList->erase(projectileList_it);
-                projectileList_it--;
+                projectile->setIsReadyForErase(true);
                 continue;
             }
         }
@@ -2569,12 +2691,12 @@ public:
 
     bool isMouseInsideGameWindow()
     {
-        return tibia::GuiData::gameWindowRect.contains(getMouseWindowPosition());
+        return tibia::GuiData::GameWindow::rect.contains(getMouseWindowPosition());
     }
 
     bool isMouseInsideMiniMapWindow()
     {
-        return tibia::GuiData::miniMapWindowRect.contains(getMouseWindowPosition());
+        return tibia::GuiData::MiniMapWindow::rect.contains(getMouseWindowPosition());
     }
 
     sf::Vector2u getMouseTilePosition()
@@ -2582,8 +2704,8 @@ public:
         sf::Vector2u mouseTilePosition = static_cast<sf::Vector2u>(m_gameWindow.mapPixelToCoords(getMouseWindowPosition(), m_gameWindowView));
 
         // game window is offset
-        mouseTilePosition.x -= tibia::GuiData::gameWindowX;
-        mouseTilePosition.y -= tibia::GuiData::gameWindowY;
+        mouseTilePosition.x -= tibia::GuiData::GameWindow::x;
+        mouseTilePosition.y -= tibia::GuiData::GameWindow::y;
 
         // convert mouse tile position to actual tile position
         // round down to nearest multiple of tile size
@@ -2884,7 +3006,54 @@ public:
                 {
                     for (auto& creatureIt = tileCreatures->begin(); creatureIt != tileCreatures->end(); creatureIt++)
                     {
-                        tibia::Creature* creature = creatureIt->get();
+                        tibia::Creature::Ptr creature = *creatureIt;
+
+                        tibia::Creature::StatusEffectList* statusEffectList = creature->getStatusEffectList();
+
+                        if (creature->isDead() == true)
+                        {
+                            statusEffectList->clear();
+                        }
+
+                        if (statusEffectList->size() != 0)
+                        {
+                            for (auto& statusEffectIt = statusEffectList->begin(); statusEffectIt != statusEffectList->end(); statusEffectIt++)
+                            {
+                                if (statusEffectIt->clock.getElapsedTime().asSeconds() > statusEffectIt->timePerTick.asSeconds())
+                                {
+                                    if (statusEffectIt->ticks == 0)
+                                    {
+                                        std::string statusEffectName = statusEffectIt->name;
+
+                                        std::transform(statusEffectName.begin(), statusEffectName.end(), statusEffectName.begin(), std::tolower);
+
+                                        std::stringstream ss;
+                                        ss << "You are no longer " << statusEffectName << ".";
+
+                                        showStatusBarText(ss.str());
+
+                                        statusEffectIt = statusEffectList->erase(statusEffectIt);
+                                        statusEffectIt--;
+                                        continue;
+                                    }
+
+                                    //std::cout << "statusEffect name:  " << statusEffectIt->name  << std::endl;
+                                    //std::cout << "statusEffect ticks: " << statusEffectIt->ticks << std::endl;
+
+                                    handleCreatureModifyHp
+                                    (
+                                        nullptr,
+                                        creature,
+                                        -(statusEffectIt->damage),
+                                        tibia::umapCreatureStatusEffectsModifyHpTypes[statusEffectIt->type]
+                                    );
+
+                                    statusEffectIt->ticks--;
+
+                                    statusEffectIt->clock.restart();
+                                }
+                            }
+                        }
 
                         creature->update();
 
@@ -2905,7 +3074,7 @@ public:
                 {
                     for (auto& objectIt = tileObjects->begin(); objectIt != tileObjects->end(); objectIt++)
                     {
-                        tibia::Object* object = objectIt->get();
+                        tibia::Object::Ptr object = *objectIt;
 
                         if (object->isDecay() == true)
                         {
@@ -2943,7 +3112,7 @@ public:
                 {
                     for (auto& animationIt = tileAnimations->begin(); animationIt != tileAnimations->end(); animationIt++)
                     {
-                        tibia::Animation* animation = animationIt->get();
+                        tibia::Animation::Ptr animation = *animationIt;
 
                         animation->update();
 
@@ -3164,7 +3333,7 @@ public:
         m_gameWindow.display();
 
         m_gameWindowSprite.setTexture(m_gameWindow.getTexture());
-        m_gameWindowSprite.setPosition(tibia::GuiData::gameWindowX, tibia::GuiData::gameWindowY);
+        m_gameWindowSprite.setPosition(tibia::GuiData::GameWindow::x, tibia::GuiData::GameWindow::y);
 
         mainWindow->draw(m_gameWindowSprite);
 
@@ -3224,7 +3393,7 @@ public:
         m_miniMapWindow.display();
 
         m_miniMapWindowSprite.setTexture(m_miniMapWindow.getTexture());
-        m_miniMapWindowSprite.setPosition(tibia::GuiData::miniMapWindowX, tibia::GuiData::miniMapWindowY);
+        m_miniMapWindowSprite.setPosition(tibia::GuiData::MiniMapWindow::x, tibia::GuiData::MiniMapWindow::y);
 
         mainWindow->draw(m_miniMapWindowSprite);
     }
@@ -3291,7 +3460,7 @@ public:
                 displayTime *= 2;
             }
 
-            float textTileDistance = calculateDistance
+            float textTileDistance = utility::calculateDistance
             (
                 gameTextIt->getTilePosition().x,
                 gameTextIt->getTilePosition().y,

@@ -478,31 +478,37 @@ namespace tibia
 
     namespace GuiData
     {
-        const int gameWindowX = 32;
-        const int gameWindowY = 32;
+        namespace GameWindow
+        {
+            int x = 32;
+            int y = 32;
 
-        const int gameWindowWidth  = TILES_WIDTH;
-        const int gameWindowHeight = TILES_HEIGHT;
+            int width  = tibia::TILES_WIDTH;
+            int height = tibia::TILES_HEIGHT;
 
-        sf::IntRect gameWindowRect(gameWindowX, gameWindowY, gameWindowWidth, gameWindowHeight);
+            sf::IntRect rect(x, y, width, height);
+        }
 
-        const int miniMapWindowX = gameWindowX + gameWindowWidth + 32;
-        const int miniMapWindowY = 32;
+        namespace MiniMapWindow
+        {
+            int x = tibia::GuiData::GameWindow::x + tibia::GuiData::GameWindow::width + 32;
+            int y = 32;
 
-        const int miniMapWindowWidth  = 128;
-        const int miniMapWindowHeight = 88;
+            int width  = 128;
+            int height = 88;
 
-        sf::IntRect miniMapWindowRect(miniMapWindowX, miniMapWindowY, miniMapWindowWidth, miniMapWindowHeight);
+            sf::IntRect rect(x, y, width, height);
 
-        const int creatureBarWidth  = 24;
-        const int creatureBarHeight = 2;
-    }
+            int zoomMin     = 1;
+            int zoomDefault = 2;
+            int zoomMax     = 4;
+        }
 
-    namespace MiniMapWindow
-    {
-        const int zoomMin     = 1;
-        const int zoomDefault = 2;
-        const int zoomMax     = 4;
+        namespace CreatureBar
+        {
+            int width  = 24;
+            int height = 2;
+        }
     }
 
     namespace ZAxis
@@ -558,6 +564,7 @@ namespace tibia
             neutral,
             good,
             evil,
+            other,
         };
     }
 
@@ -566,6 +573,7 @@ namespace tibia
         {"neutral", tibia::Teams::neutral},
         {"good",    tibia::Teams::good},
         {"evil",    tibia::Teams::evil},
+        {"other",   tibia::Teams::other},
     };
 
     namespace TileMapTypes
@@ -699,11 +707,13 @@ namespace tibia
     {
         enum
         {
+            none,
             black,
             blood,
             fire,
             electricity,
             poison,
+            poisoned,
             spellBlue,
             spellBlack,
             heal,
@@ -722,13 +732,31 @@ namespace tibia
         {1497, tibia::ModifyHpTypes::electricity},
         {1498, tibia::ModifyHpTypes::electricity},
 
-        {3158, tibia::ModifyHpTypes::poison},
-        {3159, tibia::ModifyHpTypes::poison},
-        {3160, tibia::ModifyHpTypes::poison},
-        {3161, tibia::ModifyHpTypes::poison},
+        {3158, tibia::ModifyHpTypes::poisoned},
+        {3159, tibia::ModifyHpTypes::poisoned},
+        {3160, tibia::ModifyHpTypes::poisoned},
+        {3161, tibia::ModifyHpTypes::poisoned},
     };
 
-    namespace CreatureStatusFlags
+    std::unordered_map<int, int> umapModifyHpOnTouchDamages =
+    {
+        {1489, 25},
+        {1490, 25},
+        {1491, 10},
+        {1492, 10},
+        //{1493, 1},
+        //{1494, 1},
+
+        {1497, 25},
+        {1498, 25},
+
+        {3158, 0},
+        {3159, 0},
+        {3160, 0},
+        {3161, 0},
+    };
+
+    namespace CreatureStatusEffects
     {
         enum
         {
@@ -746,6 +774,104 @@ namespace tibia
             strengthened,
         };
     }
+
+    std::unordered_map<int, int> umapModifyHpOnTouchStatusEffects =
+    {
+        {1489, tibia::CreatureStatusEffects::burning},
+        {1490, tibia::CreatureStatusEffects::burning},
+        {1491, tibia::CreatureStatusEffects::burning},
+        {1492, tibia::CreatureStatusEffects::burning},
+        //{1493, tibia::CreatureStatusEffects::burning},
+        //{1494, tibia::CreatureStatusEffects::burning},
+
+        {1497, tibia::CreatureStatusEffects::electrified},
+        {1498, tibia::CreatureStatusEffects::electrified},
+
+        {3158, tibia::CreatureStatusEffects::poisoned},
+        {3159, tibia::CreatureStatusEffects::poisoned},
+        {3160, tibia::CreatureStatusEffects::poisoned},
+        {3161, tibia::CreatureStatusEffects::poisoned},
+    };
+
+    std::unordered_map<int, std::string> umapCreatureStatusEffectsNames =
+    {
+        {tibia::CreatureStatusEffects::burning,       "Burning"},
+        {tibia::CreatureStatusEffects::cursed,        "Cursed"},
+        {tibia::CreatureStatusEffects::dazzled,       "Dazzled"},
+        {tibia::CreatureStatusEffects::drowning,      "Drowning"},
+        {tibia::CreatureStatusEffects::drunk,         "Drunk"},
+        {tibia::CreatureStatusEffects::electrified,   "Electrified"},
+        {tibia::CreatureStatusEffects::freezing,      "Freezing"},
+        {tibia::CreatureStatusEffects::hasted,        "Hasted"},
+        {tibia::CreatureStatusEffects::magicShielded, "Magic Shielded"},
+        {tibia::CreatureStatusEffects::poisoned,      "Poisoned"},
+        {tibia::CreatureStatusEffects::slowed,        "Slowed"},
+        {tibia::CreatureStatusEffects::strengthened,  "Strengthened"},
+    };
+
+    std::unordered_map<int, int> umapCreatureStatusEffectsModifyHpTypes =
+    {
+        {tibia::CreatureStatusEffects::burning,       tibia::ModifyHpTypes::fire},
+        {tibia::CreatureStatusEffects::cursed,        tibia::ModifyHpTypes::none},
+        {tibia::CreatureStatusEffects::dazzled,       tibia::ModifyHpTypes::none},
+        {tibia::CreatureStatusEffects::drowning,      tibia::ModifyHpTypes::none},
+        {tibia::CreatureStatusEffects::drunk,         tibia::ModifyHpTypes::none},
+        {tibia::CreatureStatusEffects::electrified,   tibia::ModifyHpTypes::electricity},
+        {tibia::CreatureStatusEffects::freezing,      tibia::ModifyHpTypes::none},
+        {tibia::CreatureStatusEffects::hasted,        tibia::ModifyHpTypes::none},
+        {tibia::CreatureStatusEffects::magicShielded, tibia::ModifyHpTypes::none},
+        {tibia::CreatureStatusEffects::poisoned,      tibia::ModifyHpTypes::poisoned},
+        {tibia::CreatureStatusEffects::slowed,        tibia::ModifyHpTypes::none},
+        {tibia::CreatureStatusEffects::strengthened,  tibia::ModifyHpTypes::none},
+    };
+
+    std::unordered_map<int, int> umapCreatureStatusEffectsDamages =
+    {
+        {tibia::CreatureStatusEffects::burning,       10},
+        {tibia::CreatureStatusEffects::cursed,        0},
+        {tibia::CreatureStatusEffects::dazzled,       0},
+        {tibia::CreatureStatusEffects::drowning,      10},
+        {tibia::CreatureStatusEffects::drunk,         0},
+        {tibia::CreatureStatusEffects::electrified,   10},
+        {tibia::CreatureStatusEffects::freezing,      10},
+        {tibia::CreatureStatusEffects::hasted,        0},
+        {tibia::CreatureStatusEffects::magicShielded, 0},
+        {tibia::CreatureStatusEffects::poisoned,      2},
+        {tibia::CreatureStatusEffects::slowed,        0},
+        {tibia::CreatureStatusEffects::strengthened,  0},
+    };
+
+    std::unordered_map<int, int> umapCreatureStatusEffectsTicks =
+    {
+        {tibia::CreatureStatusEffects::burning,       10},
+        {tibia::CreatureStatusEffects::cursed,        10},
+        {tibia::CreatureStatusEffects::dazzled,       10},
+        {tibia::CreatureStatusEffects::drowning,      10},
+        {tibia::CreatureStatusEffects::drunk,         10},
+        {tibia::CreatureStatusEffects::electrified,   10},
+        {tibia::CreatureStatusEffects::freezing,      10},
+        {tibia::CreatureStatusEffects::hasted,        10},
+        {tibia::CreatureStatusEffects::magicShielded, 10},
+        {tibia::CreatureStatusEffects::poisoned,      10},
+        {tibia::CreatureStatusEffects::slowed,        10},
+        {tibia::CreatureStatusEffects::strengthened,  10},
+    };
+
+    std::unordered_map<int, sf::Time> umapCreatureStatusEffectsTimesPerTick =
+    {
+        {tibia::CreatureStatusEffects::burning,       sf::seconds(1.0f)},
+        {tibia::CreatureStatusEffects::cursed,        sf::seconds(1.0f)},
+        {tibia::CreatureStatusEffects::dazzled,       sf::seconds(1.0f)},
+        {tibia::CreatureStatusEffects::drowning,      sf::seconds(1.0f)},
+        {tibia::CreatureStatusEffects::drunk,         sf::seconds(1.0f)},
+        {tibia::CreatureStatusEffects::electrified,   sf::seconds(1.0f)},
+        {tibia::CreatureStatusEffects::freezing,      sf::seconds(1.0f)},
+        {tibia::CreatureStatusEffects::hasted,        sf::seconds(1.0f)},
+        {tibia::CreatureStatusEffects::magicShielded, sf::seconds(1.0f)},
+        {tibia::CreatureStatusEffects::poisoned,      sf::seconds(5.0f)},
+        {tibia::CreatureStatusEffects::slowed,        sf::seconds(1.0f)},
+        {tibia::CreatureStatusEffects::strengthened,  sf::seconds(1.0f)},
+    };
 
     namespace CreatureTypes
     {
@@ -1108,6 +1234,7 @@ namespace tibia
         {tibia::ModifyHpTypes::fire,        tibia::Animations::fire},
         {tibia::ModifyHpTypes::electricity, tibia::Animations::electricity},
         {tibia::ModifyHpTypes::poison,      tibia::Animations::hitPoison},
+        {tibia::ModifyHpTypes::poisoned,    tibia::Animations::poison},
         {tibia::ModifyHpTypes::spellBlue,   tibia::Animations::spellBlue},
         {tibia::ModifyHpTypes::spellBlack,  tibia::Animations::spellBlack},
         {tibia::ModifyHpTypes::heal,        tibia::Animations::particlesRed},
@@ -1202,6 +1329,8 @@ namespace tibia
         std::vector<int> guiTextIcons = {529, 530, 531, 532, 533, 534};
 
         std::vector<int> corpse = {491, 492, 493, 494, 495, 496, 497};
+
+        std::vector<int> chair = {522, 1054, 521, 1055}; // up, right, down, left
 
         std::vector<int> counterVertical   = {1043, 1046};
         std::vector<int> counterHorizontal = {1044, 1048};
@@ -1700,15 +1829,21 @@ namespace tibia
             3322, 3326,
             3380, 3381,
             3385,
+            3391,
         };
 
         std::vector<int> interactive =
         {
-            counterVertical[0],
-            counterVertical[1],
+            tibia::SpriteData::chair[0],
+            tibia::SpriteData::chair[1],
+            tibia::SpriteData::chair[2],
+            tibia::SpriteData::chair[3],
 
-            counterHorizontal[0],
-            counterHorizontal[1],
+            tibia::SpriteData::counterVertical[0],
+            tibia::SpriteData::counterVertical[1],
+
+            tibia::SpriteData::counterHorizontal[0],
+            tibia::SpriteData::counterHorizontal[1],
 
             tibia::SpriteData::ovenDown[0],
             tibia::SpriteData::ovenDown[1],

@@ -25,7 +25,7 @@
 
 #include "resource.h"
 
-static tibia::Game g_game;
+tibia::Game g_game;
 
 std::string gameTitle = "Tibianer";
 
@@ -378,6 +378,8 @@ int main(int argc, char* argv[])
 
         // delta time
         sf::Time timeDelta = clockDelta->restart();
+
+        // 1.0f / 60.0f = 0.0166666666666667
 
         if (timeDelta.asSeconds() < 0.01)
         {

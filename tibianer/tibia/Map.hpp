@@ -31,8 +31,9 @@ public:
 
     struct MapProperties_t
     {
-        std::string name   = "Unknown Map";
-        std::string author = "Unknown Author";
+        std::string name        = "Unknown Map";
+        std::string description = "";
+        std::string author      = "Unknown Author";
 
         unsigned int playerStartX = 0;
         unsigned int playerStartY = 0;
@@ -72,6 +73,10 @@ public:
                 if (docMapPropertyName == "name")
                 {
                     properties.name = docMapProperty->Attribute("value");
+                }
+                else if (docMapPropertyName == "description")
+                {
+                    properties.description = docMapProperty->Attribute("value");
                 }
                 else if (docMapPropertyName == "author")
                 {

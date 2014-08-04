@@ -25,6 +25,20 @@ public:
     typedef std::shared_ptr<tibia::Creature> Ptr;
     typedef std::vector<tibia::Creature::Ptr> List;
 
+    struct CreatureStatusEffect_t
+    {
+        int type;
+        int damage;
+        unsigned int ticks;
+
+        sf::Time timePerTick;
+        sf::Clock clock;
+
+        std::string name;
+    };
+
+    typedef std::vector<tibia::Creature::CreatureStatusEffect_t> StatusEffectList;
+
     Creature::Creature(int tileX, int tileY, int z)
     {
         setTileCoords(tileX, tileY);
@@ -269,10 +283,10 @@ public:
 
     void setOutfitRandom()
     {
-        m_outfit[0] = getRandomNumber(0, (tibia::Outfits::head.size() / 4) - 1);
-        m_outfit[1] = getRandomNumber(0, (tibia::Outfits::body.size() / 4) - 1);
-        m_outfit[2] = getRandomNumber(0, (tibia::Outfits::legs.size() / 4) - 1);
-        m_outfit[3] = getRandomNumber(0, (tibia::Outfits::feet.size() / 4) - 1);
+        m_outfit[0] = utility::getRandomNumber(0, (tibia::Outfits::head.size() / 4) - 1);
+        m_outfit[1] = utility::getRandomNumber(0, (tibia::Outfits::body.size() / 4) - 1);
+        m_outfit[2] = utility::getRandomNumber(0, (tibia::Outfits::legs.size() / 4) - 1);
+        m_outfit[3] = utility::getRandomNumber(0, (tibia::Outfits::feet.size() / 4) - 1);
 
         updateOutfit();
     }
@@ -391,7 +405,7 @@ public:
 
         if (dir > tibia::Directions::left)
         {
-            int random = getRandomNumber(1, 2);
+            int random = utility::getRandomNumber(1, 2);
 
             switch (dir)
             {
@@ -407,15 +421,15 @@ public:
                     break;
 
                 case tibia::Directions::upRight:
-                    dir = getRandomNumber(tibia::Directions::up, tibia::Directions::right);
+                    dir = utility::getRandomNumber(tibia::Directions::up, tibia::Directions::right);
                     break;
 
                 case tibia::Directions::downRight:
-                    dir = getRandomNumber(tibia::Directions::right, tibia::Directions::down);
+                    dir = utility::getRandomNumber(tibia::Directions::right, tibia::Directions::down);
                     break;
 
                 case tibia::Directions::downLeft:
-                    dir = getRandomNumber(tibia::Directions::down, tibia::Directions::left);
+                    dir = utility::getRandomNumber(tibia::Directions::down, tibia::Directions::left);
                     break;
             }
         }
@@ -448,6 +462,50 @@ public:
     tibia::Creature::Ptr getLastAttacker()
     {
         return m_lastAttacker;
+    }
+
+    tibia::Creature::StatusEffectList::iterator findStatusEffect(int type)
+    {
+        return std::find_if
+        (
+            m_statusEffectList.begin(),
+            m_statusEffectList.end(),
+            [&type](tibia::Creature::CreatureStatusEffect_t const& se)
+            { 
+                return se.type == type;
+            }
+        );
+    }
+
+    bool hasStatusEffect(int type)
+    {
+        auto findStatusEffectIt = findStatusEffect(type);
+
+        return findStatusEffectIt != m_statusEffectList.end();
+    }
+
+    void addStatusEffect(int type, int damage, unsigned int ticks, sf::Time timePerTick)
+    {
+        auto findStatusEffectIt = findStatusEffect(type);
+
+        if (findStatusEffectIt != m_statusEffectList.end())
+        {
+            findStatusEffectIt->ticks = ticks;
+            findStatusEffectIt->clock.restart();
+            return;
+        }
+
+        tibia::Creature::CreatureStatusEffect_t statusEffect;
+        statusEffect.type        = type;
+        statusEffect.damage      = damage;
+        statusEffect.ticks       = ticks;
+        statusEffect.timePerTick = timePerTick;
+
+        statusEffect.name = tibia::umapCreatureStatusEffectsNames[type];
+
+        statusEffect.clock.restart();
+
+        m_statusEffectList.push_back(statusEffect);
     }
 
     bool isDead()
@@ -722,6 +780,11 @@ public:
         return &m_clockAnimation;
     }
 
+    tibia::Creature::StatusEffectList* getStatusEffectList()
+    {
+        return &m_statusEffectList;
+    }
+
 private:
 
     int m_tileOffset;
@@ -795,6 +858,8 @@ private:
     sf::Clock m_clockLogic;
 
     tibia::Creature::Ptr m_lastAttacker;
+
+    tibia::Creature::StatusEffectList m_statusEffectList;
 
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const
     {

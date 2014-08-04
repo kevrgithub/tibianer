@@ -231,6 +231,11 @@ public:
         return m_speed;
     }
 
+    int getDirection()
+    {
+        return m_direction;
+    }
+
     void setDistanceTravelled(int distance)
     {
         m_distanceTravelled = distance;
