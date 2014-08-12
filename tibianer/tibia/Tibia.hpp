@@ -1,11 +1,12 @@
 #ifndef TIBIA_TIBIA_HPP
 #define TIBIA_TIBIA_HPP
 
+#include <cmath>
+
 #include <string>
 #include <vector>
 #include <unordered_map>
 #include <memory>
-#include <cmath>
 
 #include <SFML/Graphics.hpp>
 
@@ -65,18 +66,20 @@ namespace tibia
 
     namespace Textures
     {
+        sf::Texture cursor;
         sf::Texture sprites;
         sf::Texture lights;
         sf::Texture background;
-        sf::Texture cursor;
+        sf::Texture bars;
     }
 
     std::unordered_map<std::string, sf::Texture&> umapTextureFiles =
     {
+        {"images/cursor.png",     tibia::Textures::cursor},
         {"images/sprites.png",    tibia::Textures::sprites},
         {"images/lights.png",     tibia::Textures::lights},
         {"images/background.png", tibia::Textures::background},
-        {"images/cursor.png",     tibia::Textures::cursor},
+        {"images/bars.png",       tibia::Textures::bars},
     };
 
     namespace Fonts
@@ -116,7 +119,7 @@ namespace tibia
 
         std::vector<int> tinyGlyphWidths =
         {
-            6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 3, 6, 3, 7,
+            4, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 3, 6, 3, 7,
             6, 5, 6, 6, 6, 6, 6, 6, 6, 6, 3, 3, 7, 7, 7, 7,
             7, 6, 6, 6, 6, 6, 6, 6, 6, 3, 6, 7, 6, 7, 7, 6,
             6, 7, 6, 6, 7, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
@@ -154,6 +157,23 @@ namespace tibia
         };
     }
 
+    namespace BarsTypes
+    {
+        enum
+        {
+            red,
+            blue,
+            green,
+            purple
+        };
+    }
+
+    namespace BarsData
+    {
+        int width  = 202;
+        int height = 16;
+    }
+
     namespace GameTextData
     {
         const float time = 5.0;
@@ -168,8 +188,6 @@ namespace tibia
     namespace StatusBarTextData
     {
         const float time = 5.0;
-
-        sf::Vector2f position(240, 307); // 308 - 1
     }
 
     namespace AnimatedObjects
@@ -250,238 +268,245 @@ namespace tibia
 
         sf::Color light(255, 255, 255, 192);
 
-        sf::Color mouseCursorRed(255, 128, 128);
-        sf::Color mouseCursorGreen(128, 255, 128);
-        sf::Color mouseCursorBlue(128, 255, 255);
-        sf::Color mouseCursorYellow(255, 255, 128);
-        sf::Color mouseCursorTeal(128, 255, 255);
-        sf::Color mouseCursorPink(255, 128, 255);
+        namespace MouseCursor
+        {
+            sf::Color red(255, 128, 128);
+            sf::Color green(128, 255, 128);
+            sf::Color blue(128, 255, 255);
+            sf::Color yellow(255, 255, 128);
+            sf::Color teal(128, 255, 255);
+            sf::Color pink(255, 128, 255);
+        }
 
-        sf::Color textWhite(255, 255, 255);
-        sf::Color textRed(255, 64, 64);
-        sf::Color textGreen(64, 255, 64);
-        sf::Color textYellow(255, 255, 64);
-        sf::Color textOrange(255, 128, 64);
-        
-        sf::Color mainWindowColor = white;
-        sf::Color windowBorderColor = black;
+        namespace Text
+        {
+            sf::Color white(255, 255, 255);
+            sf::Color red(255, 64, 64);
+            sf::Color green(64, 255, 64);
+            sf::Color yellow(255, 255, 64);
+            sf::Color orange(255, 128, 64);
+            sf::Color teal(64, 255, 255);
+        }
 
-        sf::Color miniMapDefault(153, 153, 153);
-        sf::Color miniMapMountain(102, 102, 102);
-        sf::Color miniMapSolid(255, 51, 0);
-        sf::Color miniMapCave(153, 51, 0);
-        sf::Color miniMapWood(128, 64, 0);
-        sf::Color miniMapDirt(153, 102, 51);
-        sf::Color miniMapGrass(0, 204, 0);
-        sf::Color miniMapTree(0, 102, 0);
-        sf::Color miniMapWater(51, 0, 204);
-        sf::Color miniMapShallowWater(64, 128, 192);
-        sf::Color miniMapLava(255, 128, 0);
-        sf::Color miniMapSwamp(0, 255, 0);
-        sf::Color miniMapIce(128, 255, 255);
-        sf::Color miniMapSnow(192, 192, 192);
-        sf::Color miniMapSand(255, 255, 128);
-        sf::Color miniMapMoveAboveOrBelow(255, 255, 0);
+        namespace MiniMap
+        {
+            sf::Color default(153, 153, 153);
+            sf::Color mountain(102, 102, 102);
+            sf::Color solid(255, 51, 0);
+            sf::Color cave(153, 51, 0);
+            sf::Color wood(128, 64, 0);
+            sf::Color dirt(153, 102, 51);
+            sf::Color grass(0, 204, 0);
+            sf::Color tree(0, 102, 0);
+            sf::Color water(51, 0, 204);
+            sf::Color shallowWater(64, 128, 192);
+            sf::Color lava(255, 128, 0);
+            sf::Color swamp(0, 255, 0);
+            sf::Color ice(128, 255, 255);
+            sf::Color snow(192, 192, 192);
+            sf::Color sand(255, 255, 128);
+            sf::Color moveAboveOrBelow(255, 255, 0);
+        }
     }
 
     std::unordered_map<int, sf::Color> umapMiniMapColors =
     {
-        {2,    tibia::Colors::miniMapWood},
-        {38,   tibia::Colors::miniMapDirt},
-        {43,   tibia::Colors::miniMapGrass},
-        {116,  tibia::Colors::miniMapShallowWater},
-        {118,  tibia::Colors::miniMapDirt},
-        {119,  tibia::Colors::miniMapDirt},
-        {120,  tibia::Colors::miniMapDirt},
-        {121,  tibia::Colors::miniMapDirt},
-        {122,  tibia::Colors::miniMapDirt},
-        {123,  tibia::Colors::miniMapDirt},
-        {124,  tibia::Colors::miniMapDirt},
-        {125,  tibia::Colors::miniMapDirt},
-        {126,  tibia::Colors::miniMapDirt},
-        {127,  tibia::Colors::miniMapIce},
-        {193,  tibia::Colors::miniMapDirt},
-        {194,  tibia::Colors::miniMapDirt},
-        {195,  tibia::Colors::miniMapDirt},
-        {196,  tibia::Colors::miniMapDirt},
-        {388,  tibia::Colors::miniMapWood},
-        {461,  tibia::Colors::miniMapDirt},
-        {462,  tibia::Colors::miniMapDirt},
-        {463,  tibia::Colors::miniMapDirt},
-        {464,  tibia::Colors::miniMapDirt},
-        {465,  tibia::Colors::miniMapDirt},
-        {466,  tibia::Colors::miniMapCave},
-        {467,  tibia::Colors::miniMapCave},
-        {468,  tibia::Colors::miniMapCave},
-        {469,  tibia::Colors::miniMapCave},
-        {470,  tibia::Colors::miniMapCave},
-        {471,  tibia::Colors::miniMapCave},
-        {472,  tibia::Colors::miniMapCave},
-        {473,  tibia::Colors::miniMapCave},
-        {474,  tibia::Colors::miniMapCave},
-        {475,  tibia::Colors::miniMapCave},
-        {476,  tibia::Colors::miniMapCave},
-        {477,  tibia::Colors::miniMapCave},
-        {1060, tibia::Colors::miniMapTree},
-        {1066, tibia::Colors::miniMapMountain},
-        {1067, tibia::Colors::miniMapMountain},
-        {1068, tibia::Colors::miniMapMountain},
-        {1069, tibia::Colors::miniMapMountain},
-        {1070, tibia::Colors::miniMapMountain},
-        {1075, tibia::Colors::miniMapGrass},
-        {1076, tibia::Colors::miniMapGrass},
-        {1077, tibia::Colors::miniMapGrass},
-        {1078, tibia::Colors::miniMapGrass},
-        {1079, tibia::Colors::miniMapGrass},
-        {1080, tibia::Colors::miniMapGrass},
-        {1081, tibia::Colors::miniMapGrass},
-        {1082, tibia::Colors::miniMapGrass},
-        {1083, tibia::Colors::miniMapGrass},
-        {1084, tibia::Colors::miniMapGrass},
-        {1085, tibia::Colors::miniMapGrass},
-        {1086, tibia::Colors::miniMapGrass},
-        {1092, tibia::Colors::miniMapCave},
-        {1093, tibia::Colors::miniMapCave},
-        {1094, tibia::Colors::miniMapCave},
-        {1095, tibia::Colors::miniMapCave},
-        {1096, tibia::Colors::miniMapCave},
-        {1097, tibia::Colors::miniMapCave},
-        {1098, tibia::Colors::miniMapCave},
-        {1099, tibia::Colors::miniMapCave},
-        {1100, tibia::Colors::miniMapCave},
-        {1101, tibia::Colors::miniMapCave},
-        {1102, tibia::Colors::miniMapCave},
-        {1103, tibia::Colors::miniMapCave},
-        {1140, tibia::Colors::miniMapTree},
-        {1144, tibia::Colors::miniMapTree},
-        {1152, tibia::Colors::miniMapWood},
-        {1160, tibia::Colors::miniMapWood},
-        {1164, tibia::Colors::miniMapTree},
-        {1168, tibia::Colors::miniMapTree},
-        {1172, tibia::Colors::miniMapTree},
-        {1176, tibia::Colors::miniMapTree},
-        {1180, tibia::Colors::miniMapTree},
-        {1185, tibia::Colors::miniMapTree},
-        {1186, tibia::Colors::miniMapWood},
+        {2,    tibia::Colors::MiniMap::wood},
+        {38,   tibia::Colors::MiniMap::dirt},
+        {43,   tibia::Colors::MiniMap::grass},
+        {116,  tibia::Colors::MiniMap::shallowWater},
+        {118,  tibia::Colors::MiniMap::dirt},
+        {119,  tibia::Colors::MiniMap::dirt},
+        {120,  tibia::Colors::MiniMap::dirt},
+        {121,  tibia::Colors::MiniMap::dirt},
+        {122,  tibia::Colors::MiniMap::dirt},
+        {123,  tibia::Colors::MiniMap::dirt},
+        {124,  tibia::Colors::MiniMap::dirt},
+        {125,  tibia::Colors::MiniMap::dirt},
+        {126,  tibia::Colors::MiniMap::dirt},
+        {127,  tibia::Colors::MiniMap::ice},
+        {193,  tibia::Colors::MiniMap::dirt},
+        {194,  tibia::Colors::MiniMap::dirt},
+        {195,  tibia::Colors::MiniMap::dirt},
+        {196,  tibia::Colors::MiniMap::dirt},
+        {388,  tibia::Colors::MiniMap::wood},
+        {461,  tibia::Colors::MiniMap::dirt},
+        {462,  tibia::Colors::MiniMap::dirt},
+        {463,  tibia::Colors::MiniMap::dirt},
+        {464,  tibia::Colors::MiniMap::dirt},
+        {465,  tibia::Colors::MiniMap::dirt},
+        {466,  tibia::Colors::MiniMap::cave},
+        {467,  tibia::Colors::MiniMap::cave},
+        {468,  tibia::Colors::MiniMap::cave},
+        {469,  tibia::Colors::MiniMap::cave},
+        {470,  tibia::Colors::MiniMap::cave},
+        {471,  tibia::Colors::MiniMap::cave},
+        {472,  tibia::Colors::MiniMap::cave},
+        {473,  tibia::Colors::MiniMap::cave},
+        {474,  tibia::Colors::MiniMap::cave},
+        {475,  tibia::Colors::MiniMap::cave},
+        {476,  tibia::Colors::MiniMap::cave},
+        {477,  tibia::Colors::MiniMap::cave},
+        {1060, tibia::Colors::MiniMap::tree},
+        {1066, tibia::Colors::MiniMap::mountain},
+        {1067, tibia::Colors::MiniMap::mountain},
+        {1068, tibia::Colors::MiniMap::mountain},
+        {1069, tibia::Colors::MiniMap::mountain},
+        {1070, tibia::Colors::MiniMap::mountain},
+        {1075, tibia::Colors::MiniMap::grass},
+        {1076, tibia::Colors::MiniMap::grass},
+        {1077, tibia::Colors::MiniMap::grass},
+        {1078, tibia::Colors::MiniMap::grass},
+        {1079, tibia::Colors::MiniMap::grass},
+        {1080, tibia::Colors::MiniMap::grass},
+        {1081, tibia::Colors::MiniMap::grass},
+        {1082, tibia::Colors::MiniMap::grass},
+        {1083, tibia::Colors::MiniMap::grass},
+        {1084, tibia::Colors::MiniMap::grass},
+        {1085, tibia::Colors::MiniMap::grass},
+        {1086, tibia::Colors::MiniMap::grass},
+        {1092, tibia::Colors::MiniMap::cave},
+        {1093, tibia::Colors::MiniMap::cave},
+        {1094, tibia::Colors::MiniMap::cave},
+        {1095, tibia::Colors::MiniMap::cave},
+        {1096, tibia::Colors::MiniMap::cave},
+        {1097, tibia::Colors::MiniMap::cave},
+        {1098, tibia::Colors::MiniMap::cave},
+        {1099, tibia::Colors::MiniMap::cave},
+        {1100, tibia::Colors::MiniMap::cave},
+        {1101, tibia::Colors::MiniMap::cave},
+        {1102, tibia::Colors::MiniMap::cave},
+        {1103, tibia::Colors::MiniMap::cave},
+        {1140, tibia::Colors::MiniMap::tree},
+        {1144, tibia::Colors::MiniMap::tree},
+        {1152, tibia::Colors::MiniMap::wood},
+        {1160, tibia::Colors::MiniMap::wood},
+        {1164, tibia::Colors::MiniMap::tree},
+        {1168, tibia::Colors::MiniMap::tree},
+        {1172, tibia::Colors::MiniMap::tree},
+        {1176, tibia::Colors::MiniMap::tree},
+        {1180, tibia::Colors::MiniMap::tree},
+        {1185, tibia::Colors::MiniMap::tree},
+        {1186, tibia::Colors::MiniMap::wood},
         {1191, tibia::Colors::black},
-        {1203, tibia::Colors::miniMapTree},
-        {1495, tibia::Colors::miniMapCave},
-        {1496, tibia::Colors::miniMapCave},
-        {1564, tibia::Colors::miniMapSwamp},
-        {1565, tibia::Colors::miniMapCave},
-        {1566, tibia::Colors::miniMapCave},
-        {1567, tibia::Colors::miniMapCave},
-        {1606, tibia::Colors::miniMapSnow},
-        {1610, tibia::Colors::miniMapTree},
-        {1614, tibia::Colors::miniMapTree},
-        {1618, tibia::Colors::miniMapTree},
-        {1622, tibia::Colors::miniMapTree},
-        {1623, tibia::Colors::miniMapWood},
-        {1624, tibia::Colors::miniMapWood},
-        {1625, tibia::Colors::miniMapWood},
-        {1626, tibia::Colors::miniMapWood},
-        {1630, tibia::Colors::miniMapTree},
-        {1634, tibia::Colors::miniMapTree},
-        {1635, tibia::Colors::miniMapTree},
-        {1636, tibia::Colors::miniMapWood},
-        {1637, tibia::Colors::miniMapTree},
-        {1638, tibia::Colors::miniMapTree},
-        {1651, tibia::Colors::miniMapTree},
-        {1669, tibia::Colors::miniMapTree},
-        {1676, tibia::Colors::miniMapTree},
-        {1680, tibia::Colors::miniMapWood},
-        {1684, tibia::Colors::miniMapWood},
-        {1688, tibia::Colors::miniMapWood},
-        {1692, tibia::Colors::miniMapWood},
-        {1760, tibia::Colors::miniMapWood},
-        {1764, tibia::Colors::miniMapWood},
-        {1768, tibia::Colors::miniMapTree},
-        {1772, tibia::Colors::miniMapTree},
-        {1993, tibia::Colors::miniMapTree},
-        {1994, tibia::Colors::miniMapTree},
-        {1995, tibia::Colors::miniMapTree},
-        {1996, tibia::Colors::miniMapTree},
-        {1997, tibia::Colors::miniMapTree},
-        {1998, tibia::Colors::miniMapTree},
-        {1999, tibia::Colors::miniMapTree},
-        {2000, tibia::Colors::miniMapTree},
-        {2001, tibia::Colors::miniMapTree},
-        {2002, tibia::Colors::miniMapTree},
-        {2003, tibia::Colors::miniMapTree},
-        {2004, tibia::Colors::miniMapTree},
-        {2005, tibia::Colors::miniMapTree},
-        {2006, tibia::Colors::miniMapTree},
-        {2007, tibia::Colors::miniMapTree},
-        {2008, tibia::Colors::miniMapTree},
-        {2009, tibia::Colors::miniMapTree},
-        {2010, tibia::Colors::miniMapTree},
-        {2011, tibia::Colors::miniMapTree},
-        {2012, tibia::Colors::miniMapTree},
-        {2013, tibia::Colors::miniMapTree},
-        {2014, tibia::Colors::miniMapTree},
-        {2015, tibia::Colors::miniMapTree},
-        {2016, tibia::Colors::miniMapTree},
-        {2017, tibia::Colors::miniMapTree},
-        {2018, tibia::Colors::miniMapTree},
-        {2019, tibia::Colors::miniMapTree},
-        {2020, tibia::Colors::miniMapTree},
-        {2021, tibia::Colors::miniMapSand},
-        {2022, tibia::Colors::miniMapSand},
-        {2023, tibia::Colors::miniMapSand},
-        {2024, tibia::Colors::miniMapSand},
-        {2025, tibia::Colors::miniMapSand},
-        {2026, tibia::Colors::miniMapSand},
-        {2027, tibia::Colors::miniMapSand},
-        {2028, tibia::Colors::miniMapSand},
-        {2029, tibia::Colors::miniMapSand},
-        {2030, tibia::Colors::miniMapSand},
-        {2031, tibia::Colors::miniMapSand},
-        {2032, tibia::Colors::miniMapSand},
-        {2033, tibia::Colors::miniMapSand},
-        {2034, tibia::Colors::miniMapShallowWater},
-        {2035, tibia::Colors::miniMapShallowWater},
-        {2036, tibia::Colors::miniMapShallowWater},
-        {2037, tibia::Colors::miniMapShallowWater},
-        {2038, tibia::Colors::miniMapShallowWater},
-        {2039, tibia::Colors::miniMapShallowWater},
-        {2040, tibia::Colors::miniMapShallowWater},
-        {2041, tibia::Colors::miniMapShallowWater},
-        {2042, tibia::Colors::miniMapShallowWater},
-        {2043, tibia::Colors::miniMapShallowWater},
-        {2044, tibia::Colors::miniMapShallowWater},
-        {2045, tibia::Colors::miniMapShallowWater},
-        {2046, tibia::Colors::miniMapShallowWater},
-        {2123, tibia::Colors::miniMapTree},
-        {2127, tibia::Colors::miniMapTree},
-        {2131, tibia::Colors::miniMapTree},
-        {2164, tibia::Colors::miniMapTree},
-        {2168, tibia::Colors::miniMapTree},
-        {2172, tibia::Colors::miniMapTree},
-        {2185, tibia::Colors::miniMapSand},
-        {2186, tibia::Colors::miniMapSand},
-        {2187, tibia::Colors::miniMapSand},
-        {2188, tibia::Colors::miniMapSand},
-        {2191, tibia::Colors::miniMapSand},
-        {2192, tibia::Colors::miniMapSand},
-        {2193, tibia::Colors::miniMapSand},
-        {2194, tibia::Colors::miniMapSand},
-        {3254, tibia::Colors::miniMapMountain},
-        {3255, tibia::Colors::miniMapMountain},
-        {3256, tibia::Colors::miniMapMountain},
-        {3257, tibia::Colors::miniMapMountain},
-        {3322, tibia::Colors::miniMapTree},
-        {3326, tibia::Colors::miniMapTree},
-        {3337, tibia::Colors::miniMapSnow},
-        {3344, tibia::Colors::miniMapWood},
-        {3375, tibia::Colors::miniMapTree},
+        {1203, tibia::Colors::MiniMap::tree},
+        {1495, tibia::Colors::MiniMap::cave},
+        {1496, tibia::Colors::MiniMap::cave},
+        {1564, tibia::Colors::MiniMap::swamp},
+        {1565, tibia::Colors::MiniMap::cave},
+        {1566, tibia::Colors::MiniMap::cave},
+        {1567, tibia::Colors::MiniMap::cave},
+        {1606, tibia::Colors::MiniMap::snow},
+        {1610, tibia::Colors::MiniMap::tree},
+        {1614, tibia::Colors::MiniMap::tree},
+        {1618, tibia::Colors::MiniMap::tree},
+        {1622, tibia::Colors::MiniMap::tree},
+        {1623, tibia::Colors::MiniMap::wood},
+        {1624, tibia::Colors::MiniMap::wood},
+        {1625, tibia::Colors::MiniMap::wood},
+        {1626, tibia::Colors::MiniMap::wood},
+        {1630, tibia::Colors::MiniMap::tree},
+        {1634, tibia::Colors::MiniMap::tree},
+        {1635, tibia::Colors::MiniMap::tree},
+        {1636, tibia::Colors::MiniMap::wood},
+        {1637, tibia::Colors::MiniMap::tree},
+        {1638, tibia::Colors::MiniMap::tree},
+        {1651, tibia::Colors::MiniMap::tree},
+        {1669, tibia::Colors::MiniMap::tree},
+        {1676, tibia::Colors::MiniMap::tree},
+        {1680, tibia::Colors::MiniMap::wood},
+        {1684, tibia::Colors::MiniMap::wood},
+        {1688, tibia::Colors::MiniMap::wood},
+        {1692, tibia::Colors::MiniMap::wood},
+        {1760, tibia::Colors::MiniMap::wood},
+        {1764, tibia::Colors::MiniMap::wood},
+        {1768, tibia::Colors::MiniMap::tree},
+        {1772, tibia::Colors::MiniMap::tree},
+        {1993, tibia::Colors::MiniMap::tree},
+        {1994, tibia::Colors::MiniMap::tree},
+        {1995, tibia::Colors::MiniMap::tree},
+        {1996, tibia::Colors::MiniMap::tree},
+        {1997, tibia::Colors::MiniMap::tree},
+        {1998, tibia::Colors::MiniMap::tree},
+        {1999, tibia::Colors::MiniMap::tree},
+        {2000, tibia::Colors::MiniMap::tree},
+        {2001, tibia::Colors::MiniMap::tree},
+        {2002, tibia::Colors::MiniMap::tree},
+        {2003, tibia::Colors::MiniMap::tree},
+        {2004, tibia::Colors::MiniMap::tree},
+        {2005, tibia::Colors::MiniMap::tree},
+        {2006, tibia::Colors::MiniMap::tree},
+        {2007, tibia::Colors::MiniMap::tree},
+        {2008, tibia::Colors::MiniMap::tree},
+        {2009, tibia::Colors::MiniMap::tree},
+        {2010, tibia::Colors::MiniMap::tree},
+        {2011, tibia::Colors::MiniMap::tree},
+        {2012, tibia::Colors::MiniMap::tree},
+        {2013, tibia::Colors::MiniMap::tree},
+        {2014, tibia::Colors::MiniMap::tree},
+        {2015, tibia::Colors::MiniMap::tree},
+        {2016, tibia::Colors::MiniMap::tree},
+        {2017, tibia::Colors::MiniMap::tree},
+        {2018, tibia::Colors::MiniMap::tree},
+        {2019, tibia::Colors::MiniMap::tree},
+        {2020, tibia::Colors::MiniMap::tree},
+        {2021, tibia::Colors::MiniMap::sand},
+        {2022, tibia::Colors::MiniMap::sand},
+        {2023, tibia::Colors::MiniMap::sand},
+        {2024, tibia::Colors::MiniMap::sand},
+        {2025, tibia::Colors::MiniMap::sand},
+        {2026, tibia::Colors::MiniMap::sand},
+        {2027, tibia::Colors::MiniMap::sand},
+        {2028, tibia::Colors::MiniMap::sand},
+        {2029, tibia::Colors::MiniMap::sand},
+        {2030, tibia::Colors::MiniMap::sand},
+        {2031, tibia::Colors::MiniMap::sand},
+        {2032, tibia::Colors::MiniMap::sand},
+        {2033, tibia::Colors::MiniMap::sand},
+        {2034, tibia::Colors::MiniMap::shallowWater},
+        {2035, tibia::Colors::MiniMap::shallowWater},
+        {2036, tibia::Colors::MiniMap::shallowWater},
+        {2037, tibia::Colors::MiniMap::shallowWater},
+        {2038, tibia::Colors::MiniMap::shallowWater},
+        {2039, tibia::Colors::MiniMap::shallowWater},
+        {2040, tibia::Colors::MiniMap::shallowWater},
+        {2041, tibia::Colors::MiniMap::shallowWater},
+        {2042, tibia::Colors::MiniMap::shallowWater},
+        {2043, tibia::Colors::MiniMap::shallowWater},
+        {2044, tibia::Colors::MiniMap::shallowWater},
+        {2045, tibia::Colors::MiniMap::shallowWater},
+        {2046, tibia::Colors::MiniMap::shallowWater},
+        {2123, tibia::Colors::MiniMap::tree},
+        {2127, tibia::Colors::MiniMap::tree},
+        {2131, tibia::Colors::MiniMap::tree},
+        {2164, tibia::Colors::MiniMap::tree},
+        {2168, tibia::Colors::MiniMap::tree},
+        {2172, tibia::Colors::MiniMap::tree},
+        {2185, tibia::Colors::MiniMap::sand},
+        {2186, tibia::Colors::MiniMap::sand},
+        {2187, tibia::Colors::MiniMap::sand},
+        {2188, tibia::Colors::MiniMap::sand},
+        {2191, tibia::Colors::MiniMap::sand},
+        {2192, tibia::Colors::MiniMap::sand},
+        {2193, tibia::Colors::MiniMap::sand},
+        {2194, tibia::Colors::MiniMap::sand},
+        {3254, tibia::Colors::MiniMap::mountain},
+        {3255, tibia::Colors::MiniMap::mountain},
+        {3256, tibia::Colors::MiniMap::mountain},
+        {3257, tibia::Colors::MiniMap::mountain},
+        {3322, tibia::Colors::MiniMap::tree},
+        {3326, tibia::Colors::MiniMap::tree},
+        {3337, tibia::Colors::MiniMap::snow},
+        {3344, tibia::Colors::MiniMap::wood},
+        {3375, tibia::Colors::MiniMap::tree},
     };
 
     namespace GuiData
     {
         namespace GameWindow
         {
-            int x = 32;
-            int y = 32;
+            int x = 51;
+            int y = 22;
 
             int width  = tibia::TILES_WIDTH;
             int height = tibia::TILES_HEIGHT;
@@ -491,11 +516,11 @@ namespace tibia
 
         namespace MiniMapWindow
         {
-            int x = tibia::GuiData::GameWindow::x + tibia::GuiData::GameWindow::width + 32;
-            int y = 32;
+            int x = 519;
+            int y = 11;
 
-            int width  = 128;
-            int height = 88;
+            int width  = 110; //128;
+            int height = 110; //88;
 
             sf::IntRect rect(x, y, width, height);
 
@@ -504,7 +529,36 @@ namespace tibia
             int zoomMax     = 4;
         }
 
-        namespace CreatureBar
+        namespace StatusEffectIcons
+        {
+            int x = 481;
+            int y = 18;
+
+            int distanceBetweenIcons = 28;
+        }
+
+        namespace StatusBarText
+        {
+            int x = 259;
+            int y = 297;
+        }
+
+        namespace Bars
+        {
+            namespace Hp
+            {
+                int x = 51;
+                int y = 322;
+            }
+
+            namespace Mp
+            {
+                int x = 265;
+                int y = 322;
+            }
+        }
+
+        namespace CreatureBars
         {
             int width  = 24;
             int height = 2;
@@ -628,7 +682,7 @@ namespace tibia
     namespace Outfits
     {
         // newbie outfit
-        std::vector<int> default = {1, 1, 0, 0};
+        std::vector<int> default = {1, 1, 0, 0}; // head, body, legs, feet
 
         // 10
         std::vector<int> head = 
@@ -719,6 +773,14 @@ namespace tibia
             heal,
         };
     }
+
+    std::unordered_map<int, sf::Color> umapModifyHpTextColors =
+    {
+        {tibia::ModifyHpTypes::fire,        tibia::Colors::Text::orange},
+        {tibia::ModifyHpTypes::electricity, tibia::Colors::Text::teal},
+        {tibia::ModifyHpTypes::poison,      tibia::Colors::Text::green},
+        {tibia::ModifyHpTypes::poisoned,    tibia::Colors::Text::green},
+    };
 
     std::unordered_map<int, int> umapModifyHpOnTouchTypes =
     {
@@ -1261,6 +1323,8 @@ namespace tibia
         std::vector<int> arrow       = {980, 982, 984, 986, 987, 981, 983, 985};
         std::vector<int> arrowFire   = {1855, 1857, 1859, 1861, 1854, 1856, 1858, 1860};
         std::vector<int> arrowPoison = {1847, 1849, 1851, 1853, 1846, 1848, 1850, 1852};
+
+        int cacodemon = 3497;
     }
 
     namespace ProjectileTypes
@@ -1274,7 +1338,8 @@ namespace tibia
             bolt,
             arrow,
             arrowFire,
-            arrowPoison
+            arrowPoison,
+            cacodemon
         };
     }
 
@@ -1290,7 +1355,7 @@ namespace tibia
 
     namespace ProjectileDamages
     {
-        const float default = 5.0;
+        const float default = 10.0;
     }
 
     namespace SpriteFlags
@@ -1429,6 +1494,10 @@ namespace tibia
 
         const int mountainRampLeft  = 2103;
         const int mountainRampRight = 2097;
+
+        const int statusEffectBurning     = 3556;
+        const int statusEffectElectrified = 3557;
+        const int statusEffectPoisoned    = 3558;
 
         std::vector<int> water =
         {
@@ -1830,6 +1899,7 @@ namespace tibia
             3380, 3381,
             3385,
             3391,
+            3497,
         };
 
         std::vector<int> interactive =
@@ -2264,6 +2334,13 @@ namespace tibia
     {
         {tibia::CreatureBloodTypes::red,   tibia::SpriteData::poolRed},
         {tibia::CreatureBloodTypes::green, tibia::SpriteData::poolGreen},
+    };
+
+    std::unordered_map<int, int> umapCreatureStatusEffectsIcons =
+    {
+        {tibia::CreatureStatusEffects::burning,     tibia::SpriteData::statusEffectBurning},
+        {tibia::CreatureStatusEffects::electrified, tibia::SpriteData::statusEffectElectrified},
+        {tibia::CreatureStatusEffects::poisoned,    tibia::SpriteData::statusEffectPoisoned},
     };
 
     namespace Sounds

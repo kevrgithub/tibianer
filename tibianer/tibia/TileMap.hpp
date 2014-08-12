@@ -186,26 +186,26 @@ public:
                 quad[2].position = sf::Vector2f((i + 1) * tibia::TILE_SIZE, (j + 1) * tibia::TILE_SIZE);
                 quad[3].position = sf::Vector2f(i       * tibia::TILE_SIZE, (j + 1) * tibia::TILE_SIZE);
 
-                sf::Color tileColor = tibia::Colors::miniMapDefault;
+                sf::Color tileColor = tibia::Colors::MiniMap::default;
 
                 if (tileFlags & tibia::SpriteFlags::solid)
                 {
-                    tileColor = tibia::Colors::miniMapSolid;
+                    tileColor = tibia::Colors::MiniMap::solid;
                 }
 
                 if (tileFlags & tibia::SpriteFlags::water)
                 {
-                    tileColor = tibia::Colors::miniMapWater;
+                    tileColor = tibia::Colors::MiniMap::water;
                 }
 
                 if (tileFlags & tibia::SpriteFlags::lava)
                 {
-                    tileColor = tibia::Colors::miniMapLava;
+                    tileColor = tibia::Colors::MiniMap::lava;
                 }
 
                 if (tileFlags & (tibia::SpriteFlags::moveAbove | tibia::SpriteFlags::moveBelow))
                 {
-                    tileColor = tibia::Colors::miniMapMoveAboveOrBelow;
+                    tileColor = tibia::Colors::MiniMap::moveAboveOrBelow;
                 }
 
                 auto miniMapColorIt = umapMiniMapColors.find(tileId);
@@ -245,7 +245,7 @@ public:
 
                         if (objectFlags & tibia::SpriteFlags::solid)
                         {
-                            objectColor = tibia::Colors::miniMapSolid;
+                            objectColor = tibia::Colors::MiniMap::solid;
                         }
 
                         if
@@ -256,7 +256,7 @@ public:
                             object->getId()   == tibia::SpriteData::ropeUp
                         )
                         {
-                            objectColor = tibia::Colors::miniMapMoveAboveOrBelow;
+                            objectColor = tibia::Colors::MiniMap::moveAboveOrBelow;
                         }
 
                         auto miniMapColorIt = umapMiniMapColors.find(object->getId());

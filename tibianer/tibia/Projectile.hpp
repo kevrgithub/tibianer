@@ -105,6 +105,11 @@ public:
                 m_id           = tibia::Projectiles::arrowPoison[m_direction];
                 m_modifyHpType = tibia::ModifyHpTypes::blood;
                 break;
+
+            case tibia::ProjectileTypes::cacodemon:
+                m_id           = tibia::Projectiles::cacodemon;
+                m_modifyHpType = tibia::ModifyHpTypes::electricity;
+                break;
         }
     }
 

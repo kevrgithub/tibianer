@@ -195,7 +195,7 @@ int main(int argc, char* argv[])
     loadingSprite.setTexture(loadingTexture);
 
     tibia::BitmapFontText loadingText;
-    loadingText.setText(g_game.getBitmapFontDefault(), "Loading...", tibia::Colors::textWhite, true);
+    loadingText.setText(g_game.getBitmapFontDefault(), "Loading...", tibia::Colors::Text::white, true);
     loadingText.setPosition
     (
         mainWindow.getSize().x / 2,
@@ -273,7 +273,7 @@ int main(int argc, char* argv[])
             doEnterGame = false;
         }
 
-        mainWindow.clear(tibia::Colors::mainWindowColor);
+        mainWindow.clear(tibia::Colors::white);
 
         sf::Sprite background;
         background.setTexture(tibia::Textures::background);
@@ -295,6 +295,12 @@ int main(int argc, char* argv[])
 
         g_game.drawMiniMapWindow(&mainWindow);
         g_game.updateMiniMapWindow();
+
+        g_game.drawBars(&mainWindow);
+
+        g_game.drawStatusBarText(&mainWindow);
+
+        g_game.drawStatusEffectIcons(&mainWindow);
 
         if (mouseUseDefaultCursor == false)
         {

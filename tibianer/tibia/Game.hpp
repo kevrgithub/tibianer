@@ -31,6 +31,7 @@
 #include "tibia/Animation.hpp"
 #include "tibia/Light.hpp"
 #include "tibia/Projectile.hpp"
+#include "tibia/Bar.hpp"
 
 namespace tibia
 {
@@ -56,13 +57,13 @@ public:
     Game::Game()
     :
         m_gameWindowView(sf::FloatRect(0, 0, tibia::GuiData::GameWindow::width, tibia::GuiData::GameWindow::height)),
-        m_miniMapWindowView(sf::FloatRect(0, 0, tibia::TILES_WIDTH * tibia::GuiData::MiniMapWindow::zoomDefault, tibia::TILES_HEIGHT * tibia::GuiData::MiniMapWindow::zoomDefault))
+        m_miniMapWindowView(sf::FloatRect(0, 0, tibia::TILES_WIDTH * tibia::GuiData::MiniMapWindow::zoomDefault, tibia::TILES_WIDTH * tibia::GuiData::MiniMapWindow::zoomDefault))
     {
         m_miniMapWindowZoom = tibia::GuiData::MiniMapWindow::zoomDefault;
 
         m_tileMapTileVertices.setPrimitiveType(sf::Quads);
 
-        m_statusBarText.setPosition(tibia::StatusBarTextData::position);
+        m_statusBarText.setPosition(sf::Vector2f(tibia::GuiData::StatusBarText::x, tibia::GuiData::StatusBarText::y));
 
         m_gameWindowLayer.create(tibia::MAP_TILE_XY_MAX, tibia::MAP_TILE_XY_MAX);
 
@@ -124,7 +125,7 @@ public:
         std::stringstream ss;
         ss << m_map.properties.name << "\nby " << m_map.properties.author;
 
-        spawnGameText(m_player->getTilePosition(), m_player->getZ(), ss.str(), tibia::Colors::textWhite);
+        spawnGameText(m_player->getTilePosition(), m_player->getZ(), ss.str(), tibia::Colors::Text::white);
     }
 
     void doEnterGame()
@@ -231,11 +232,11 @@ public:
                 break;
 
             case sf::Keyboard::F:
-                spawnFloatingText(m_player->getTilePosition(), m_player->getZ(), "Floating Text", tibia::Colors::textWhite);
+                spawnFloatingText(m_player->getTilePosition(), m_player->getZ(), "Floating Text", tibia::Colors::Text::white);
                 break;
 
             case sf::Keyboard::H:
-                spawnGameText(m_player->getTilePosition(), m_player->getZ(), "You say:\nHello!\nWelcome to\nthe world of\nTibianer!", tibia::Colors::textYellow);
+                spawnGameText(m_player->getTilePosition(), m_player->getZ(), "You say:\nHello!", tibia::Colors::Text::yellow);
                 break;
 
             case sf::Keyboard::M:
@@ -348,7 +349,7 @@ public:
                     m_miniMapWindowZoom = tibia::GuiData::MiniMapWindow::zoomDefault;
                 }
 
-                m_miniMapWindowView.setSize(sf::Vector2f(tibia::TILES_WIDTH * m_miniMapWindowZoom, tibia::TILES_HEIGHT * m_miniMapWindowZoom));
+                m_miniMapWindowView.setSize(sf::Vector2f(tibia::TILES_WIDTH * m_miniMapWindowZoom, tibia::TILES_WIDTH * m_miniMapWindowZoom));
             }
         }
         else if (event.mouseButton.button == sf::Mouse::Right)
@@ -412,7 +413,7 @@ public:
 
     void doCreatureLogic(int z)
     {
-        //return;
+        //return
 
         for (auto& creature : m_tileMapCreatures[z])
         {
@@ -435,9 +436,52 @@ public:
                 continue;
             }
 
-            int direction = utility::getRandomNumber(tibia::Directions::up, tibia::Directions::left);
+            int randomShouldMove = utility::getRandomNumber(1, 100);
 
-            handleCreatureMovement(creature, direction);
+            if (randomShouldMove > 50)
+            {
+                int direction = utility::getRandomNumber(tibia::Directions::up, tibia::Directions::left);
+
+                handleCreatureMovement(creature, direction);
+            }
+
+            if (creature->getType() == tibia::CreatureTypes::cacodemon && creature->getTeam() == tibia::Teams::evil)
+            {
+                int randomShouldAttack = utility::getRandomNumber(1, 100);
+
+                if (randomShouldAttack > 25)
+                {
+                    auto targetCreatureIt = std::find_if
+                    (
+                        m_tileMapCreatures[z].begin(),
+                        m_tileMapCreatures[z].end(),
+                        [](tibia::Creature::Ptr const& c)
+                        { 
+                            return
+                                c->isDead()     == false &&
+                                c->isSleeping() == false &&
+                                c->getTeam()    == tibia::Teams::good;
+                        }
+                    );
+
+                    if (targetCreatureIt != m_tileMapCreatures[z].end())
+                    {
+                        spawnProjectile
+                        (
+                            creature,
+                            tibia::ProjectileTypes::cacodemon,
+                            creature->getDirection(),
+                            sf::Vector2f(creature->getTileX(), creature->getTileY()),
+                            sf::Vector2f
+                            (
+                                targetCreatureIt->get()->getTileX(),
+                                targetCreatureIt->get()->getTileY()
+                            ),
+                            creature->getZ()
+                        );
+                    }
+                }
+            }
 
             creature->setIsLogicReady(false);
 
@@ -1289,7 +1333,7 @@ public:
 
             std::cout << signText.str() << std::endl;
 
-            spawnGameText(object->getTilePosition(), creature->getZ(), signText.str(), tibia::Colors::textGreen);
+            spawnGameText(object->getTilePosition(), creature->getZ(), signText.str(), tibia::Colors::Text::green);
 
             return true;
         }
@@ -2040,7 +2084,7 @@ public:
             {
                 if (object->getFlags() & tibia::SpriteFlags::interactive)
                 {
-                    m_mouseCursor.setColor(tibia::Colors::mouseCursorPink);
+                    m_mouseCursor.setColor(tibia::Colors::MouseCursor::pink);
                     setMouseCursorType(tibia::MouseCursorTypes::open);
                     break;
                 }
@@ -2226,12 +2270,21 @@ public:
 
         if (hpChange != 0)
         {
+            sf::Color textColor = tibia::Colors::Text::white;
+
+            auto textColorIt = umapModifyHpTextColors.find(modifyHpType);
+
+            if (textColorIt != umapModifyHpTextColors.end())
+            {
+                textColor = textColorIt->second;
+            }
+
             spawnFloatingText
             (
                 defender->getTilePosition(),
                 defender->getZ(),
                 std::to_string(hpChange),
-                tibia::Colors::textWhite
+                textColor
             );
         }
 
@@ -2253,46 +2306,49 @@ public:
             animation
         );
 
-        if (attacker != nullptr)
+        if (hpChange != 0)
         {
-            std::cout << attacker->getName();
-
-            if (isDamage == true)
+            if (attacker != nullptr)
             {
-                std::cout << " damaged ";
+                std::cout << attacker->getName();
+
+                if (isDamage == true)
+                {
+                    std::cout << " damaged ";
+                }
+                else
+                {
+                    std::cout << " healed ";
+                }
+
+                std::cout
+                    << defender->getName()
+                    << "for "
+                    << std::abs(hpChange)
+                    << " points of health."
+                    << std::endl;
             }
             else
             {
-                std::cout << " healed ";
+                std::cout << defender->getName();
+
+                std::cout << " was";
+
+                if (isDamage == true)
+                {
+                    std::cout << " damaged ";
+                }
+                else
+                {
+                    std::cout << " healed ";
+                }
+
+                std::cout
+                    << "for "
+                    << std::abs(hpChange)
+                    << " points of health."
+                    << std::endl;
             }
-
-            std::cout
-                << defender->getName()
-                << "for "
-                << std::abs(hpChange)
-                << " points of health."
-                << std::endl;
-        }
-        else
-        {
-            std::cout << defender->getName();
-
-            std::cout << " was";
-
-            if (isDamage == true)
-            {
-                std::cout << " damaged ";
-            }
-            else
-            {
-                std::cout << " healed ";
-            }
-
-            std::cout
-                << "for "
-                << std::abs(hpChange)
-                << " points of health."
-                << std::endl;
         }
 
         if (isDamage == true)
@@ -2331,7 +2387,7 @@ public:
                         defender->getTilePosition(),
                         defender->getZ(),
                         "You are dead.",
-                        tibia::Colors::textWhite
+                        tibia::Colors::Text::white
                     );
                 }
 
@@ -3142,7 +3198,7 @@ public:
     {
         light.setPosition(tilePosition.x + (tibia::TILE_SIZE / 2), tilePosition.y + (tibia::TILE_SIZE / 2));
 
-        m_lightLayer.draw(light, sf::BlendMode::BlendAdd);
+        m_lightLayer.draw(light, sf::BlendAdd);
     }
 
     void drawTileMapLights(int z)
@@ -3214,7 +3270,7 @@ public:
 
         m_lightLayerSprite.setTexture(m_lightLayer.getTexture());
 
-        m_gameWindowLayer.draw(m_lightLayerSprite, sf::BlendMode::BlendMultiply);
+        m_gameWindowLayer.draw(m_lightLayerSprite, sf::BlendMultiply);
     }
 
     void drawGameLayer(int z)
@@ -3337,7 +3393,54 @@ public:
 
         mainWindow->draw(m_gameWindowSprite);
 
-        drawStatusBarText(mainWindow);
+/*
+        sf::Texture texSkills;
+        texSkills.loadFromFile("images/skills.png");
+
+        sf::Sprite sprSkills;
+        sprSkills.setTexture(texSkills);
+        sprSkills.setPosition(519, 167);
+
+        mainWindow->draw(sprSkills);
+
+        float skillsY = 169;
+
+        tibia::BitmapFontText bftSkills;
+
+        bftSkills.setPosition(sf::Vector2f(521, skillsY));
+        bftSkills.setText(&m_bitmapFontTiny, "FIST FIGHTING:", tibia::Colors::textWhite);
+        mainWindow->draw(bftSkills);
+        skillsY += 12;
+
+        bftSkills.setPosition(sf::Vector2f(521, skillsY));
+        bftSkills.setText(&m_bitmapFontTiny, "CLUB FIGHTING:", tibia::Colors::textWhite);
+        mainWindow->draw(bftSkills);
+        skillsY += 12;
+
+        bftSkills.setPosition(sf::Vector2f(521, skillsY));
+        bftSkills.setText(&m_bitmapFontTiny, "SWORD FIGHTING:", tibia::Colors::textWhite);
+        mainWindow->draw(bftSkills);
+        skillsY += 12;
+
+        bftSkills.setPosition(sf::Vector2f(521, skillsY));
+        bftSkills.setText(&m_bitmapFontTiny, "AXE FIGHTING:", tibia::Colors::textWhite);
+        mainWindow->draw(bftSkills);
+        skillsY += 12;
+
+        bftSkills.setPosition(sf::Vector2f(521, skillsY));
+        bftSkills.setText(&m_bitmapFontTiny, "DISTANCE FIGHTING:", tibia::Colors::textWhite);
+        mainWindow->draw(bftSkills);
+        skillsY += 12;
+
+        bftSkills.setPosition(sf::Vector2f(521, skillsY));
+        bftSkills.setText(&m_bitmapFontTiny, "SHIELDING:", tibia::Colors::textWhite);
+        mainWindow->draw(bftSkills);
+        skillsY += 12;
+
+        bftSkills.setPosition(sf::Vector2f(521, skillsY));
+        bftSkills.setText(&m_bitmapFontTiny, "FISHING:", tibia::Colors::textWhite);
+        mainWindow->draw(bftSkills);
+*/
     }
 
     void updateMiniMapWindow()
@@ -3349,14 +3452,18 @@ public:
         int x1 = ((m_gameWindowView.getCenter().x - (tibia::TILE_SIZE / 2)) / tibia::TILE_SIZE);
         int y1 = ((m_gameWindowView.getCenter().y - (tibia::TILE_SIZE / 2)) / tibia::TILE_SIZE);
 
-        x1 = x1 - (NUM_TILES_FROM_CENTER_X * m_miniMapWindowZoom) - 1;
-        y1 = y1 - (NUM_TILES_FROM_CENTER_Y * m_miniMapWindowZoom) - 1;
+        //x1 = x1 - (NUM_TILES_FROM_CENTER_X * m_miniMapWindowZoom) - 1;
+        //y1 = y1 - (NUM_TILES_FROM_CENTER_Y * m_miniMapWindowZoom) - 1;
+        x1 = x1 - (8 * m_miniMapWindowZoom);
+        y1 = y1 - (8 * m_miniMapWindowZoom);
 
         if (x1 < 0) x1 = 0;
         if (y1 < 0) y1 = 0;
 
-        int x2 = (tibia::NUM_TILES_X * m_miniMapWindowZoom) + 1;
-        int y2 = (tibia::NUM_TILES_Y * m_miniMapWindowZoom) + 1;
+        //int x2 = (tibia::NUM_TILES_X * m_miniMapWindowZoom) + 1;
+        //int y2 = (tibia::NUM_TILES_Y * m_miniMapWindowZoom) + 1;
+        int x2 = (16 * m_miniMapWindowZoom);
+        int y2 = (16 * m_miniMapWindowZoom);
 
         m_map.tileMapTiles[m_player->getZ()].addMiniMapTiles(m_miniMapVertices, x1, y1, x2, y2);
 
@@ -3527,7 +3634,7 @@ public:
 
     void showStatusBarText(const std::string& text)
     {
-        m_statusBarText.setText(&m_bitmapFontModern, text, tibia::Colors::textWhite, true);
+        m_statusBarText.setText(&m_bitmapFontModern, text, tibia::Colors::Text::white, true);
 
         m_clockStatusBar.restart();
     }
@@ -3540,6 +3647,130 @@ public:
         {
             mainWindow->draw(m_statusBarText);
         }
+    }
+
+    void drawStatusEffectIcons(sf::RenderWindow* mainWindow)
+    {
+        tibia::Creature::StatusEffectList* statusEffectList = m_player->getStatusEffectList();
+
+        if (statusEffectList->size() == 0)
+        {
+            return;
+        }
+
+        int statusEffectIndex = 0;
+
+        for (auto& statusEffect : *statusEffectList)
+        {
+            if (statusEffect.ticks == 0)
+            {
+                continue;
+            }
+
+            int statusEffectIconId = tibia::umapCreatureStatusEffectsIcons[statusEffect.type];
+
+            tibia::Sprite statusEffectIcon;
+            statusEffectIcon.setId(statusEffectIconId);
+
+            statusEffectIcon.setPosition
+            (
+                sf::Vector2f
+                (
+                    tibia::GuiData::StatusEffectIcons::x,
+                    tibia::GuiData::StatusEffectIcons::y + (tibia::GuiData::StatusEffectIcons::distanceBetweenIcons * statusEffectIndex)
+                )
+            );
+
+            tibia::BitmapFontText statusEffectTicksText;
+            statusEffectTicksText.setText(&m_bitmapFontTiny, std::to_string(statusEffect.ticks), sf::Color::White);
+
+            statusEffectTicksText.setPosition
+            (
+                sf::Vector2f
+                (
+                    tibia::GuiData::StatusEffectIcons::x + 2,
+                    tibia::GuiData::StatusEffectIcons::y + 2 + (tibia::GuiData::StatusEffectIcons::distanceBetweenIcons * statusEffectIndex)
+                )
+            );
+
+            mainWindow->draw(statusEffectIcon);
+            mainWindow->draw(statusEffectTicksText);
+
+            statusEffectIndex++;
+        }
+    }
+
+    void drawBars(sf::RenderWindow* mainWindow)
+    {
+        tibia::Bar bar;
+
+        // Health
+
+        int hp    = m_player->getHp();
+        int hpMax = m_player->getHpMax();
+
+        bar.setValues(tibia::BarsTypes::red, hp, hpMax);
+
+        bar.setPosition
+        (
+            sf::Vector2f
+            (
+                tibia::GuiData::Bars::Hp::x,
+                tibia::GuiData::Bars::Hp::y
+            )
+        );
+
+        std::stringstream hpTextStream;
+        hpTextStream << hp << " / " << hpMax;
+
+        tibia::BitmapFontText hpText;
+        hpText.setText(&m_bitmapFontModern, hpTextStream.str(), sf::Color::White);
+
+        hpText.setPosition
+        (
+            sf::Vector2f
+            (
+                bar.getPosition().x + (tibia::BarsData::width / 2) - (hpText.getVertexArray()->getBounds().width / 2),
+                bar.getPosition().y + 2
+            )
+        );
+
+        mainWindow->draw(bar);
+        mainWindow->draw(hpText);
+
+        // Mana
+
+        int mp    = m_player->getMp();
+        int mpMax = m_player->getMpMax();
+
+        bar.setValues(tibia::BarsTypes::blue, mp, mpMax);
+
+        bar.setPosition
+        (
+            sf::Vector2f
+            (
+                tibia::GuiData::Bars::Mp::x,
+                tibia::GuiData::Bars::Mp::y
+            )
+        );
+
+        std::stringstream mpTextStream;
+        mpTextStream << mp << " / " << mpMax;
+
+        tibia::BitmapFontText mpText;
+        mpText.setText(&m_bitmapFontModern, mpTextStream.str(), sf::Color::White);
+
+        mpText.setPosition
+        (
+            sf::Vector2f
+            (
+                bar.getPosition().x + (tibia::BarsData::width / 2) - (mpText.getVertexArray()->getBounds().width / 2),
+                bar.getPosition().y + 2
+            )
+        );
+
+        mainWindow->draw(bar);
+        mainWindow->draw(mpText);
     }
 
     bool isTileMapVisible(tibia::TileMap* tileMap)
