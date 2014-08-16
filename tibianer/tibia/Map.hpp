@@ -266,6 +266,23 @@ public:
                                     object->properties.signText = objectSignText;
                                 }
                             }
+                            else if (objectType == tibia::ObjectTypes::book)
+                            {
+                                if (docMapObjectPropertyName == "name")
+                                {
+                                    std::string objectBookName = docMapObjectProperty->Attribute("value");
+
+                                    object->properties.bookName = objectBookName;
+                                }
+                                if (docMapObjectPropertyName == "text")
+                                {
+                                    std::string objectBookText = docMapObjectProperty->Attribute("value");
+
+                                    boost::replace_all(objectBookText, "\\n", "\n");
+
+                                    object->properties.bookText = objectBookText;
+                                }
+                            }
                             else if (objectType == tibia::ObjectTypes::teleporter)
                             {
                                 if (docMapObjectPropertyName == "x")

@@ -31,6 +31,8 @@ public:
 
         m_z = z;
 
+        m_numTextLines = 0;
+
         std::vector<std::string> textLines;
         boost::split(textLines, text, boost::is_any_of("\n"));
         //std::stringstream ss(text);

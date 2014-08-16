@@ -22,8 +22,11 @@ public:
 
     struct ObjectProperties_t
     {
-        std::string signName = "sign";
+        std::string signName = "a sign";
         std::string signText;
+
+        std::string bookName = "a book";
+        std::string bookText;
 
         unsigned int teleporterX;
         unsigned int teleporterY;

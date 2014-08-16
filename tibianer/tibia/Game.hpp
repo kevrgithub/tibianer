@@ -15,6 +15,8 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 
+#include "iup.h"
+
 #include "tibia/Tibia.hpp"
 #include "tibia/Utility.hpp"
 #include "tibia/Tile.hpp"
@@ -43,16 +45,36 @@ public:
 
     struct GameOptions_t
     {
-        bool isSoundEnabled = true;
-        bool isMusicEnabled = true;
+        bool isMouseUseDefaultMouseCursorEnabled = false;
 
-        bool isFriendlyFireEnabled = false;
+        bool isGameShowFloatingTextEnabled      = true;
+        bool isGameShowNamesEnabled             = false;
+        bool isGameShowCreatureBarsEnabled      = false;
+        bool isGameFriendlyFireEnabled          = false;
 
-        bool isInfiniteHealthEnabled = false;
-        bool isInfiniteManaEnabled   = false;
+        bool isAudioSoundEnabled = true;
+        bool isAudioMusicEnabled = true;
+
+        bool isCheatInfiniteHealthEnabled = false;
+        bool isCheatInfiniteManaEnabled   = false;
     };
 
     GameOptions_t options;
+
+    struct GameGui_t
+    {
+        int tabButtonsState = tibia::GuiData::TabButtons::State::buttonMiniMap;
+
+        bool topMiniMap   = true;
+        bool topStatus    = false;
+        bool topEquipment = false;
+
+        bool bottomInventory = true;
+        bool bottomSkills    = false;
+        bool bottomCombat    = false;
+    };
+
+    GameGui_t gui;
 
     Game::Game()
     :
@@ -63,7 +85,7 @@ public:
 
         m_tileMapTileVertices.setPrimitiveType(sf::Quads);
 
-        m_statusBarText.setPosition(sf::Vector2f(tibia::GuiData::StatusBarText::x, tibia::GuiData::StatusBarText::y));
+        m_statusBarText.setPosition(tibia::GuiData::StatusBarText::position);
 
         m_gameWindowLayer.create(tibia::MAP_TILE_XY_MAX, tibia::MAP_TILE_XY_MAX);
 
@@ -93,6 +115,77 @@ public:
         }
 
         return true;
+    }
+
+    void setMouseCursorVisible(sf::RenderWindow* mainWindow, bool isVisible)
+    {
+        mainWindow->setMouseCursorVisible(isVisible);
+    }
+
+    void showOptionsWindow()
+    {
+        setMouseCursorVisible(m_mainWindow, true);
+
+        int option_isGameShowFloatingTextEnabled = this->options.isGameShowFloatingTextEnabled;
+        int option_isGameShowNamesEnabled        = this->options.isGameShowNamesEnabled;
+        int option_isGameShowCreatureBarsEnabled = this->options.isGameShowCreatureBarsEnabled;
+        int option_isGameFriendlyFireEnabled     = this->options.isGameFriendlyFireEnabled;
+
+        int option_isAudioSoundEnabled           = this->options.isAudioSoundEnabled;
+        int option_isAudioMusicEnabled           = this->options.isAudioMusicEnabled;
+
+        int option_isCheatInfiniteHealthEnabled  = this->options.isCheatInfiniteHealthEnabled;
+        int option_isCheatInfiniteManaEnabled    = this->options.isCheatInfiniteManaEnabled;
+
+        IupGetParam
+        (
+            "Options", NULL, 0,
+
+            "Game %t\n"
+                "Show Floating Text: %b[Disabled,Enabled]\n"
+                "Show Names: %b[Disabled,Enabled]\n"
+                "Show Creature Bars: %b[Disabled,Enabled]\n"
+                "Friendly Fire: %b[Disabled,Enabled]\n"
+
+            "Audio %t\n"
+                "Sound: %b[Disabled,Enabled]\n"
+                "Music: %b[Disabled,Enabled]\n"
+
+            "Cheats %t\n"
+                "Infinite Health: %b[Disabled,Enabled]\n"
+                "Infinite Mana: %b[Disabled,Enabled]\n"
+
+            ,
+
+            &option_isGameShowFloatingTextEnabled,
+            &option_isGameShowNamesEnabled,
+            &option_isGameShowCreatureBarsEnabled,
+            &option_isGameFriendlyFireEnabled,
+
+            &option_isAudioSoundEnabled,
+            &option_isAudioMusicEnabled,
+
+            &option_isCheatInfiniteHealthEnabled,
+            &option_isCheatInfiniteManaEnabled,
+
+            NULL
+        );
+
+        this->options.isGameShowFloatingTextEnabled = option_isGameShowFloatingTextEnabled;
+        this->options.isGameShowNamesEnabled        = option_isGameShowNamesEnabled;
+        this->options.isGameShowCreatureBarsEnabled = option_isGameShowCreatureBarsEnabled;
+        this->options.isGameFriendlyFireEnabled     = option_isGameFriendlyFireEnabled;
+
+        this->options.isAudioSoundEnabled           = option_isAudioSoundEnabled;
+        this->options.isAudioMusicEnabled           = option_isAudioMusicEnabled;
+
+        this->options.isCheatInfiniteHealthEnabled  = option_isCheatInfiniteHealthEnabled;
+        this->options.isCheatInfiniteManaEnabled    = option_isCheatInfiniteManaEnabled;
+
+        if (this->options.isMouseUseDefaultMouseCursorEnabled == false)
+        {
+            setMouseCursorVisible(m_mainWindow, false);
+        }
     }
 
     void createPlayer()
@@ -215,10 +308,21 @@ public:
         }
     }
 
+    void loadWindows()
+    {
+        //
+    }
+
     void handleKeyboardEvent(sf::Event event)
     {
         switch (event.key.code)
         {
+            case sf::Keyboard::Q:
+            {
+                showOptionsWindow();
+                break;
+            }
+
             case sf::Keyboard::Space:
                 doPlayerInteractWithPlayerTileObjects();
                 break;
@@ -236,7 +340,7 @@ public:
                 break;
 
             case sf::Keyboard::H:
-                spawnGameText(m_player->getTilePosition(), m_player->getZ(), "You say:\nHello!", tibia::Colors::Text::yellow);
+                spawnGameText(sf::Vector2u(m_player->getTilePosition().x, m_player->getTilePosition().y - tibia::TILE_SIZE), m_player->getZ(), "You say:\nHello!", tibia::Colors::Text::yellow);
                 break;
 
             case sf::Keyboard::M:
@@ -350,6 +454,38 @@ public:
                 }
 
                 m_miniMapWindowView.setSize(sf::Vector2f(tibia::TILES_WIDTH * m_miniMapWindowZoom, tibia::TILES_WIDTH * m_miniMapWindowZoom));
+            }
+            else if (tibia::GuiData::OptionsButton::rect.contains(getMouseWindowPosition()) == true)
+            {
+                showOptionsWindow();
+            }
+            else if (tibia::GuiData::TabButtons::Inventory::rect.contains(getMouseWindowPosition()) == true)
+            {
+                this->gui.tabButtonsState = tibia::GuiData::TabButtons::State::buttonInventory;
+
+                this->gui.topMiniMap   = false;
+                this->gui.topStatus    = false;
+                this->gui.topEquipment = true;
+            }
+            else if (tibia::GuiData::TabButtons::Status::rect.contains(getMouseWindowPosition()) == true)
+            {
+                this->gui.tabButtonsState = tibia::GuiData::TabButtons::State::buttonStatus;
+
+                this->gui.topMiniMap   = false;
+                this->gui.topStatus    = true;
+                this->gui.topEquipment = false;
+            }
+            else if (tibia::GuiData::TabButtons::Combat::rect.contains(getMouseWindowPosition()) == true)
+            {
+                this->gui.tabButtonsState = tibia::GuiData::TabButtons::State::buttonCombat;
+            }
+            else if (tibia::GuiData::TabButtons::MiniMap::rect.contains(getMouseWindowPosition()) == true)
+            {
+                this->gui.tabButtonsState = tibia::GuiData::TabButtons::State::buttonMiniMap;
+
+                this->gui.topMiniMap   = true;
+                this->gui.topStatus    = false;
+                this->gui.topEquipment = false;
             }
         }
         else if (event.mouseButton.button == sf::Mouse::Right)
@@ -820,8 +956,11 @@ public:
 
         if
         (
-            fromTile->getZ() >= tibia::ZAxis::ground &&
-            fromTile->getZ() < tibia::ZAxis::ceiling &&
+            // broken!
+            //fromTile->getZ() >= tibia::ZAxis::ground &&
+            //fromTile->getZ() < tibia::ZAxis::ceiling &&
+            fromTile->getZ() != tibia::ZAxis::ground &&
+            fromTile->getZ() != tibia::ZAxis::floor  &&
 
             toTile->getId() == tibia::TILE_NULL
         )
@@ -864,8 +1003,11 @@ public:
         (
             isTileClimbDown == false &&
 
-            fromTile->getZ() >= tibia::ZAxis::ground &&
-            fromTile->getZ() < tibia::ZAxis::ceiling &&
+            // broken!
+            //fromTile->getZ() >= tibia::ZAxis::ground &&
+            //fromTile->getZ() < tibia::ZAxis::ceiling &&
+            fromTile->getZ() != tibia::ZAxis::underGround &&
+            fromTile->getZ() != tibia::ZAxis::ceiling     &&
 
             fromTile->getHeight() >= tibia::TILE_CLIMB_HEIGHT &&
 
@@ -1311,6 +1453,32 @@ public:
             return false;
         }
 
+        // signs
+        if (object->getType() == tibia::ObjectTypes::sign)
+        {
+            std::stringstream signText;
+            signText << "You see " << object->properties.signName << ". It reads:\n" << object->properties.signText;
+
+            std::cout << signText.str() << std::endl;
+
+            spawnGameText(object->getTilePosition(), creature->getZ(), signText.str(), tibia::Colors::Text::green);
+
+            return true;
+        }
+
+        // books
+        if (object->getType() == tibia::ObjectTypes::book)
+        {
+            std::stringstream bookText;
+            bookText << "You see " << object->properties.bookName << ". It reads:\n" << object->properties.bookText;
+
+            std::cout << bookText.str() << std::endl;
+
+            IupGetText("Book", (char*)object->properties.bookText.c_str());
+
+            return true;
+        }
+
         // street lamp
         if (object->getId() == tibia::SpriteData::streetLamp[0])
         {
@@ -1321,19 +1489,6 @@ public:
         else if (object->getId() == tibia::SpriteData::streetLamp[1])
         {
             object->setId(tibia::SpriteData::streetLamp[0]);
-
-            return true;
-        }
-
-        // signs
-        if (object->getType() == tibia::ObjectTypes::sign)
-        {
-            std::stringstream signText;
-            signText << "You see a " << object->properties.signName << ". It reads:\n" << object->properties.signText;
-
-            std::cout << signText.str() << std::endl;
-
-            spawnGameText(object->getTilePosition(), creature->getZ(), signText.str(), tibia::Colors::Text::green);
 
             return true;
         }
@@ -2089,6 +2244,18 @@ public:
                     break;
                 }
             }
+
+            tibia::Creature::List* creatureList = m_mouseTile->getCreatureList();
+
+            for (auto& creature : *creatureList)
+            {
+                if (creature->getTeam() == tibia::Teams::evil)
+                {
+                    m_mouseCursor.setColor(tibia::Colors::MouseCursor::red);
+                    setMouseCursorType(tibia::MouseCursorTypes::open);
+                    break;
+                }
+            }
         }
 
         mainWindow->draw(m_mouseCursor);
@@ -2251,7 +2418,10 @@ public:
                 // friendly fire
                 if (attacker->getTeam() == defender->getTeam())
                 {
-                    return false;
+                    if (this->options.isGameFriendlyFireEnabled == false)
+                    {
+                        return false;
+                    }
                 }
 
                 defender->setLastAttacker(attacker);
@@ -2264,6 +2434,13 @@ public:
                     return false;
                 }
             }
+        }
+
+        if (defender == m_player && this->options.isCheatInfiniteHealthEnabled == true)
+        {
+            hpChange = 0;
+
+            defender->setHp(defender->getHpMax());
         }
 
         defender->modifyHp(hpChange);
@@ -2310,7 +2487,14 @@ public:
         {
             if (attacker != nullptr)
             {
-                std::cout << attacker->getName();
+                if (attacker == m_player)
+                {
+                    std::cout << "You";
+                }
+                else
+                {
+                    std::cout << attacker->getName();
+                }
 
                 if (isDamage == true)
                 {
@@ -2536,6 +2720,11 @@ public:
 
     void spawnSound(sf::Vector2u tilePosition, int z, sf::SoundBuffer& soundBuffer)
     {
+        if (this->options.isAudioSoundEnabled == false)
+        {
+            return;
+        }
+
         int soundTileDistance = tibia::Utility::calculateTileDistance
         (
             m_player->getTileX(),
@@ -3066,7 +3255,7 @@ public:
 
                         tibia::Creature::StatusEffectList* statusEffectList = creature->getStatusEffectList();
 
-                        if (creature->isDead() == true)
+                        if (creature->isDead() == true || creature->isSleeping() == true)
                         {
                             statusEffectList->clear();
                         }
@@ -3258,7 +3447,7 @@ public:
             }
         }
 
-       for (auto& projectile : m_tileMapProjectiles[z])
+        for (auto& projectile : m_tileMapProjectiles[z])
         {
             if (projectile->getFlags() & tibia::SpriteFlags::lightSource)
             {
@@ -3389,7 +3578,7 @@ public:
         m_gameWindow.display();
 
         m_gameWindowSprite.setTexture(m_gameWindow.getTexture());
-        m_gameWindowSprite.setPosition(tibia::GuiData::GameWindow::x, tibia::GuiData::GameWindow::y);
+        m_gameWindowSprite.setPosition(tibia::GuiData::GameWindow::position);
 
         mainWindow->draw(m_gameWindowSprite);
 
@@ -3500,7 +3689,7 @@ public:
         m_miniMapWindow.display();
 
         m_miniMapWindowSprite.setTexture(m_miniMapWindow.getTexture());
-        m_miniMapWindowSprite.setPosition(tibia::GuiData::MiniMapWindow::x, tibia::GuiData::MiniMapWindow::y);
+        m_miniMapWindowSprite.setPosition(tibia::GuiData::MiniMapWindow::position);
 
         mainWindow->draw(m_miniMapWindowSprite);
     }
@@ -3595,6 +3784,11 @@ public:
 
     void spawnFloatingText(const sf::Vector2u& tilePosition, int z, const std::string& text, sf::Color textColor)
     {
+        if (this->options.isGameShowFloatingTextEnabled == false)
+        {
+            return;
+        }
+
         tibia::FloatingText ft;
         ft.setText(m_bitmapFontModern, tilePosition, z, text, textColor);
 
@@ -3711,14 +3905,7 @@ public:
 
         bar.setValues(tibia::BarsTypes::red, hp, hpMax);
 
-        bar.setPosition
-        (
-            sf::Vector2f
-            (
-                tibia::GuiData::Bars::Hp::x,
-                tibia::GuiData::Bars::Hp::y
-            )
-        );
+        bar.setPosition(tibia::GuiData::Bars::Hp::position);
 
         std::stringstream hpTextStream;
         hpTextStream << hp << " / " << hpMax;
@@ -3745,14 +3932,7 @@ public:
 
         bar.setValues(tibia::BarsTypes::blue, mp, mpMax);
 
-        bar.setPosition
-        (
-            sf::Vector2f
-            (
-                tibia::GuiData::Bars::Mp::x,
-                tibia::GuiData::Bars::Mp::y
-            )
-        );
+        bar.setPosition(tibia::GuiData::Bars::Mp::position);
 
         std::stringstream mpTextStream;
         mpTextStream << mp << " / " << mpMax;
@@ -3771,6 +3951,71 @@ public:
 
         mainWindow->draw(bar);
         mainWindow->draw(mpText);
+    }
+
+    void drawOptionsButton(sf::RenderWindow* mainWindow)
+    {
+        tibia::Sprite optionsButton;
+        optionsButton.setId(tibia::SpriteData::optionsButton);
+        optionsButton.setPosition(tibia::GuiData::OptionsButton::position);
+
+        mainWindow->draw(optionsButton);
+    }
+
+    void drawTabButtons(sf::RenderWindow* mainWindow)
+    {
+        int tabButtonId = tibia::SpriteData::tabButtonMiniMap[1];
+
+        sf::Vector2f tabButtonPosition = tibia::GuiData::TabButtons::MiniMap::position;
+
+        switch (this->gui.tabButtonsState)
+        {
+            case tibia::GuiData::TabButtons::State::buttonInventory:
+                tabButtonId       = tibia::SpriteData::tabButtonInventory[1];
+                tabButtonPosition = tibia::GuiData::TabButtons::Inventory::position;
+                break;
+
+            case tibia::GuiData::TabButtons::State::buttonStatus:
+                tabButtonId       = tibia::SpriteData::tabButtonStatus[1];
+                tabButtonPosition = tibia::GuiData::TabButtons::Status::position;
+                break;
+
+            case tibia::GuiData::TabButtons::State::buttonCombat:
+                tabButtonId       = tibia::SpriteData::tabButtonCombat[1];
+                tabButtonPosition = tibia::GuiData::TabButtons::Combat::position;
+                break;
+
+            case tibia::GuiData::TabButtons::State::buttonMiniMap:
+                tabButtonId       = tibia::SpriteData::tabButtonMiniMap[1];
+                tabButtonPosition = tibia::GuiData::TabButtons::MiniMap::position;
+                break;
+        }
+
+        tibia::Sprite tabButton;
+        tabButton.setId(tabButtonId);
+        tabButton.setPosition(tabButtonPosition);
+
+        mainWindow->draw(tabButton);
+    }
+
+    void drawStatusWindow(sf::RenderWindow* mainWindow)
+    {
+        sf::Sprite statusWindow;
+        statusWindow.setTexture(tibia::Textures::status);
+
+        statusWindow.setPosition(tibia::GuiData::StatusWindow::position);
+
+        mainWindow->draw(statusWindow);
+    }
+
+    void drawEquipmentWindow(sf::RenderWindow* mainWindow)
+    {
+        sf::Sprite equipmentWindow;
+        equipmentWindow.setTexture(tibia::Textures::equipment);
+
+        equipmentWindow.setPosition(tibia::GuiData::EquipmentWindow::position);
+
+        mainWindow->draw(equipmentWindow);
     }
 
     bool isTileMapVisible(tibia::TileMap* tileMap)
@@ -4049,7 +4294,14 @@ public:
         return m_timeOfDay;
     }
 
+    void setMainWindow(sf::RenderWindow* window)
+    {
+        m_mainWindow = window;
+    }
+
 private:
+
+    sf::RenderWindow* m_mainWindow;
 
     sf::Clock m_clockDelta;
     sf::Time m_timeDelta;

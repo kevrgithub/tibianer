@@ -71,6 +71,8 @@ namespace tibia
         sf::Texture lights;
         sf::Texture background;
         sf::Texture bars;
+        sf::Texture status;
+        sf::Texture equipment;
     }
 
     std::unordered_map<std::string, sf::Texture&> umapTextureFiles =
@@ -80,6 +82,8 @@ namespace tibia
         {"images/lights.png",     tibia::Textures::lights},
         {"images/background.png", tibia::Textures::background},
         {"images/bars.png",       tibia::Textures::bars},
+        {"images/status.png",     tibia::Textures::status},
+        {"images/equipment.png",  tibia::Textures::equipment},
     };
 
     namespace Fonts
@@ -270,7 +274,8 @@ namespace tibia
 
         namespace MouseCursor
         {
-            sf::Color red(255, 128, 128);
+            sf::Color white(255, 255, 255);
+            sf::Color red(255, 32, 32);
             sf::Color green(128, 255, 128);
             sf::Color blue(128, 255, 255);
             sf::Color yellow(255, 255, 128);
@@ -511,7 +516,88 @@ namespace tibia
             int width  = tibia::TILES_WIDTH;
             int height = tibia::TILES_HEIGHT;
 
+            sf::Vector2f position(x, y);
+
             sf::IntRect rect(x, y, width, height);
+        }
+
+        namespace OptionsButton
+        {
+            int x = 13;
+            int y = 18;
+
+            int width  = 24;
+            int height = 24;
+
+            sf::Vector2f position(x, y);
+
+            sf::IntRect rect(x, y, width, height);
+        }
+
+        namespace TabButtons
+        {
+            namespace State
+            {
+                enum
+                {
+                    buttonInventory,
+                    buttonStatus,
+                    buttonCombat,
+                    buttonMiniMap,
+                };
+            }
+
+            namespace Inventory
+            {
+                int x = 518;
+                int y = 132;
+
+                int width  = 24;
+                int height = 24;
+
+                sf::Vector2f position(x, y);
+
+                sf::IntRect rect(x, y, width, height);
+            }
+
+            namespace Status
+            {
+                int x = 547;
+                int y = 132;
+
+                int width  = 24;
+                int height = 24;
+
+                sf::Vector2f position(x, y);
+
+                sf::IntRect rect(x, y, width, height);
+            }
+
+            namespace Combat
+            {
+                int x = 576;
+                int y = 132;
+
+                int width  = 24;
+                int height = 24;
+
+                sf::Vector2f position(x, y);
+
+                sf::IntRect rect(x, y, width, height);
+            }
+
+            namespace MiniMap
+            {
+                int x = 605;
+                int y = 132;
+
+                int width  = 24;
+                int height = 24;
+
+                sf::Vector2f position(x, y);
+
+                sf::IntRect rect(x, y, width, height);
+            }
         }
 
         namespace MiniMapWindow
@@ -522,6 +608,8 @@ namespace tibia
             int width  = 110; //128;
             int height = 110; //88;
 
+            sf::Vector2f position(x, y);
+
             sf::IntRect rect(x, y, width, height);
 
             int zoomMin     = 1;
@@ -529,10 +617,38 @@ namespace tibia
             int zoomMax     = 4;
         }
 
+        namespace StatusWindow
+        {
+            int x = 519;
+            int y = 11;
+
+            int width  = 110;
+            int height = 110;
+
+            sf::Vector2f position(x, y);
+
+            sf::IntRect rect(x, y, width, height);
+        }
+
+        namespace EquipmentWindow
+        {
+            int x = 519;
+            int y = 11;
+
+            int width  = 110;
+            int height = 110;
+
+            sf::Vector2f position(x, y);
+
+            sf::IntRect rect(x, y, width, height);
+        }
+
         namespace StatusEffectIcons
         {
             int x = 481;
             int y = 18;
+
+            sf::Vector2f position(x, y);
 
             int distanceBetweenIcons = 28;
         }
@@ -541,6 +657,8 @@ namespace tibia
         {
             int x = 259;
             int y = 297;
+
+            sf::Vector2f position(x, y);
         }
 
         namespace Bars
@@ -549,12 +667,16 @@ namespace tibia
             {
                 int x = 51;
                 int y = 322;
+
+                sf::Vector2f position(x, y);
             }
 
             namespace Mp
             {
                 int x = 265;
                 int y = 322;
+
+                sf::Vector2f position(x, y);
             }
         }
 
@@ -1494,6 +1616,13 @@ namespace tibia
 
         const int mountainRampLeft  = 2103;
         const int mountainRampRight = 2097;
+
+        const int optionsButton = 3559;
+
+        std::vector<int> tabButtonInventory = {3544, 3545};
+        std::vector<int> tabButtonStatus    = {3546, 3547};
+        std::vector<int> tabButtonCombat    = {3548, 3549};
+        std::vector<int> tabButtonMiniMap   = {3550, 3551};
 
         const int statusEffectBurning     = 3556;
         const int statusEffectElectrified = 3557;

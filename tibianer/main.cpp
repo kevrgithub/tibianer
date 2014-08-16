@@ -18,6 +18,8 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 
+#include "iup.h"
+
 #include "utility.hpp"
 
 #include "tibia/Tibia.hpp"
@@ -27,93 +29,80 @@
 
 tibia::Game g_game;
 
-std::string gameTitle = "Tibianer";
+std::string g_gameTitle = "Tibianer";
 
-std::string configFile = "cfg/config.cfg";
+std::string g_configFile = "cfg/config.cfg";
 
-sf::RenderWindow mainWindow;
+sf::RenderWindow g_mainWindow;
 
-sf::Uint32 windowStyle = sf::Style::Titlebar | sf::Style::Close | sf::Style::Resize;
+sf::Uint32 g_windowStyle = sf::Style::Titlebar | sf::Style::Close | sf::Style::Resize;
 
-unsigned int windowWidth  = 640;
-unsigned int windowHeight = 480;
+unsigned int g_windowWidth  = 640;
+unsigned int g_windowHeight = 480;
 
-bool windowIsFocused = true;
+bool g_windowIsFocused = true;
 
-bool windowIsFullscreen = false;
+unsigned int g_windowFrameRateLimit = 60;
 
-unsigned int windowFrameRateLimit = 60;
+float g_zoomLevel  = 1;
+float g_zoomFactor = 0.4;
 
-bool mouseUseDefaultCursor = true;
-
-float zoomLevel  = 1;
-float zoomFactor = 0.4;
-
-std::string mapFile = "test.tmx";
+std::string g_mapFile = "test.tmx";
 
 bool loadConfig()
 {
-    if (utility::fileExists(configFile) == false)
+    if (utility::fileExists(g_configFile) == false)
     {
         return false;
     }
 
     boost::property_tree::ptree pt;
-    boost::property_tree::ini_parser::read_ini(configFile, pt);
+    boost::property_tree::ini_parser::read_ini(g_configFile, pt);
 
-    windowIsFullscreen = pt.get<bool>("Window.Fullscreen", windowIsFullscreen);
+    g_windowFrameRateLimit = pt.get<unsigned int>("Window.FrameRateLimit", g_windowFrameRateLimit);
 
-    windowFrameRateLimit = pt.get<unsigned int>("Window.FrameRateLimit", windowFrameRateLimit);
+    g_mapFile = pt.get<std::string>("Map.File", g_mapFile);
 
-    mouseUseDefaultCursor = pt.get<bool>("Mouse.UseDefaultCursor", mouseUseDefaultCursor);
+    g_game.options.isMouseUseDefaultMouseCursorEnabled = pt.get<bool>("Mouse.UseDefaultCursor", g_game.options.isMouseUseDefaultMouseCursorEnabled);
 
-    mapFile = pt.get<std::string>("Map.File", mapFile);
+    g_game.options.isGameShowFloatingTextEnabled = pt.get<bool>("Game.ShowFloatingText", g_game.options.isGameShowFloatingTextEnabled);
+    g_game.options.isGameShowNamesEnabled        = pt.get<bool>("Game.ShowNames",        g_game.options.isGameShowNamesEnabled);
+    g_game.options.isGameShowCreatureBarsEnabled = pt.get<bool>("Game.ShowCreatureBars", g_game.options.isGameShowCreatureBarsEnabled);
+    g_game.options.isGameFriendlyFireEnabled     = pt.get<bool>("Game.FriendlyFire",     g_game.options.isGameFriendlyFireEnabled);
+
+    g_game.options.isAudioSoundEnabled           = pt.get<bool>("Audio.Sound",           g_game.options.isAudioSoundEnabled);
+    g_game.options.isAudioMusicEnabled           = pt.get<bool>("Audio.Music",           g_game.options.isAudioMusicEnabled);
+
+    g_game.options.isCheatInfiniteHealthEnabled  = pt.get<bool>("Cheats.InfiniteHealth", g_game.options.isCheatInfiniteHealthEnabled);
+    g_game.options.isCheatInfiniteManaEnabled    = pt.get<bool>("Cheats.InfiniteMana",   g_game.options.isCheatInfiniteManaEnabled);
 
     return true;
 }
 
-void doMainWindowFullScreen()
+void createMainWindow()
 {
-    mainWindow.setSize(sf::Vector2u(sf::VideoMode::getDesktopMode().width, sf::VideoMode::getDesktopMode().height));
-    mainWindow.setPosition(sf::Vector2i(0, 0));
-}
-
-void createMainWindow(bool fullscreen)
-{
-    sf::Uint32 tempStyle = windowStyle;
-
-    if (fullscreen == true)
-    {
-        tempStyle = sf::Style::None;
-    }
-
-    mainWindow.create(sf::VideoMode(windowWidth, windowHeight), gameTitle, tempStyle);
-
-    if (fullscreen == true)
-    {
-        doMainWindowFullScreen();
-    }
+    g_mainWindow.create(sf::VideoMode(g_windowWidth, g_windowHeight), g_gameTitle, g_windowStyle);
 
     sf::Image windowIcon;
     if (windowIcon.loadFromFile("images/icon.png") == true)
     {
-        mainWindow.setIcon(32, 32, windowIcon.getPixelsPtr());
+        g_mainWindow.setIcon(32, 32, windowIcon.getPixelsPtr());
     }
 
-    if (windowFrameRateLimit > 0)
+    if (g_windowFrameRateLimit > 0)
     {
-        mainWindow.setFramerateLimit(windowFrameRateLimit);
+        g_mainWindow.setFramerateLimit(g_windowFrameRateLimit);
     }
 
-    if (mouseUseDefaultCursor == false)
+    if (g_game.options.isMouseUseDefaultMouseCursorEnabled == false)
     {
-        mainWindow.setMouseCursorVisible(false);
+        g_game.setMouseCursorVisible(&g_mainWindow, false);
     }
 }
 
 bool doSaveScreenshot()
 {
-    sf::Image screenshot = mainWindow.capture();
+    sf::Image screenshot = g_mainWindow.capture();
 
     std::stringstream screenshotName;
 
@@ -134,12 +123,16 @@ bool doSaveScreenshot()
 
 int main(int argc, char* argv[])
 {
-    std::cout << gameTitle << std::endl;
+    IupOpen(&argc, &argv);
+
+    std::cout << g_gameTitle << std::endl;
 
     if (argc == 2)
     {
         std::cout << argv[1] << std::endl;
     }
+
+    g_game.setMainWindow(&g_mainWindow);
 
     unsigned int maximumTextureSize = sf::Texture::getMaximumSize();
     if (maximumTextureSize < tibia::TEXTURE_SIZE_MAX)
@@ -159,7 +152,7 @@ int main(int argc, char* argv[])
     std::srand(std::time(0));
 
     std::cout << "Creating main window" << std::endl;
-    createMainWindow(false);
+    createMainWindow();
 
     std::cout << "Loading fonts" << std::endl;
     if (g_game.loadFonts() == false)
@@ -198,14 +191,14 @@ int main(int argc, char* argv[])
     loadingText.setText(g_game.getBitmapFontDefault(), "Loading...", tibia::Colors::Text::white, true);
     loadingText.setPosition
     (
-        mainWindow.getSize().x / 2,
-        mainWindow.getSize().y - (loadingText.getVertexArray()->getBounds().height + 4)
+        g_mainWindow.getSize().x / 2,
+        g_mainWindow.getSize().y - (loadingText.getVertexArray()->getBounds().height + 4)
     );
 
-    mainWindow.clear(tibia::Colors::black);
-    mainWindow.draw(loadingSprite);
-    mainWindow.draw(loadingText);
-    mainWindow.display();
+    g_mainWindow.clear(tibia::Colors::black);
+    g_mainWindow.draw(loadingSprite);
+    g_mainWindow.draw(loadingText);
+    g_mainWindow.display();
 
     std::cout << "Creating game windows" << std::endl;
     if (g_game.createWindows() == false)
@@ -227,22 +220,22 @@ int main(int argc, char* argv[])
     std::cout << "Loading map" << std::endl;
 
     std::stringstream mapFilePath;
-    mapFilePath << "maps/" << mapFile;
+    mapFilePath << "maps/" << g_mapFile;
 
     if (g_game.loadMap(mapFilePath.str()) == false)
     {
-        std::cout << "Error: Failed to load map" << std::endl;
+        std::cout << "Error: Failed to load map" << " (" << g_mapFile << ")" << std::endl;
         return EXIT_FAILURE;
     }
+
+    std::cout << "Loading windows" << std::endl;
+    g_game.loadWindows();
 
     std::cout << "Loading game view" << std::endl;
     sf::View* gameView = g_game.getGameWindowView();
 
     std::cout << "Creating player" << std::endl;
     g_game.createPlayer();
-
-    std::cout << "Updating main window" << std::endl;
-    createMainWindow(windowIsFullscreen);
 
     std::cout << "Starting main loop" << std::endl;
 
@@ -252,8 +245,10 @@ int main(int argc, char* argv[])
 
     bool doEnterGame = true;
 
-    while (mainWindow.isOpen())
+    while (g_mainWindow.isOpen())
     {
+        IupLoopStep();
+
         sf::Time timeGame = clockGame->getElapsedTime();
 
         sf::Time timeAnimatedWaterAndObjects = clockAnimatedWaterAndObjects->getElapsedTime();
@@ -273,17 +268,17 @@ int main(int argc, char* argv[])
             doEnterGame = false;
         }
 
-        mainWindow.clear(tibia::Colors::white);
+        g_mainWindow.clear(tibia::Colors::white);
 
         sf::Sprite background;
         background.setTexture(tibia::Textures::background);
         background.setPosition(0, 0);
-        mainWindow.draw(background);
+        g_mainWindow.draw(background);
 
-        g_game.updateMouseWindowPosition(&mainWindow);
+        g_game.updateMouseWindowPosition(&g_mainWindow);
         g_game.updateMouseTile();
 
-        if (windowIsFocused == true)
+        if (g_windowIsFocused == true)
         {
             g_game.handleKeyboardInput();
             g_game.handleMouseInput();
@@ -291,41 +286,56 @@ int main(int argc, char* argv[])
 
         g_game.updateLightBrightness();
 
-        g_game.drawGameWindow(&mainWindow);
+        g_game.drawGameWindow(&g_mainWindow);
 
-        g_game.drawMiniMapWindow(&mainWindow);
-        g_game.updateMiniMapWindow();
+        g_game.drawOptionsButton(&g_mainWindow);
 
-        g_game.drawBars(&mainWindow);
+        g_game.drawTabButtons(&g_mainWindow);
 
-        g_game.drawStatusBarText(&mainWindow);
-
-        g_game.drawStatusEffectIcons(&mainWindow);
-
-        if (mouseUseDefaultCursor == false)
+        if (g_game.gui.topStatus == true)
         {
-            g_game.drawMouseCursor(&mainWindow);
+            g_game.drawStatusWindow(&g_mainWindow);
+        }
+        else if (g_game.gui.topEquipment == true)
+        {
+            g_game.drawEquipmentWindow(&g_mainWindow);
+        }
+        else if (g_game.gui.topMiniMap == true)
+        {
+            g_game.drawMiniMapWindow(&g_mainWindow);
+            g_game.updateMiniMapWindow();
+        }
+
+        g_game.drawBars(&g_mainWindow);
+
+        g_game.drawStatusBarText(&g_mainWindow);
+
+        g_game.drawStatusEffectIcons(&g_mainWindow);
+
+        if (g_game.options.isMouseUseDefaultMouseCursorEnabled == false)
+        {
+            g_game.drawMouseCursor(&g_mainWindow);
         }
 
         g_game.updateSounds();
 
-        mainWindow.display();
+        g_mainWindow.display();
 
         sf::Event event;
-        while (mainWindow.pollEvent(event))
+        while (g_mainWindow.pollEvent(event))
         {
             if (event.type == sf::Event::Closed)
             {
-                mainWindow.close();
+                g_mainWindow.close();
             }
 
             else if (event.type == sf::Event::LostFocus)
             {
-                windowIsFocused = false;
+                g_windowIsFocused = false;
             }
             else if (event.type == sf::Event::GainedFocus)
             {
-                windowIsFocused = true;
+                g_windowIsFocused = true;
             }
 
             else if (event.type == sf::Event::KeyPressed)
@@ -333,14 +343,7 @@ int main(int argc, char* argv[])
                 // quit
                 if (event.key.code == sf::Keyboard::Escape)
                 {
-                    mainWindow.close();
-                }
-                // toggle fullscreen
-                else if (event.key.code == sf::Keyboard::F11 || (event.key.alt == true && event.key.code == sf::Keyboard::Return))
-                {
-                    utility::toggleBool(windowIsFullscreen);
-
-                    createMainWindow(windowIsFullscreen);
+                    g_mainWindow.close();
                 }
                 // take screenshot
                 else if (event.key.code == sf::Keyboard::Key::F12)
@@ -367,17 +370,17 @@ int main(int argc, char* argv[])
             {
                 if (event.mouseWheel.delta > 0)
                 {
-                    zoomLevel -= zoomFactor;
+                    g_zoomLevel -= g_zoomFactor;
 
-                    if (zoomLevel < 1) zoomLevel = 1;
+                    if (g_zoomLevel < 1) g_zoomLevel = 1;
 
-                    gameView->setSize(sf::Vector2f(tibia::TILES_WIDTH * zoomLevel, tibia::TILES_HEIGHT * zoomLevel));
+                    gameView->setSize(sf::Vector2f(tibia::TILES_WIDTH * g_zoomLevel, tibia::TILES_HEIGHT * g_zoomLevel));
                 }
                 else if (event.mouseWheel.delta < 0)
                 {
-                    zoomLevel += zoomFactor;
+                    g_zoomLevel += g_zoomFactor;
 
-                    gameView->setSize(sf::Vector2f(tibia::TILES_WIDTH * zoomLevel, tibia::TILES_HEIGHT * zoomLevel));
+                    gameView->setSize(sf::Vector2f(tibia::TILES_WIDTH * g_zoomLevel, tibia::TILES_HEIGHT * g_zoomLevel));
                 }
             }
         }
@@ -396,6 +399,8 @@ int main(int argc, char* argv[])
 
         g_game.setTimeDelta(timeDelta);
     }
+
+    IupClose();
 
     return EXIT_SUCCESS;
 }

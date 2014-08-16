@@ -43,7 +43,16 @@ public:
 
     void update(sf::Time timeDelta)
     {
-        m_textPosition.y -= tibia::FloatingTextData::speed * timeDelta.asSeconds();
+        if (m_distanceMoved < (tibia::TILE_SIZE * 2))
+        {
+            float startY = m_textPosition.y;
+
+            m_textPosition.y -= tibia::FloatingTextData::speed * timeDelta.asSeconds();
+
+            m_distanceMoved += startY - m_textPosition.y;
+
+            //std::cout << "distance moved: " << m_distanceMoved << std::endl;
+        }
 
         m_bitmapFontText.setPosition(m_textPosition);
     }
@@ -64,6 +73,8 @@ private:
     sf::Vector2f m_textPosition;
 
     sf::Clock m_clock;
+
+    float m_distanceMoved = 0.0f;
 
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const
     {
