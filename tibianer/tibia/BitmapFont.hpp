@@ -33,7 +33,7 @@ public:
             return false;
         }
 
-        for (unsigned int i = 0; i < m_numGlyphs; i++)
+        for (int i = 0; i < m_numGlyphs; i++)
         {
             int tu = i % (m_texture.getSize().x / glyphSize.x);
             int tv = i / (m_texture.getSize().x / glyphSize.x);

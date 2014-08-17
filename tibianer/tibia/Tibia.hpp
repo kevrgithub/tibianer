@@ -59,7 +59,7 @@ namespace tibia
 
     const int DRAW_INDEX_LAST = 256;
 
-    const float VOLUME_MULTIPLIER = 12.0;
+    const float VOLUME_MULTIPLIER = 12.0f;
 
     const std::string CREATURE_NAME_DEFAULT = "Creature";
     const std::string CREATURE_NAME_PLAYER  = "Player";
@@ -67,29 +67,52 @@ namespace tibia
     namespace Textures
     {
         sf::Texture cursor;
+        sf::Texture loading;
         sf::Texture sprites;
+        sf::Texture sprites2;
         sf::Texture lights;
+        sf::Texture lights2;
         sf::Texture background;
         sf::Texture bars;
         sf::Texture status;
         sf::Texture equipment;
+        sf::Texture inventory;
+        sf::Texture inventory2;
+        sf::Texture combat;
+        sf::Texture skills;
+        sf::Texture book;
     }
 
     std::unordered_map<std::string, sf::Texture&> umapTextureFiles =
     {
         {"images/cursor.png",     tibia::Textures::cursor},
+        {"images/loading.png",    tibia::Textures::loading},
         {"images/sprites.png",    tibia::Textures::sprites},
+        {"images/sprites2.png",   tibia::Textures::sprites2},
         {"images/lights.png",     tibia::Textures::lights},
+        {"images/lights2.png",    tibia::Textures::lights2},
         {"images/background.png", tibia::Textures::background},
         {"images/bars.png",       tibia::Textures::bars},
         {"images/status.png",     tibia::Textures::status},
         {"images/equipment.png",  tibia::Textures::equipment},
+        {"images/inventory.png",  tibia::Textures::inventory},
+        {"images/inventory2.png", tibia::Textures::inventory2},
+        {"images/combat.png",     tibia::Textures::combat},
+        {"images/skills.png",     tibia::Textures::skills},
+        {"images/book.png",       tibia::Textures::book},
     };
 
     namespace Fonts
     {
-        std::string default = "fonts/OpenSans.ttf";
-        std::string console = "fonts/Inconsolata.ttf";
+        namespace Default
+        {
+            std::string filename = "fonts/OpenSans.ttf";
+        }
+
+        namespace Console
+        {
+            std::string filename = "fonts/Inconsolata.ttf";
+        }
     }
 
     namespace FontSizes
@@ -102,46 +125,59 @@ namespace tibia
 
     namespace BitmapFonts
     {
-        std::string default = "images/font.png";
-        std::string tiny    = "images/font2.png";
-        std::string modern  = "images/font3.png";
-
-        sf::Vector2u defaultGlyphSize(18, 19);
-
-        // 16x6
-        std::vector<int> defaultGlyphWidths =
+        namespace Default
         {
-            6,  4,  8,  16, 9,  18, 15, 5,  7,  7,  9,  13, 5,  8,  4,  7,
-            10, 8,  10, 10, 10, 9,  10, 10, 9,  10, 4,  5,  12, 14, 12, 9,
-            14, 15, 13, 13, 14, 13, 12, 15, 15, 8,  9,  15, 13, 18, 15, 14,
-            12, 14, 15, 11, 14, 15, 15, 18, 15, 15, 13, 15, 14, 15, 11, 13,
-            4,  9,  11, 9,  11, 9,  10, 11, 11, 6,  7,  11, 6,  16, 11, 10,
-            11, 11, 8,  8,  7,  11, 11, 15, 11, 12, 10, 9,  10, 11, 14, 11,
-        };
+            std::string filename = "images/font.png";
 
-        sf::Vector2u tinyGlyphSize(7, 10);
+            sf::Vector2u glyphSize(18, 19);
 
-        std::vector<int> tinyGlyphWidths =
+            // 16x6
+            std::vector<int> glyphWidths =
+            {
+                6,  4,  8,  16, 9,  18, 15, 5,  7,  7,  9,  13, 5,  8,  4,  7,
+                10, 8,  10, 10, 10, 9,  10, 10, 9,  10, 4,  5,  12, 14, 12, 9,
+                14, 15, 13, 13, 14, 13, 12, 15, 15, 8,  9,  15, 13, 18, 15, 14,
+                12, 14, 15, 11, 14, 15, 15, 18, 15, 15, 13, 15, 14, 15, 11, 13,
+                4,  9,  11, 9,  11, 9,  10, 11, 11, 6,  7,  11, 6,  16, 11, 10,
+                11, 11, 8,  8,  7,  11, 11, 15, 11, 12, 10, 9,  10, 11, 14, 11,
+            };
+        }
+
+        namespace Tiny
         {
-            4, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 3, 6, 3, 7,
-            6, 5, 6, 6, 6, 6, 6, 6, 6, 6, 3, 3, 7, 7, 7, 7,
-            7, 6, 6, 6, 6, 6, 6, 6, 6, 3, 6, 7, 6, 7, 7, 6,
-            6, 7, 6, 6, 7, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-            7, 6, 6, 6, 6, 6, 6, 6, 6, 3, 6, 7, 6, 7, 7, 6,
-            6, 7, 6, 6, 7, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-        };
+            std::string filename = "images/font2.png";
 
-        sf::Vector2u modernGlyphSize(16, 12);
+            sf::Vector2u glyphSize(7, 10);
 
-        std::vector<int> modernGlyphWidths =
+            // 16x6
+            std::vector<int> glyphWidths =
+            {
+                4, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 3, 6, 3, 7,
+                6, 5, 6, 6, 6, 6, 6, 6, 6, 6, 3, 3, 7, 7, 7, 7,
+                7, 6, 6, 6, 6, 6, 6, 6, 6, 3, 6, 7, 6, 7, 7, 6,
+                6, 7, 6, 6, 7, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+                7, 6, 6, 6, 6, 6, 6, 6, 6, 3, 6, 7, 6, 7, 7, 6,
+                6, 7, 6, 6, 7, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+            };
+        }
+
+        namespace Modern
         {
-            3,  4, 7, 9, 8,  10, 10, 4,  6, 6, 9, 9, 4, 9,  4,  8,
-            8,  6, 8, 8, 8,  8,  8,  8,  8, 8, 4, 4, 9, 9,  9,  7,
-            10, 9, 8, 8, 9,  8,  8,  9,  9, 6, 7, 8, 8, 10, 9,  9,
-            8,  9, 9, 8, 10, 9,  8,  10, 8, 8, 8, 6, 8, 6,  10, 10,
-            4,  8, 8, 7, 8,  8,  7,  8,  8, 4, 6, 8, 4, 10, 8,  8,
-            8,  8, 7, 7, 7,  8,  8,  10, 8, 8, 7, 8, 4, 8,  9,  8,
-        };
+            std::string filename = "images/font3.png";
+
+            sf::Vector2u glyphSize(16, 12);
+
+            // 16x6
+            std::vector<int> glyphWidths =
+            {
+                3,  4, 7, 9, 8,  10, 10, 4,  6, 6, 9, 9, 4, 9,  4,  8,
+                8,  6, 8, 8, 8,  8,  8,  8,  8, 8, 4, 4, 9, 9,  9,  7,
+                10, 9, 8, 8, 9,  8,  8,  9,  9, 6, 7, 8, 8, 10, 9,  9,
+                8,  9, 9, 8, 10, 9,  8,  10, 8, 8, 8, 6, 8, 6,  10, 10,
+                4,  8, 8, 7, 8,  8,  7,  8,  8, 4, 6, 8, 4, 10, 8,  8,
+                8,  8, 7, 7, 7,  8,  8,  10, 8, 8, 7, 8, 4, 8,  9,  8,
+            };
+        }
     }
 
     namespace MouseCursor
@@ -180,28 +216,28 @@ namespace tibia
 
     namespace GameTextData
     {
-        const float time = 5.0;
+        const float time = 5.0f;
     }
 
     namespace FloatingTextData
     {
-        const float time  = 1.0;
-        const float speed = 60.0;
+        const float time  = 1.0f;
+        const float speed = 60.0f;
     }
 
     namespace StatusBarTextData
     {
-        const float time = 5.0;
+        const float time = 5.0f;
     }
 
     namespace AnimatedObjects
     {
-        const float time = 1.0;
+        const float time = 1.0f;
     }
 
     namespace DecayObjects
     {
-        const float time = 30.0;
+        const float time = 30.0f;
     }
 
     namespace Lights
@@ -232,7 +268,7 @@ namespace tibia
         const int day         = max;
         const int night       = min * 2;
 
-        const float updateTime = 1;
+        const float updateTime = 1.0f;
     }
 
     std::unordered_map<int, sf::Color> umapLightColors =
@@ -641,6 +677,72 @@ namespace tibia
             sf::Vector2f position(x, y);
 
             sf::IntRect rect(x, y, width, height);
+
+            namespace Slots
+            {
+                namespace Container
+                {
+                    int x = 601;
+                    int y = 15;
+
+                    int width  = 24;
+                    int height = 24;
+
+                    float scale = 0.75f; // (24 * 100) / 32
+
+                    sf::Vector2f position(x, y);
+                }
+            }
+        }
+
+        namespace InventoryWindow
+        {
+            int x = 515;
+            int y = 163;
+
+            int width  = 118;
+            int height = 310;
+
+            sf::Vector2f position(x, y);
+
+            sf::IntRect rect(x, y, width, height);
+
+            namespace Icons
+            {
+                namespace Container1
+                {
+                    int x = 558;
+                    int y = 171;
+
+                    sf::Vector2f position(x, y);
+                }
+            }
+        }
+
+        namespace SkillsWindow
+        {
+            int x = 515;
+            int y = 163;
+
+            int width  = 118;
+            int height = 231;
+
+            sf::Vector2f position(x, y);
+
+            sf::IntRect rect(x, y, width, height);
+        }
+
+        namespace CombatWindow
+        {
+            int x = 515;
+            int y = 163;
+
+            int width  = 118;
+            int height = 231;
+
+            sf::Vector2f position(x, y);
+
+            sf::IntRect rect(x, y, width, height);
         }
 
         namespace StatusEffectIcons
@@ -729,8 +831,8 @@ namespace tibia
 
     namespace MovementSpeeds
     {
-        const float default = 0.5;
-        const float player  = 0.1; // 0.2
+        const float default = 0.5f;
+        const float player  = 0.1f; // 0.2f
     }
 
     namespace Teams
@@ -783,7 +885,8 @@ namespace tibia
             changeMap,
             creature,
             book,
-            changeMusic,
+            playMusic,
+            playSound,
         };
     }
 
@@ -798,7 +901,8 @@ namespace tibia
         {"changemap",   tibia::ObjectTypes::changeMap},
         {"creature",    tibia::ObjectTypes::creature},
         {"book",        tibia::ObjectTypes::book},
-        {"changemusic", tibia::ObjectTypes::changeMusic},
+        {"playmusic",   tibia::ObjectTypes::playMusic},
+        {"playsound",   tibia::ObjectTypes::playSound},
     };
 
     namespace Outfits
@@ -1064,7 +1168,7 @@ namespace tibia
             human,
 
             bear,
-            cacodemon, // doom
+            cacodemon, // Doom
             citizenMale,
             citizenFemale,
             demon,
@@ -1353,9 +1457,9 @@ namespace tibia
 
     namespace AnimationTimes
     {
-        const float default           = 0.1;
-        const float corpseDecay       = 5.0; //60.0;
-        const float creatureAnimation = 1.0;
+        const float default           = 0.1f;
+        const float corpseDecay       = 60.0f;
+        const float creatureAnimation = 1.0f;
     }
 
     namespace Animations
@@ -1467,17 +1571,17 @@ namespace tibia
 
     namespace ProjectileRanges
     {
-        const float default = 6.0;
+        const float default = 6.0f;
     }
 
     namespace ProjectileSpeeds
     {
-        const float default = 240.0;
+        const float default = 240.0f;
     }
 
     namespace ProjectileDamages
     {
-        const float default = 10.0;
+        const float default = 10.0f;
     }
 
     namespace SpriteFlags
@@ -1502,9 +1606,10 @@ namespace tibia
             fixDrawOrder     = 1 << 15,
             moveable         = 1 << 16,
             modifyHpOnTouch  = 1 << 17,
-            food             = 1 << 18,
-            instrument       = 1 << 19,
-            currency         = 1 << 20,
+            stackable        = 1 << 18,
+            food             = 1 << 19,
+            instrument       = 1 << 20,
+            currency         = 1 << 21,
         };
     }
 
@@ -1513,16 +1618,14 @@ namespace tibia
 
     namespace SpriteData
     {
-        std::vector<int> guiTextIcons = {529, 530, 531, 532, 533, 534};
-
-        std::vector<int> corpse = {491, 492, 493, 494, 495, 496, 497};
+        std::vector<int> corpse = {491, 492, 493, 494, 495, 496, 497}; // decaying
 
         std::vector<int> chair = {522, 1054, 521, 1055}; // up, right, down, left
 
-        std::vector<int> counterVertical   = {1043, 1046};
+        std::vector<int> counterVertical   = {1043, 1046}; // closed, open
         std::vector<int> counterHorizontal = {1044, 1048};
 
-        std::vector<int> streetLamp = {486, 3385};
+        std::vector<int> streetLamp = {486, 3385}; // off, on
 
         std::vector<int> sign = {379, 380, 381, 382, 383, 384};
 
@@ -1530,7 +1633,7 @@ namespace tibia
 
         std::vector<int> chalkboard = {609, 2965};
 
-        std::vector<int> doorVertical   = {549, 553};
+        std::vector<int> doorVertical   = {549, 553}; // closed, open
         std::vector<int> doorHorizontal = {555, 558};
 
         std::vector<int> doorLockedVertical   = {3303, 3307};
@@ -1553,10 +1656,10 @@ namespace tibia
 
         std::vector<int> lantern = {1938, 1879, 1880};
 
-        std::vector<int> digHole    = {1204, 1205};
+        std::vector<int> digHole    = {1204, 1205}; // closed, open
         std::vector<int> digHoleIce = {3242, 3243};
 
-        std::vector<int> stepTileStone     = {398,  399};
+        std::vector<int> stepTileStone     = {398,  399};  // deactivated, activated
         std::vector<int> stepTileWood      = {1275, 1276};
         std::vector<int> stepTileGrassHole = {478, 479};
 
@@ -1582,12 +1685,17 @@ namespace tibia
         std::vector<int> splatRed =   {748, 749, 750};
         std::vector<int> splatGreen = {760, 761, 762};
 
-        std::vector<int> locker = {1264, 1265, 1266, 1267};
+        std::vector<int> locker = {1267, 1264, 1265, 1266}; // up, right, down, left
 
         std::vector<int> parcel = {1268, 1269};
         std::vector<int> letter = {1270, 1271};
 
         std::vector<int> magicWall = {3271, 3275, 3279};
+
+        std::vector<int> portal = {197, 198, 199, 3391};
+
+        const int bag      = 45;
+        const int backpack = 200;
 
         const int label   = 1272;
         const int depot   = 1273;
@@ -1617,16 +1725,19 @@ namespace tibia
         const int mountainRampLeft  = 2103;
         const int mountainRampRight = 2097;
 
-        const int optionsButton = 3559;
+        namespace Gui
+        {
+            const int optionsButton = 3559;
 
-        std::vector<int> tabButtonInventory = {3544, 3545};
-        std::vector<int> tabButtonStatus    = {3546, 3547};
-        std::vector<int> tabButtonCombat    = {3548, 3549};
-        std::vector<int> tabButtonMiniMap   = {3550, 3551};
+            std::vector<int> tabButtonInventory = {3544, 3545};
+            std::vector<int> tabButtonStatus    = {3546, 3547};
+            std::vector<int> tabButtonCombat    = {3548, 3549};
+            std::vector<int> tabButtonMiniMap   = {3550, 3551};
 
-        const int statusEffectBurning     = 3556;
-        const int statusEffectElectrified = 3557;
-        const int statusEffectPoisoned    = 3558;
+            const int statusEffectBurning     = 3556;
+            const int statusEffectElectrified = 3557;
+            const int statusEffectPoisoned    = 3558;
+        }
 
         std::vector<int> water =
         {
@@ -2176,9 +2287,9 @@ namespace tibia
 
         std::vector<int> transparent =
         {
-            1, // pink square
+            1,    // pink square
             1087, // pink square
-            3388, // invisible
+            3388, // invisible tile
         };
 
         // right to left, bottom then top
@@ -2451,6 +2562,12 @@ namespace tibia
 
         // corpse
         {491, 492, 493, 494, 495, 496, 497},
+
+        // portals
+        {197},
+        {198},
+        {199},
+        {3391},
     };
 
     std::unordered_map<int, std::vector<int>> umapCreatureBloodTypesSplats =
@@ -2467,9 +2584,9 @@ namespace tibia
 
     std::unordered_map<int, int> umapCreatureStatusEffectsIcons =
     {
-        {tibia::CreatureStatusEffects::burning,     tibia::SpriteData::statusEffectBurning},
-        {tibia::CreatureStatusEffects::electrified, tibia::SpriteData::statusEffectElectrified},
-        {tibia::CreatureStatusEffects::poisoned,    tibia::SpriteData::statusEffectPoisoned},
+        {tibia::CreatureStatusEffects::burning,     tibia::SpriteData::Gui::statusEffectBurning},
+        {tibia::CreatureStatusEffects::electrified, tibia::SpriteData::Gui::statusEffectElectrified},
+        {tibia::CreatureStatusEffects::poisoned,    tibia::SpriteData::Gui::statusEffectPoisoned},
     };
 
     namespace Sounds

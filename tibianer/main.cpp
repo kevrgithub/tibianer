@@ -44,8 +44,8 @@ bool g_windowIsFocused = true;
 
 unsigned int g_windowFrameRateLimit = 60;
 
-float g_zoomLevel  = 1;
-float g_zoomFactor = 0.4;
+float g_zoomLevel  = 1.0f;
+float g_zoomFactor = 0.4f;
 
 std::string g_mapFile = "test.tmx";
 
@@ -304,6 +304,19 @@ int main(int argc, char* argv[])
         {
             g_game.drawMiniMapWindow(&g_mainWindow);
             g_game.updateMiniMapWindow();
+        }
+
+        if (g_game.gui.bottomInventory == true)
+        {
+            g_game.drawInventoryWindow(&g_mainWindow);
+        }
+        else if (g_game.gui.bottomSkills == true)
+        {
+            g_game.drawSkillsWindow(&g_mainWindow);
+        }
+        else if (g_game.gui.bottomCombat == true)
+        {
+            g_game.drawCombatWindow(&g_mainWindow);
         }
 
         g_game.drawBars(&g_mainWindow);

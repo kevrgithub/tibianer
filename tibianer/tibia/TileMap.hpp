@@ -154,9 +154,9 @@ public:
             return;
         }
 
-        for (unsigned int i = x1; i < x1 + x2; i++)
+        for (int i = x1; i < x1 + x2; i++)
         {
-            for (unsigned int j = y1; j < y1 + y2; j++)
+            for (int j = y1; j < y1 + y2; j++)
             {
                 if (i > tibia::MAP_SIZE - 1) continue;
                 if (j > tibia::MAP_SIZE - 1) continue;

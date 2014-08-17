@@ -305,7 +305,7 @@ public:
 
                     if (objectCount > 0)
                     {
-                        for (unsigned int i = 1; i < objectCount; i++)
+                        for (int i = 1; i < objectCount; i++)
                         {
                             tibia::Object::Ptr copyObject = std::make_shared<tibia::Object>(*object);
 

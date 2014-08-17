@@ -50,6 +50,7 @@ public:
         bool isGameShowFloatingTextEnabled      = true;
         bool isGameShowNamesEnabled             = false;
         bool isGameShowCreatureBarsEnabled      = false;
+        bool isGameSmoothLightingEnabled        = false;
         bool isGameFriendlyFireEnabled          = false;
 
         bool isAudioSoundEnabled = true;
@@ -69,9 +70,11 @@ public:
         bool topStatus    = false;
         bool topEquipment = false;
 
-        bool bottomInventory = true;
-        bool bottomSkills    = false;
-        bool bottomCombat    = false;
+        bool bottomInventory  = true;
+        bool bottomSkills     = false;
+        bool bottomCombat     = false;
+
+        bool isInventorySplit = false;
     };
 
     GameGui_t gui;
@@ -129,6 +132,7 @@ public:
         int option_isGameShowFloatingTextEnabled = this->options.isGameShowFloatingTextEnabled;
         int option_isGameShowNamesEnabled        = this->options.isGameShowNamesEnabled;
         int option_isGameShowCreatureBarsEnabled = this->options.isGameShowCreatureBarsEnabled;
+        int option_isGameSmoothLightingEnabled   = this->options.isGameSmoothLightingEnabled;
         int option_isGameFriendlyFireEnabled     = this->options.isGameFriendlyFireEnabled;
 
         int option_isAudioSoundEnabled           = this->options.isAudioSoundEnabled;
@@ -145,6 +149,7 @@ public:
                 "Show Floating Text: %b[Disabled,Enabled]\n"
                 "Show Names: %b[Disabled,Enabled]\n"
                 "Show Creature Bars: %b[Disabled,Enabled]\n"
+                "Smooth Lighting: %b[Disabled,Enabled]\n"
                 "Friendly Fire: %b[Disabled,Enabled]\n"
 
             "Audio %t\n"
@@ -160,6 +165,7 @@ public:
             &option_isGameShowFloatingTextEnabled,
             &option_isGameShowNamesEnabled,
             &option_isGameShowCreatureBarsEnabled,
+            &option_isGameSmoothLightingEnabled,
             &option_isGameFriendlyFireEnabled,
 
             &option_isAudioSoundEnabled,
@@ -174,6 +180,7 @@ public:
         this->options.isGameShowFloatingTextEnabled = option_isGameShowFloatingTextEnabled;
         this->options.isGameShowNamesEnabled        = option_isGameShowNamesEnabled;
         this->options.isGameShowCreatureBarsEnabled = option_isGameShowCreatureBarsEnabled;
+        this->options.isGameSmoothLightingEnabled   = option_isGameSmoothLightingEnabled;
         this->options.isGameFriendlyFireEnabled     = option_isGameFriendlyFireEnabled;
 
         this->options.isAudioSoundEnabled           = option_isAudioSoundEnabled;
@@ -185,6 +192,15 @@ public:
         if (this->options.isMouseUseDefaultMouseCursorEnabled == false)
         {
             setMouseCursorVisible(m_mainWindow, false);
+        }
+
+        if (this->options.isGameSmoothLightingEnabled == true)
+        {
+            m_light.setTexture(tibia::Textures::lights2);
+        }
+        else
+        {
+            m_light.setTexture(tibia::Textures::lights);
         }
     }
 
@@ -248,12 +264,12 @@ public:
 
     bool loadFonts()
     {
-        if (m_fontDefault.loadFromFile(tibia::Fonts::default) == false)
+        if (m_fontDefault.loadFromFile(tibia::Fonts::Default::filename) == false)
         {
             return false;
         }
 
-        if (m_fontConsole.loadFromFile(tibia::Fonts::console) == false)
+        if (m_fontConsole.loadFromFile(tibia::Fonts::Console::filename) == false)
         {
             return false;
         }
@@ -263,17 +279,17 @@ public:
 
     bool loadBitmapFonts()
     {
-        if (m_bitmapFontDefault.load(tibia::BitmapFonts::default, tibia::BitmapFonts::defaultGlyphSize, &tibia::BitmapFonts::defaultGlyphWidths) == false)
+        if (m_bitmapFontDefault.load(tibia::BitmapFonts::Default::filename, tibia::BitmapFonts::Default::glyphSize, &tibia::BitmapFonts::Default::glyphWidths) == false)
         {
             return false;
         }
 
-        if (m_bitmapFontTiny.load(tibia::BitmapFonts::tiny, tibia::BitmapFonts::tinyGlyphSize, &tibia::BitmapFonts::tinyGlyphWidths, -1) == false)
+        if (m_bitmapFontTiny.load(tibia::BitmapFonts::Tiny::filename, tibia::BitmapFonts::Tiny::glyphSize, &tibia::BitmapFonts::Tiny::glyphWidths, -1) == false)
         {
             return false;
         }
 
-        if (m_bitmapFontModern.load(tibia::BitmapFonts::modern, tibia::BitmapFonts::modernGlyphSize, &tibia::BitmapFonts::modernGlyphWidths, -1) == false)
+        if (m_bitmapFontModern.load(tibia::BitmapFonts::Modern::filename, tibia::BitmapFonts::Modern::glyphSize, &tibia::BitmapFonts::Modern::glyphWidths, -1) == false)
         {
             return false;
         }
@@ -317,12 +333,6 @@ public:
     {
         switch (event.key.code)
         {
-            case sf::Keyboard::Q:
-            {
-                showOptionsWindow();
-                break;
-            }
-
             case sf::Keyboard::Space:
                 doPlayerInteractWithPlayerTileObjects();
                 break;
@@ -372,8 +382,8 @@ public:
 
             case sf::Keyboard::I:
             {
-                std::cout << "Player HP,MP:  " << m_player->getHp() << "," << m_player->getMp() << std::endl;
-                std::cout << "Player X,Y,Z: " << m_player->getX() << "," << m_player->getY() << "," << m_player->getZ() <<std::endl;
+                std::cout << "Player HP,MP: " << m_player->getHp() << "," << m_player->getMp() << std::endl;
+                std::cout << "Player X,Y,Z: " << m_player->getX()  << "," << m_player->getY()  << "," << m_player->getZ() <<std::endl;
 
                 tibia::Tile::Ptr playerTile = getThingTile(m_player);
 
@@ -466,6 +476,10 @@ public:
                 this->gui.topMiniMap   = false;
                 this->gui.topStatus    = false;
                 this->gui.topEquipment = true;
+
+                this->gui.bottomInventory = true;
+                this->gui.bottomSkills    = false;
+                this->gui.bottomCombat    = false;
             }
             else if (tibia::GuiData::TabButtons::Status::rect.contains(getMouseWindowPosition()) == true)
             {
@@ -474,10 +488,18 @@ public:
                 this->gui.topMiniMap   = false;
                 this->gui.topStatus    = true;
                 this->gui.topEquipment = false;
+
+                this->gui.bottomInventory = false;
+                this->gui.bottomSkills    = true;
+                this->gui.bottomCombat    = false;
             }
             else if (tibia::GuiData::TabButtons::Combat::rect.contains(getMouseWindowPosition()) == true)
             {
                 this->gui.tabButtonsState = tibia::GuiData::TabButtons::State::buttonCombat;
+
+                this->gui.bottomInventory = false;
+                this->gui.bottomSkills    = false;
+                this->gui.bottomCombat    = true;
             }
             else if (tibia::GuiData::TabButtons::MiniMap::rect.contains(getMouseWindowPosition()) == true)
             {
@@ -2231,6 +2253,7 @@ public:
             setMouseCursorType(tibia::MouseCursorTypes::click);
         }
 
+        // highlight objects and creatures
         if (m_mouseTile != nullptr)
         {
             tibia::Object::List* objectList = m_mouseTile->getObjectList();
@@ -3095,9 +3118,9 @@ public:
         int x2 = tibia::NUM_TILES_X + 2;
         int y2 = tibia::NUM_TILES_Y + 2;
 
-        for (unsigned int i = x1; i < x1 + x2; i++)
+        for (int i = x1; i < x1 + x2; i++)
         {
-            for (unsigned int j = y1; j < y1 + y2; j++)
+            for (int j = y1; j < y1 + y2; j++)
             {
                 if (i > tibia::MAP_SIZE - 1) continue;
                 if (j > tibia::MAP_SIZE - 1) continue;
@@ -3219,9 +3242,9 @@ public:
         int x2 = tibia::NUM_TILES_X + 2;
         int y2 = tibia::NUM_TILES_Y + 2;
 
-        for (unsigned int i = x1; i < x1 + x2; i++)
+        for (int i = x1; i < x1 + x2; i++)
         {
-            for (unsigned int j = y1; j < y1 + y2; j++)
+            for (int j = y1; j < y1 + y2; j++)
             {
                 if (i > tibia::MAP_SIZE - 1) continue;
                 if (j > tibia::MAP_SIZE - 1) continue;
@@ -3401,9 +3424,7 @@ public:
             m_lightLayer.clear(sf::Color(m_lightBrightness, m_lightBrightness, m_lightBrightness));
         }
 
-        tibia::Light light;
-
-        light.setSize(tibia::LightSizes::small);
+        m_light.setSize(tibia::LightSizes::small);
 
         for (auto& creature : m_tileMapCreatures[z])
         {
@@ -3412,10 +3433,10 @@ public:
                 continue;
             }
 
-            drawLightAtTilePosition(light, creature->getTilePosition());
+            drawLightAtTilePosition(m_light, creature->getTilePosition());
         }
 
-        light.setSize(tibia::LightSizes::medium);
+        m_light.setSize(tibia::LightSizes::medium);
 
         for (auto& object : m_tileMapObjects[z])
         {
@@ -3423,7 +3444,7 @@ public:
             {
                 //light.setColorbyId(object->getId());
 
-                drawLightAtTilePosition(light, object->getTilePosition());
+                drawLightAtTilePosition(m_light, object->getTilePosition());
             }
 
             if (z == tibia::ZAxis::ground - 1)
@@ -3432,18 +3453,18 @@ public:
                 {
                     //light.setColor(tibia::Colors::light);
 
-                    drawLightAtTilePosition(light, object->getTilePosition());
+                    drawLightAtTilePosition(m_light, object->getTilePosition());
                 }
             }
         }
 
-        light.setSize(tibia::LightSizes::tiny);
+        m_light.setSize(tibia::LightSizes::tiny);
 
         for (auto& animation : m_tileMapAnimations[z])
         {
             if (animation->getFlags() & tibia::SpriteFlags::lightSource)
             {
-                drawLightAtTilePosition(light, animation->getTilePosition());
+                drawLightAtTilePosition(m_light, animation->getTilePosition());
             }
         }
 
@@ -3451,7 +3472,7 @@ public:
         {
             if (projectile->getFlags() & tibia::SpriteFlags::lightSource)
             {
-                drawLightAtTilePosition(light, projectile->getTilePosition());
+                drawLightAtTilePosition(m_light, projectile->getTilePosition());
             }
         }
 
@@ -3956,7 +3977,7 @@ public:
     void drawOptionsButton(sf::RenderWindow* mainWindow)
     {
         tibia::Sprite optionsButton;
-        optionsButton.setId(tibia::SpriteData::optionsButton);
+        optionsButton.setId(tibia::SpriteData::Gui::optionsButton);
         optionsButton.setPosition(tibia::GuiData::OptionsButton::position);
 
         mainWindow->draw(optionsButton);
@@ -3964,29 +3985,29 @@ public:
 
     void drawTabButtons(sf::RenderWindow* mainWindow)
     {
-        int tabButtonId = tibia::SpriteData::tabButtonMiniMap[1];
+        int tabButtonId = tibia::SpriteData::Gui::tabButtonMiniMap[1];
 
         sf::Vector2f tabButtonPosition = tibia::GuiData::TabButtons::MiniMap::position;
 
         switch (this->gui.tabButtonsState)
         {
             case tibia::GuiData::TabButtons::State::buttonInventory:
-                tabButtonId       = tibia::SpriteData::tabButtonInventory[1];
+                tabButtonId       = tibia::SpriteData::Gui::tabButtonInventory[1];
                 tabButtonPosition = tibia::GuiData::TabButtons::Inventory::position;
                 break;
 
             case tibia::GuiData::TabButtons::State::buttonStatus:
-                tabButtonId       = tibia::SpriteData::tabButtonStatus[1];
+                tabButtonId       = tibia::SpriteData::Gui::tabButtonStatus[1];
                 tabButtonPosition = tibia::GuiData::TabButtons::Status::position;
                 break;
 
             case tibia::GuiData::TabButtons::State::buttonCombat:
-                tabButtonId       = tibia::SpriteData::tabButtonCombat[1];
+                tabButtonId       = tibia::SpriteData::Gui::tabButtonCombat[1];
                 tabButtonPosition = tibia::GuiData::TabButtons::Combat::position;
                 break;
 
             case tibia::GuiData::TabButtons::State::buttonMiniMap:
-                tabButtonId       = tibia::SpriteData::tabButtonMiniMap[1];
+                tabButtonId       = tibia::SpriteData::Gui::tabButtonMiniMap[1];
                 tabButtonPosition = tibia::GuiData::TabButtons::MiniMap::position;
                 break;
         }
@@ -4002,7 +4023,6 @@ public:
     {
         sf::Sprite statusWindow;
         statusWindow.setTexture(tibia::Textures::status);
-
         statusWindow.setPosition(tibia::GuiData::StatusWindow::position);
 
         mainWindow->draw(statusWindow);
@@ -4012,10 +4032,56 @@ public:
     {
         sf::Sprite equipmentWindow;
         equipmentWindow.setTexture(tibia::Textures::equipment);
-
         equipmentWindow.setPosition(tibia::GuiData::EquipmentWindow::position);
 
+        tibia::Sprite slotContainer;
+        slotContainer.setId(tibia::SpriteData::backpack);
+        slotContainer.setPosition(tibia::GuiData::EquipmentWindow::Slots::Container::position);
+        slotContainer.setScale(tibia::GuiData::EquipmentWindow::Slots::Container::scale, tibia::GuiData::EquipmentWindow::Slots::Container::scale);
+
         mainWindow->draw(equipmentWindow);
+        mainWindow->draw(slotContainer);
+    }
+
+    void drawInventoryWindow(sf::RenderWindow* mainWindow)
+    {
+        sf::Sprite inventoryWindow;
+
+        if (this->gui.isInventorySplit == true)
+        {
+            inventoryWindow.setTexture(tibia::Textures::inventory2);
+        }
+        else
+        {
+            inventoryWindow.setTexture(tibia::Textures::inventory);
+        }
+
+        inventoryWindow.setPosition(tibia::GuiData::InventoryWindow::position);
+
+        tibia::Sprite iconContainer1;
+        iconContainer1.setId(tibia::SpriteData::backpack);
+        iconContainer1.setPosition(tibia::GuiData::InventoryWindow::Icons::Container1::position);
+
+        mainWindow->draw(inventoryWindow);
+        mainWindow->draw(iconContainer1);
+    }
+
+    void drawSkillsWindow(sf::RenderWindow* mainWindow)
+    {
+        sf::Sprite skillsWindow;
+        skillsWindow.setTexture(tibia::Textures::skills);
+        skillsWindow.setPosition(tibia::GuiData::SkillsWindow::position);
+
+        mainWindow->draw(skillsWindow);
+    }
+
+    void drawCombatWindow(sf::RenderWindow* mainWindow)
+    {
+        sf::Sprite combatWindow;
+        combatWindow.setTexture(tibia::Textures::combat);
+        combatWindow.setPosition(tibia::GuiData::CombatWindow::position);
+
+        mainWindow->draw(combatWindow);
     }
 
     bool isTileMapVisible(tibia::TileMap* tileMap)
@@ -4039,9 +4105,9 @@ public:
         int x2 = tibia::NUM_TILES_X + 2;
         int y2 = tibia::NUM_TILES_Y + 2;
 
-        for (unsigned int i = x1; i < x1 + x2; i++)
+        for (int i = x1; i < x1 + x2; i++)
         {
-            for (unsigned int j = y1; j < y1 + y2; j++)
+            for (int j = y1; j < y1 + y2; j++)
             {
                 if (i > tibia::MAP_SIZE - 1) continue;
                 if (j > tibia::MAP_SIZE - 1) continue;
@@ -4152,9 +4218,9 @@ public:
         int x2 = tibia::NUM_TILES_X;
         int y2 = tibia::NUM_TILES_Y;
 
-        for (unsigned int i = x1; i < x1 + x2; i++)
+        for (int i = x1; i < x1 + x2; i++)
         {
-            for (unsigned int j = y1; j < y1 + y2; j++)
+            for (int j = y1; j < y1 + y2; j++)
             {
                 if (i > tibia::MAP_SIZE - 1) continue;
                 if (j > tibia::MAP_SIZE - 1) continue;
@@ -4343,6 +4409,8 @@ private:
 
     sf::RenderTexture m_lightLayer;
     sf::Sprite m_lightLayerSprite;
+
+    tibia::Light m_light;
 
     unsigned int m_lightBrightness;
 
