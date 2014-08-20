@@ -43,7 +43,7 @@ class Game
 
 public:
 
-    struct GameOptions_t
+    struct Options_t
     {
         bool isMouseUseDefaultMouseCursorEnabled = false;
 
@@ -60,11 +60,13 @@ public:
         bool isCheatInfiniteManaEnabled   = false;
     };
 
-    GameOptions_t options;
+    Options_t options;
 
-    struct GameGui_t
+    struct Gui_t
     {
-        int tabButtonsState = tibia::GuiData::TabButtons::State::buttonMiniMap;
+        int tabButtonsState = tibia::GuiData::TabButtons::State::miniMap;
+
+        int combatButtonsState = tibia::GuiData::CombatButtons::State::halfOffenseDefense;
 
         bool topMiniMap   = true;
         bool topStatus    = false;
@@ -75,16 +77,21 @@ public:
         bool bottomCombat     = false;
 
         bool isInventorySplit = false;
+
+        bool inventoryButtonScrollUp   = false;
+        bool inventoryButtonScrollDown = false;
     };
 
-    GameGui_t gui;
+    Gui_t gui;
 
     Game::Game()
-    :
-        m_gameWindowView(sf::FloatRect(0, 0, tibia::GuiData::GameWindow::width, tibia::GuiData::GameWindow::height)),
-        m_miniMapWindowView(sf::FloatRect(0, 0, tibia::TILES_WIDTH * tibia::GuiData::MiniMapWindow::zoomDefault, tibia::TILES_WIDTH * tibia::GuiData::MiniMapWindow::zoomDefault))
     {
+        m_gameWindowView.setSize(sf::Vector2f(tibia::GuiData::GameWindow::width, tibia::GuiData::GameWindow::height));
+
         m_miniMapWindowZoom = tibia::GuiData::MiniMapWindow::zoomDefault;
+        m_miniMapWindowView.setSize(sf::Vector2f(tibia::TILES_WIDTH * tibia::GuiData::MiniMapWindow::zoomDefault, tibia::TILES_WIDTH * tibia::GuiData::MiniMapWindow::zoomDefault));
+
+        m_inventorySlotsWindowView.reset(sf::FloatRect(0, 0, tibia::GuiData::InventoryWindow::Slots::Window::TotalSize::width, tibia::GuiData::InventoryWindow::Slots::Window::TotalSize::height));
 
         m_tileMapTileVertices.setPrimitiveType(sf::Quads);
 
@@ -113,6 +120,11 @@ public:
         }
 
         if (m_miniMapWindow.create(tibia::GuiData::MiniMapWindow::width, tibia::GuiData::MiniMapWindow::height) == false)
+        {
+            return false;
+        }
+
+        if (m_inventorySlotsWindow.create(tibia::GuiData::InventoryWindow::Slots::Window::TotalSize::width, tibia::GuiData::InventoryWindow::Slots::Window::TotalSize::height) == false)
         {
             return false;
         }
@@ -194,14 +206,7 @@ public:
             setMouseCursorVisible(m_mainWindow, false);
         }
 
-        if (this->options.isGameSmoothLightingEnabled == true)
-        {
-            m_light.setTexture(tibia::Textures::lights2);
-        }
-        else
-        {
-            m_light.setTexture(tibia::Textures::lights);
-        }
+        updateLightingStyle();
     }
 
     void createPlayer()
@@ -227,6 +232,20 @@ public:
         tibia::Tile::Ptr tile = getThingTile(m_player);
 
         tile->addCreature(m_player);
+
+        ////////
+        for (int i = 1; i < 4096; i++)
+        {
+            for (auto spriteId : tibia::SpriteData::quadObjects)
+            {
+                if (i == spriteId)
+                {
+                    m_player->addInventoryItem(i, 99, 0);
+                    break;
+                }
+            }
+        }
+        ////////
     }
 
     void showMapNameAndAuthor()
@@ -234,7 +253,7 @@ public:
         std::stringstream ss;
         ss << m_map.properties.name << "\nby " << m_map.properties.author;
 
-        spawnGameText(m_player->getTilePosition(), m_player->getZ(), ss.str(), tibia::Colors::Text::white);
+        spawnGameText(m_player->getTilePosition(), m_player->getZ(), tibia::GameTextTypes::default, ss.str(), tibia::Colors::Text::white);
     }
 
     void doEnterGame()
@@ -244,6 +263,18 @@ public:
         spawnAnimation(m_player->getTilePosition(), m_player->getZ(), tibia::Animations::spellBlue);
 
         showMapNameAndAuthor();
+    }
+
+    void updateLightingStyle()
+    {
+        if (this->options.isGameSmoothLightingEnabled == true)
+        {
+            m_light.setTexture(tibia::Textures::lightsSmooth);
+        }
+        else
+        {
+            m_light.setTexture(tibia::Textures::lights);
+        }
     }
 
     bool loadTextures()
@@ -258,6 +289,10 @@ public:
         }
 
         m_mouseCursor.setTexture(tibia::Textures::cursor);
+
+        tibia::Textures::inventorySlot.setRepeated(true);
+
+        updateLightingStyle();
 
         return true;
     }
@@ -350,7 +385,7 @@ public:
                 break;
 
             case sf::Keyboard::H:
-                spawnGameText(sf::Vector2u(m_player->getTilePosition().x, m_player->getTilePosition().y - tibia::TILE_SIZE), m_player->getZ(), "You say:\nHello!", tibia::Colors::Text::yellow);
+                spawnGameText(sf::Vector2u(m_player->getTilePosition().x, m_player->getTilePosition().y - tibia::TILE_SIZE), m_player->getZ(), tibia::GameTextTypes::speech, "You say:\nHello!", tibia::Colors::Text::yellow);
                 break;
 
             case sf::Keyboard::M:
@@ -446,7 +481,7 @@ public:
 
     void handleMouseEvent(sf::Event event)
     {
-        if (event.mouseButton.button == sf::Mouse::Left)
+        if (event.mouseButton.button == sf::Mouse::Button::Left)
         {
             if (isMouseInsideMiniMapWindow() == true)
             {
@@ -463,7 +498,7 @@ public:
                     m_miniMapWindowZoom = tibia::GuiData::MiniMapWindow::zoomDefault;
                 }
 
-                m_miniMapWindowView.setSize(sf::Vector2f(tibia::TILES_WIDTH * m_miniMapWindowZoom, tibia::TILES_WIDTH * m_miniMapWindowZoom));
+                updateMiniMapWindowZoom();
             }
             else if (tibia::GuiData::OptionsButton::rect.contains(getMouseWindowPosition()) == true)
             {
@@ -471,7 +506,7 @@ public:
             }
             else if (tibia::GuiData::TabButtons::Inventory::rect.contains(getMouseWindowPosition()) == true)
             {
-                this->gui.tabButtonsState = tibia::GuiData::TabButtons::State::buttonInventory;
+                this->gui.tabButtonsState = tibia::GuiData::TabButtons::State::inventory;
 
                 this->gui.topMiniMap   = false;
                 this->gui.topStatus    = false;
@@ -483,7 +518,7 @@ public:
             }
             else if (tibia::GuiData::TabButtons::Status::rect.contains(getMouseWindowPosition()) == true)
             {
-                this->gui.tabButtonsState = tibia::GuiData::TabButtons::State::buttonStatus;
+                this->gui.tabButtonsState = tibia::GuiData::TabButtons::State::status;
 
                 this->gui.topMiniMap   = false;
                 this->gui.topStatus    = true;
@@ -495,7 +530,7 @@ public:
             }
             else if (tibia::GuiData::TabButtons::Combat::rect.contains(getMouseWindowPosition()) == true)
             {
-                this->gui.tabButtonsState = tibia::GuiData::TabButtons::State::buttonCombat;
+                this->gui.tabButtonsState = tibia::GuiData::TabButtons::State::combat;
 
                 this->gui.bottomInventory = false;
                 this->gui.bottomSkills    = false;
@@ -503,14 +538,125 @@ public:
             }
             else if (tibia::GuiData::TabButtons::MiniMap::rect.contains(getMouseWindowPosition()) == true)
             {
-                this->gui.tabButtonsState = tibia::GuiData::TabButtons::State::buttonMiniMap;
+                this->gui.tabButtonsState = tibia::GuiData::TabButtons::State::miniMap;
 
                 this->gui.topMiniMap   = true;
                 this->gui.topStatus    = false;
                 this->gui.topEquipment = false;
             }
+
+            if (this->gui.bottomInventory == true)
+            {
+                if (tibia::GuiData::InventoryWindow::Buttons::ScrollDown::rect.contains(getMouseWindowPosition()) == true)
+                {
+                    if (this->gui.inventoryButtonScrollDown == true)
+                    {
+                        doInventoryWindowSlotsViewScrollDown();
+                    }
+                }
+                else if (tibia::GuiData::InventoryWindow::Buttons::ScrollUp::rect.contains(getMouseWindowPosition()) == true)
+                {
+                    if (this->gui.inventoryButtonScrollUp == true)
+                    {
+                        doInventoryWindowSlotsViewScrollUp();
+                    }
+                }
+                else if (tibia::GuiData::InventoryWindow::Slots::Window::rect.contains(getMouseWindowPosition()) == true)
+                {
+                    // move inventory item to front of inventory list
+
+                    int inventoryWindowSlotIndex = getMouseInventoryWindowSlotIndex();
+
+                    //std::cout << "inventoryWindowSlotIndex: " << inventoryWindowSlotIndex << std::endl;
+
+                    tibia::Creature::InventoryItemList* inventoryItemList = m_player->getInventoryItemList();
+
+                    if (inventoryItemList->size() != 0 && inventoryWindowSlotIndex < inventoryItemList->size())
+                    {
+                        auto inventoryItemIt = inventoryItemList->begin() + inventoryWindowSlotIndex;
+
+                        inventoryItemList->insert(inventoryItemList->begin(), *inventoryItemIt);
+
+                        m_player->removeInventoryItem(inventoryWindowSlotIndex + 1);
+                    }
+                }
+            }
+            else if (this->gui.bottomSkills == true)
+            {
+                if (tibia::GuiData::OutfitButtons::Head::rect.contains(getMouseWindowPosition()) == true)
+                {
+                    int head = m_player->getOutfitHead();
+
+                    head++;
+
+                    if (head > (tibia::Outfits::head.size() / 4) - 1)
+                    {
+                        head = 0;
+                    }
+
+                    m_player->setOutfitHead(head);
+                }
+                else if (tibia::GuiData::OutfitButtons::Body::rect.contains(getMouseWindowPosition()) == true)
+                {
+                    int body = m_player->getOutfitBody();
+
+                    body++;
+
+                    if (body > (tibia::Outfits::body.size() / 4) - 1)
+                    {
+                        body = 0;
+                    }
+
+                    m_player->setOutfitBody(body);
+                }
+                else if (tibia::GuiData::OutfitButtons::Legs::rect.contains(getMouseWindowPosition()) == true)
+                {
+                    int legs = m_player->getOutfitLegs();
+
+                    legs++;
+
+                    if (legs > (tibia::Outfits::legs.size() / 4) - 1)
+                    {
+                        legs = 0;
+                    }
+
+                    m_player->setOutfitLegs(legs);
+                }
+                else if (tibia::GuiData::OutfitButtons::Feet::rect.contains(getMouseWindowPosition()) == true)
+                {
+                    int feet = m_player->getOutfitFeet();
+
+                    feet++;
+
+                    if (feet > (tibia::Outfits::feet.size() / 4) - 1)
+                    {
+                        feet = 0;
+                    }
+
+                    m_player->setOutfitFeet(feet);
+                }
+                else if (tibia::GuiData::OutfitButtons::All::rect.contains(getMouseWindowPosition()) == true)
+                {
+                    m_player->setOutfitRandom();
+                }
+            }
+            else if (this->gui.bottomCombat == true)
+            {
+                if (tibia::GuiData::CombatButtons::FullOffense::rect.contains(getMouseWindowPosition()) == true)
+                {
+                    this->gui.combatButtonsState = tibia::GuiData::CombatButtons::State::fullOffense;
+                }
+                else if (tibia::GuiData::CombatButtons::HalfOffenseDefense::rect.contains(getMouseWindowPosition()) == true)
+                {
+                    this->gui.combatButtonsState = tibia::GuiData::CombatButtons::State::halfOffenseDefense;
+                }
+                else if (tibia::GuiData::CombatButtons::FullDefense::rect.contains(getMouseWindowPosition()) == true)
+                {
+                    this->gui.combatButtonsState = tibia::GuiData::CombatButtons::State::fullDefense;
+                }
+            }
         }
-        else if (event.mouseButton.button == sf::Mouse::Right)
+        else if (event.mouseButton.button == sf::Mouse::Button::Right)
         {
             if (isMouseInsideGameWindow() == true)
             {
@@ -518,25 +664,114 @@ public:
                 {
                     if (m_mouseTile->getCreatureList()->size())
                     {
+                        // melee attack creature
+
                         tibia::Creature::Ptr creature = m_mouseTile->getCreatureList()->back();
 
                         if (creature != m_player)
                         {
-                            handleCreatureModifyHp(m_player, creature, -10, tibia::ModifyHpTypes::blood);
+                            int creatureTileDistance = tibia::Utility::calculateTileDistance
+                            (
+                                m_player->getTileX(),
+                                m_player->getTileY(),
+                                creature->getTileX(),
+                                creature->getTileY()
+                            );
+
+                            if (creatureTileDistance == 1)
+                            {
+                                handleCreatureModifyHp(m_player, creature, -10, tibia::ModifyHpTypes::blood);
+                            }
                         }
                     }
 
                     if (m_mouseTile->getObjectList()->size())
                     {
-                         doCreatureInteractWithTileObjects(m_player, m_mouseTile);
+                        // pickup object or interact with object
+
+                        tibia::Object::Ptr object = m_mouseTile->getObjectList()->back();
+
+                        if (object->getFlags() & tibia::SpriteFlags::pickupable)
+                        {
+                            int objectTileDistance = tibia::Utility::calculateTileDistance
+                            (
+                                m_player->getTileX(),
+                                m_player->getTileY(),
+                                object->getTileX(),
+                                object->getTileY()
+                            );
+
+                            if (objectTileDistance > 1)
+                            {
+                                showStatusBarText("Object is too far away.");
+                            }
+                            else
+                            {
+                                int creatureAddInventoryItemResult = m_player->addInventoryItem(object->getId(), 1, object->getFlags());
+
+                                if (creatureAddInventoryItemResult == tibia::CreatureAddInventoryItemResult::success)
+                                {
+                                    object->setIsReadyForErase(true);
+                                }
+                                else if (creatureAddInventoryItemResult == tibia::CreatureAddInventoryItemResult::inventoryItemCountMax)
+                                {
+                                    showStatusBarText("You cannot pick up any more of that object.");
+                                }
+                                else if (creatureAddInventoryItemResult == tibia::CreatureAddInventoryItemResult::inventoryItemsMax)
+                                {
+                                    showStatusBarText("Your inventory is full.");
+                                }
+                            }
+                        }
+                        else
+                        {
+                            doCreatureInteractWithTileObjects(m_player, m_mouseTile);
+                        }
+                    }
+                }
+            }
+
+            if (this->gui.bottomInventory == true)
+            {
+                if (tibia::GuiData::InventoryWindow::Buttons::ScrollDown::rect.contains(getMouseWindowPosition()) == true)
+                {
+                    if (this->gui.inventoryButtonScrollDown == true)
+                    {
+                        // scroll to end of inventory
+                        doInventoryWindowSlotsViewScrollToBottom();
+                    }
+                }
+                else if (tibia::GuiData::InventoryWindow::Buttons::ScrollUp::rect.contains(getMouseWindowPosition()) == true)
+                {
+                    if (this->gui.inventoryButtonScrollUp == true)
+                    {
+                        // scroll to begin of inventory
+                        doInventoryWindowSlotsViewScrollToTop();
+                    }
+                }
+                else if (tibia::GuiData::InventoryWindow::Slots::Window::rect.contains(getMouseWindowPosition()) == true)
+                {
+                    // interact with inventory item
+
+                    int inventoryWindowSlotIndex = getMouseInventoryWindowSlotIndex();
+
+                    tibia::Creature::InventoryItemList* inventoryItemList = m_player->getInventoryItemList();
+
+                    if (inventoryItemList->size() != 0 && inventoryWindowSlotIndex < inventoryItemList->size())
+                    {
+                        auto inventoryItemIt = inventoryItemList->begin() + inventoryWindowSlotIndex;
+
+                        //
                     }
                 }
             }
         }
-        else if (event.mouseButton.button == sf::Mouse::Middle)
+        else if (event.mouseButton.button == sf::Mouse::Button::Middle)
         {
             if (isMouseInsideGameWindow() == true)
             {
+                // push object
+
                 tibia::Object::List* objectList = m_mouseTile->getObjectList();
 
                 if (objectList->size())
@@ -546,6 +781,153 @@ public:
                     //std::cout << "Push Object ID: " << object->getId() << std::endl;
 
                     doCreaturePushObject(m_player, object);
+                }
+            }
+            else if (isMouseInsideMiniMapWindow() == true)
+            {
+                // reset minimap zoom to default
+
+                m_miniMapWindowZoom = tibia::GuiData::MiniMapWindow::zoomDefault;
+
+                updateMiniMapWindowZoom();
+            }
+
+            if (this->gui.bottomInventory == true)
+            {
+                if (tibia::GuiData::InventoryWindow::Slots::Window::rect.contains(getMouseWindowPosition()) == true)
+                {
+                    // drop inventory item on ground
+
+                    int inventoryWindowSlotIndex = getMouseInventoryWindowSlotIndex();
+
+                    //std::cout << "inventoryWindowSlotIndex: " << inventoryWindowSlotIndex << std::endl;
+
+                    tibia::Creature::InventoryItemList* inventoryItemList = m_player->getInventoryItemList();
+
+                    if (inventoryItemList->size() != 0 && inventoryWindowSlotIndex < inventoryItemList->size())
+                    {
+                        auto inventoryItemIt = inventoryItemList->begin() + inventoryWindowSlotIndex;
+
+                        spawnObject(m_player->getTilePosition(), m_player->getZ(), inventoryItemIt->id);
+
+                        if (inventoryItemIt->count > 1)
+                        {
+                            inventoryItemIt->count--;
+                        }
+                        else
+                        {
+                            m_player->removeInventoryItem(inventoryWindowSlotIndex);
+                        }
+                    }
+                }
+            }
+        }
+        else if (event.mouseButton.button == sf::Mouse::Button::XButton1)
+        {
+            if (this->gui.bottomInventory == true)
+            {
+                if (tibia::GuiData::InventoryWindow::rect.contains(getMouseWindowPosition()) == true)
+                {
+                    if (this->gui.inventoryButtonScrollUp == true)
+                    {
+                        // scroll to begin of inventory
+                        doInventoryWindowSlotsViewScrollToTop();
+                    }
+                }
+            }
+        }
+        else if (event.mouseButton.button == sf::Mouse::Button::XButton2)
+        {
+            if (this->gui.bottomInventory == true)
+            {
+                if (tibia::GuiData::InventoryWindow::rect.contains(getMouseWindowPosition()) == true)
+                {
+                    if (this->gui.inventoryButtonScrollDown == true)
+                    {
+                        // scroll to end of inventory
+                        doInventoryWindowSlotsViewScrollToBottom();
+                    }
+                }
+            }
+        }
+    }
+
+    void handleMouseWheelEvent(sf::Event event)
+    {
+        // scroll up
+        if (event.mouseWheel.delta > 0)
+        {
+            if (isMouseInsideGameWindow() == true)
+            {
+                // zoom in
+
+                m_gameWindowZoomLevel -= m_gameWindowZoomFactor;
+
+                if (m_gameWindowZoomLevel < 1.0f) m_gameWindowZoomLevel = 1.0f;
+
+                m_gameWindowView.setSize(sf::Vector2f(tibia::TILES_WIDTH * m_gameWindowZoomLevel, tibia::TILES_HEIGHT * m_gameWindowZoomLevel));
+            }
+            else if (isMouseInsideMiniMapWindow() == true)
+            {
+                // decrease minimap zoom
+                if (m_miniMapWindowZoom == tibia::GuiData::MiniMapWindow::zoomMax)
+                {
+                    m_miniMapWindowZoom = tibia::GuiData::MiniMapWindow::zoomDefault;
+                }
+                else if (m_miniMapWindowZoom == tibia::GuiData::MiniMapWindow::zoomDefault)
+                {
+                    m_miniMapWindowZoom = tibia::GuiData::MiniMapWindow::zoomMin;
+                }
+
+                updateMiniMapWindowZoom();
+            }
+
+            if (this->gui.bottomInventory == true)
+            {
+                if (tibia::GuiData::InventoryWindow::rect.contains(getMouseWindowPosition()) == true)
+                {
+                    if (this->gui.inventoryButtonScrollUp == true)
+                    {
+                        doInventoryWindowSlotsViewScrollUp();
+                    }
+                }
+            }
+        }
+
+        // scroll down
+        else if (event.mouseWheel.delta < 0)
+        {
+            if (isMouseInsideGameWindow() == true)
+            {
+                // zoom out
+
+                m_gameWindowZoomLevel += m_gameWindowZoomFactor;
+
+                m_gameWindowView.setSize(sf::Vector2f(tibia::TILES_WIDTH * m_gameWindowZoomLevel, tibia::TILES_HEIGHT * m_gameWindowZoomLevel));
+            }
+            else if (isMouseInsideMiniMapWindow() == true)
+            {
+                // increase minimap zoom
+                if (m_miniMapWindowZoom == tibia::GuiData::MiniMapWindow::zoomMin)
+                {
+                    m_miniMapWindowZoom = tibia::GuiData::MiniMapWindow::zoomDefault;
+                }
+                else if (m_miniMapWindowZoom == tibia::GuiData::MiniMapWindow::zoomDefault)
+                {
+                    m_miniMapWindowZoom = tibia::GuiData::MiniMapWindow::zoomMax;
+                }
+
+                updateMiniMapWindowZoom();
+            }
+
+            if (this->gui.bottomInventory == true)
+            {
+                if (tibia::GuiData::InventoryWindow::rect.contains(getMouseWindowPosition()) == true)
+                {
+                    if (this->gui.inventoryButtonScrollDown == true)
+                    {
+                        doInventoryWindowSlotsViewScrollDown();
+                    }
                 }
             }
         }
@@ -567,6 +949,60 @@ public:
     void setMouseCursorType(unsigned int type)
     {
         m_mouseCursor.setTextureRect(sf::IntRect(0, type * tibia::MouseCursor::height, tibia::MouseCursor::width, tibia::MouseCursor::height));
+    }
+
+    void updateMiniMapWindowZoom()
+    {
+        m_miniMapWindowView.setSize(sf::Vector2f(tibia::TILES_WIDTH * m_miniMapWindowZoom, tibia::TILES_WIDTH * m_miniMapWindowZoom));
+    }
+
+    void doInventoryWindowSlotsViewScrollUp()
+    {
+        m_inventorySlotsWindowView.move(0, -tibia::GuiData::InventoryWindow::Slots::size);
+    }
+
+    void doInventoryWindowSlotsViewScrollDown()
+    {
+        m_inventorySlotsWindowView.move(0, tibia::GuiData::InventoryWindow::Slots::size);
+    }
+
+    void doInventoryWindowSlotsViewScrollToTop()
+    {
+        m_inventorySlotsWindowView.reset
+        (
+            sf::FloatRect
+            (
+                0,
+                0,
+                tibia::GuiData::InventoryWindow::Slots::Window::TotalSize::width,
+                tibia::GuiData::InventoryWindow::Slots::Window::TotalSize::height
+            )
+        );
+    }
+
+    void doInventoryWindowSlotsViewScrollToBottom()
+    {
+        m_inventorySlotsWindowView.reset
+        (
+            sf::FloatRect
+            (
+                0,
+                getInventoryWindowSlotsViewMaxScrollY(),
+                tibia::GuiData::InventoryWindow::Slots::Window::TotalSize::width,
+                tibia::GuiData::InventoryWindow::Slots::Window::TotalSize::height
+            )
+        );
+    }
+
+    int getInventoryWindowSlotsViewMaxScrollY()
+    {
+        int maxScrollY = (m_player->getInventoryItemList()->size() / tibia::GuiData::InventoryWindow::Slots::numSlotsHorizontal) * tibia::GuiData::InventoryWindow::Slots::size;
+
+        maxScrollY -= (tibia::GuiData::InventoryWindow::height - (tibia::GuiData::InventoryWindow::Slots::size * 3));
+
+        maxScrollY = maxScrollY - (maxScrollY % tibia::GuiData::InventoryWindow::Slots::size);
+
+        return maxScrollY;
     }
 
     void doCreatureLogic(int z)
@@ -647,23 +1083,27 @@ public:
         }
     }
 
-    void doPlayerInteractWithPlayerTileObjects()
+    bool doPlayerInteractWithPlayerTileObjects()
     {
         tibia::Tile::Ptr playerTile = getPlayerTile();
 
         if (playerTile == nullptr)
         {
-            return;
+            return false;
         }
+
+        bool result = false;
 
         if (playerTile->getObjectList()->size())
         {
-            doCreatureInteractWithTileObjects(m_player, playerTile);
+            result = doCreatureInteractWithTileObjects(m_player, playerTile);
         }
         else
         {
-            doCreatureInteractWithTileObjects(m_player, getTileByCreatureDirection(m_player));
+            result = doCreatureInteractWithTileObjects(m_player, getTileByCreatureDirection(m_player));
         }
+
+        return result;
     }
 
     void doPlayerClickToMove()
@@ -693,9 +1133,9 @@ public:
         handleCreatureMovement(m_player, playerMovementDirection);
     }
 
-    tibia::Tile::TileProperties_t getTileProperties(tibia::Tile::Ptr tile)
+    tibia::Tile::Properties_t getTileProperties(tibia::Tile::Ptr tile)
     {
-        tibia::Tile::TileProperties_t tileProperties;
+        tibia::Tile::Properties_t tileProperties;
 
         if (tile->getFlags() & tibia::SpriteFlags::solid)
         {
@@ -968,7 +1408,7 @@ public:
             }
         }
 
-        tibia::Tile::TileProperties_t toTileProperties = getTileProperties(toTile);
+        tibia::Tile::Properties_t toTileProperties = getTileProperties(toTile);
 
         tibia::Object::Ptr teleporterObject = getTileObjectByType(toTile->getPosition(), toTile->getZ(), tibia::ObjectTypes::teleporter);
 
@@ -978,9 +1418,6 @@ public:
 
         if
         (
-            // broken!
-            //fromTile->getZ() >= tibia::ZAxis::ground &&
-            //fromTile->getZ() < tibia::ZAxis::ceiling &&
             fromTile->getZ() != tibia::ZAxis::ground &&
             fromTile->getZ() != tibia::ZAxis::floor  &&
 
@@ -1025,9 +1462,6 @@ public:
         (
             isTileClimbDown == false &&
 
-            // broken!
-            //fromTile->getZ() >= tibia::ZAxis::ground &&
-            //fromTile->getZ() < tibia::ZAxis::ceiling &&
             fromTile->getZ() != tibia::ZAxis::underGround &&
             fromTile->getZ() != tibia::ZAxis::ceiling     &&
 
@@ -1053,11 +1487,13 @@ public:
                 climbUpToTile = getTile(sf::Vector2u(toTile->getPosition().x - tibia::TILE_SIZE, toTile->getPosition().y), climbUpToZ);
             }
 
+            tibia::Tile::Ptr aboveThingTile = getTile(thing->getTilePosition(), climbUpToZ);
+
             if (climbUpToTile != nullptr)
             {
-                if (climbUpToTile->getId() != tibia::TILE_NULL)
+                if (aboveThingTile->getId() == tibia::TILE_NULL && climbUpToTile->getId() != tibia::TILE_NULL)
                 {
-                    tibia::Tile::TileProperties_t climbUpToTileProperties = getTileProperties(climbUpToTile);
+                    tibia::Tile::Properties_t climbUpToTileProperties = getTileProperties(climbUpToTile);
 
                     if(climbUpToTileProperties.hasSolidObject == false) // && climbUpToTile->getHeight() < tibia::TILE_HEIGHT_MOVEMENT_DIFFERENCE
                     {
@@ -1091,7 +1527,7 @@ public:
             {
                 if (mountainRampDownToTile->getId() != tibia::TILE_NULL)
                 {
-                    tibia::Tile::TileProperties_t mountainRampDownToTileProperties = getTileProperties(mountainRampDownToTile);
+                    tibia::Tile::Properties_t mountainRampDownToTileProperties = getTileProperties(mountainRampDownToTile);
 
                     if
                     (
@@ -1338,30 +1774,36 @@ public:
         return true;
     }
 
-    void doCreatureInteractWithTileObjects(tibia::Creature::Ptr creature, tibia::Tile::Ptr tile)
+    bool doCreatureInteractWithTileObjects(tibia::Creature::Ptr creature, tibia::Tile::Ptr tile)
     {
         if (creature == nullptr || tile == nullptr)
         {
-            return;
+            return false;
         }
 
         tibia::Object::List* objectList = tile->getObjectList();
 
         if (objectList->size() == 0)
         {
-            return;
+            return false;
         }
 
-        if (doCreatureInteractWithObject(creature, objectList->back()) == false)
+        bool result = false;
+
+        result = doCreatureInteractWithObject(creature, objectList->back());
+
+        if (result == false)
         {
             for (auto& object : *objectList)
             {
                 if (doCreatureInteractWithObject(creature, object) == true)
                 {
-                    break;
+                    return true;
                 }
             }
         }
+
+        return result;
     }
 
     bool doCreaturePushObject(tibia::Creature::Ptr creature, tibia::Object::Ptr object)
@@ -1409,7 +1851,7 @@ public:
 
         bool ignoreTileObjectCollision = false;
 
-        tibia::Tile::TileProperties_t toTileProperties = getTileProperties(toTile);
+        tibia::Tile::Properties_t toTileProperties = getTileProperties(toTile);
 
         if ((object->getFlags() & tibia::SpriteFlags::solid) == false && toTileProperties.hasHasHeightObject == true)
         {
@@ -1437,7 +1879,7 @@ public:
                     return false;
                 }
 
-                tibia::Tile::TileProperties_t toTileProperties = getTileProperties(toTile);
+                tibia::Tile::Properties_t toTileProperties = getTileProperties(toTile);
 
                 if ((object->getFlags() & tibia::SpriteFlags::solid) == false && toTileProperties.hasHasHeightObject == true)
                 {
@@ -1471,7 +1913,11 @@ public:
             > 1
         )
         {
-            showStatusBarText("Object is too far away.");
+            if (creature == m_player)
+            {
+                showStatusBarText("Object is too far away.");
+            }
+
             return false;
         }
 
@@ -1483,7 +1929,7 @@ public:
 
             std::cout << signText.str() << std::endl;
 
-            spawnGameText(object->getTilePosition(), creature->getZ(), signText.str(), tibia::Colors::Text::green);
+            spawnGameText(object->getTilePosition(), creature->getZ(), tibia::GameTextTypes::default, signText.str(), tibia::Colors::Text::green);
 
             return true;
         }
@@ -1570,9 +2016,14 @@ public:
         }
 
         // ladder and rope up
-        // TODO: make rope up require a rope
         if (object->getId() == tibia::SpriteData::ladder || object->getId() == tibia::SpriteData::ropeUp)
         {
+            if (object->getId() == tibia::SpriteData::ropeUp && creature->hasInventoryItem(tibia::SpriteData::rope) == false)
+            {
+                showStatusBarText("You need a rope to climb up.");
+                return false;
+            }
+
             tibia::Tile::Ptr toTile = getTileForMoveAbove(sf::Vector2u(object->getTileX(), object->getTileY()), creature->getZ() + 1);
 
             doMoveThingToTile(creature, toTile, tibia::Directions::up, true);
@@ -1591,9 +2042,14 @@ public:
         }
 
         // dig holes
-        // TODO: require shovel or pickaxe to dig
         if (object->getId() == tibia::SpriteData::digHole[0] || object->getId() == tibia::SpriteData::digHoleIce[0])
         {
+            if (creature->hasInventoryItem(tibia::SpriteData::shovel) == false && creature->hasInventoryItem(tibia::SpriteData::pick) == false)
+            {
+                showStatusBarText("You need a shovel or pick to dig.");
+                return false;
+            }
+
             if (object->getId() == tibia::SpriteData::digHole[0])
             {
                 object->setId(tibia::SpriteData::digHole[1]);
@@ -2169,6 +2625,17 @@ public:
         {
             tibia::Tile::Ptr toTile = getTile(sf::Vector2u(object->getTilePosition().x, object->getTilePosition().y - tibia::TILE_SIZE), object->getZ());
 
+            // do not open the counter if there are objects on the tile the counter is moving to
+            if (toTile->getObjectList()->size() > 1)
+            {
+                if (creature == m_player)
+                {
+                    showStatusBarText("The counter top is blocked by an object.");
+                }
+
+                return false;
+            }
+
             doMoveThingToTile(object, toTile, tibia::Directions::null, true);
 
             object->setId(tibia::SpriteData::counterVertical[1]);
@@ -2180,7 +2647,7 @@ public:
             tibia::Tile::Ptr toTile = getTile(sf::Vector2u(object->getTilePosition().x, object->getTilePosition().y + tibia::TILE_SIZE), object->getZ());
 
             // do not close the counter on solid objects or creatures
-            tibia::Tile::TileProperties_t tileProperties = getTileProperties(toTile);
+            tibia::Tile::Properties_t tileProperties = getTileProperties(toTile);
             if (tileProperties.hasSolidObject == true || tileProperties.hasSolidCreature == true)
             {
                 return false;
@@ -2196,6 +2663,17 @@ public:
         {
             tibia::Tile::Ptr toTile = getTile(sf::Vector2u(object->getTilePosition().x - tibia::TILE_SIZE, object->getTilePosition().y), object->getZ());
 
+            // do not open the counter if there are objects on the tile the counter is moving to
+            if (toTile->getObjectList()->size() > 1)
+            {
+                if (creature == m_player)
+                {
+                    showStatusBarText("The counter top is blocked by an object.");
+                }
+
+                return false;
+            }
+
             doMoveThingToTile(object, toTile, tibia::Directions::null, true);
 
             object->setId(tibia::SpriteData::counterHorizontal[1]);
@@ -2207,7 +2685,7 @@ public:
             tibia::Tile::Ptr toTile = getTile(sf::Vector2u(object->getTilePosition().x + tibia::TILE_SIZE, object->getTilePosition().y), object->getZ());
 
             // do not close the counter on solid objects or creatures
-            tibia::Tile::TileProperties_t tileProperties = getTileProperties(toTile);
+            tibia::Tile::Properties_t tileProperties = getTileProperties(toTile);
             if (tileProperties.hasSolidObject == true || tileProperties.hasSolidCreature == true)
             {
                 return false;
@@ -2593,6 +3071,7 @@ public:
                     (
                         defender->getTilePosition(),
                         defender->getZ(),
+                        tibia::GameTextTypes::default,
                         "You are dead.",
                         tibia::Colors::Text::white
                     );
@@ -2844,7 +3323,7 @@ public:
                 continue;
             }
 
-            tibia::Tile::TileProperties_t projectileTileProperties = getTileProperties(projectileTile);
+            tibia::Tile::Properties_t projectileTileProperties = getTileProperties(projectileTile);
 
             tibia::Object::Ptr teleporterObject = getTileObjectByType(projectileTile->getPosition(), projectileTile->getZ(), tibia::ObjectTypes::teleporter);
 
@@ -2950,6 +3429,40 @@ public:
     sf::Vector2i getMouseWindowPosition()
     {
         return m_mouseWindowPosition;
+    }
+
+    int getMouseInventoryWindowSlotIndex()
+    {
+        sf::Vector2f slotPosition = m_inventorySlotsWindow.mapPixelToCoords(getMouseWindowPosition(), m_inventorySlotsWindowView);
+
+        slotPosition.x -= tibia::GuiData::InventoryWindow::Slots::Window::x;
+        slotPosition.y -= tibia::GuiData::InventoryWindow::Slots::Window::y;
+
+        if (slotPosition.x < 0) slotPosition.x = 0;
+        if (slotPosition.y < 0) slotPosition.y = 0;
+
+        sf::Vector2u slotPositionActual;
+        slotPositionActual.x = slotPosition.x;
+        slotPositionActual.y = slotPosition.y;
+
+        // round down to nearest multiple of slot size
+        slotPositionActual.x = slotPositionActual.x - (slotPositionActual.x % tibia::GuiData::InventoryWindow::Slots::size);
+        slotPositionActual.y = slotPositionActual.y - (slotPositionActual.y % tibia::GuiData::InventoryWindow::Slots::size);
+
+        //std::cout << "slotPositionActual x: " << slotPositionActual.x << std::endl;
+        //std::cout << "slotPositionActual y: " << slotPositionActual.y << std::endl;
+
+        slotPositionActual.x = slotPositionActual.x / tibia::GuiData::InventoryWindow::Slots::size;
+        slotPositionActual.y = slotPositionActual.y / tibia::GuiData::InventoryWindow::Slots::size;
+
+        //std::cout << "slotPositionActual x: " << slotPositionActual.x << std::endl;
+        //std::cout << "slotPositionActual y: " << slotPositionActual.y << std::endl;
+
+        int slotIndex = slotPositionActual.x + (slotPositionActual.y * tibia::GuiData::InventoryWindow::Slots::numSlotsHorizontal);
+
+        //std::cout << "slotIndex: " << slotIndex << std::endl;
+
+        return slotIndex;
     }
 
     void updateMouseTile()
@@ -3744,15 +4257,15 @@ public:
         }
     }
 
-    void spawnGameText(const sf::Vector2u& tilePosition, int z, const std::string& text, sf::Color textColor)
+    void spawnGameText(const sf::Vector2u& tilePosition, int z, int type, const std::string& text, sf::Color textColor)
     {
-        tibia::GameText gt;
-        gt.setText(m_bitmapFontDefault, tilePosition, z, text, textColor);
-
         if (z != m_player->getZ())
         {
             return;
         }
+
+        tibia::GameText gt;
+        gt.setText(m_bitmapFontDefault, tilePosition, z, type, text, textColor);
 
         m_gameTextList.push_back(gt);
     }
@@ -3991,22 +4504,22 @@ public:
 
         switch (this->gui.tabButtonsState)
         {
-            case tibia::GuiData::TabButtons::State::buttonInventory:
+            case tibia::GuiData::TabButtons::State::inventory:
                 tabButtonId       = tibia::SpriteData::Gui::tabButtonInventory[1];
                 tabButtonPosition = tibia::GuiData::TabButtons::Inventory::position;
                 break;
 
-            case tibia::GuiData::TabButtons::State::buttonStatus:
+            case tibia::GuiData::TabButtons::State::status:
                 tabButtonId       = tibia::SpriteData::Gui::tabButtonStatus[1];
                 tabButtonPosition = tibia::GuiData::TabButtons::Status::position;
                 break;
 
-            case tibia::GuiData::TabButtons::State::buttonCombat:
+            case tibia::GuiData::TabButtons::State::combat:
                 tabButtonId       = tibia::SpriteData::Gui::tabButtonCombat[1];
                 tabButtonPosition = tibia::GuiData::TabButtons::Combat::position;
                 break;
 
-            case tibia::GuiData::TabButtons::State::buttonMiniMap:
+            case tibia::GuiData::TabButtons::State::miniMap:
                 tabButtonId       = tibia::SpriteData::Gui::tabButtonMiniMap[1];
                 tabButtonPosition = tibia::GuiData::TabButtons::MiniMap::position;
                 break;
@@ -4026,6 +4539,68 @@ public:
         statusWindow.setPosition(tibia::GuiData::StatusWindow::position);
 
         mainWindow->draw(statusWindow);
+
+        tibia::BitmapFontText statusText;
+
+        // HP
+        statusText.setText(&m_bitmapFontTiny, std::to_string(m_player->getHp()), tibia::Colors::white);
+        statusText.setPosition
+        (
+            tibia::GuiData::StatusWindow::Stats::Hp::x + tibia::GuiData::StatusWindow::Icons::width + 1 - statusText.getVertexArray()->getBounds().width,
+            tibia::GuiData::StatusWindow::Stats::Hp::y + tibia::GuiData::StatusWindow::Icons::width + 1 - tibia::BitmapFonts::Tiny::glyphSize.y
+        );
+
+        mainWindow->draw(statusText);
+
+        // CAP
+        statusText.setText(&m_bitmapFontTiny, std::to_string(m_player->getCap()), tibia::Colors::white);
+        statusText.setPosition
+        (
+            tibia::GuiData::StatusWindow::Stats::Cap::x + tibia::GuiData::StatusWindow::Icons::width + 1 - statusText.getVertexArray()->getBounds().width,
+            tibia::GuiData::StatusWindow::Stats::Cap::y + tibia::GuiData::StatusWindow::Icons::width + 1 - tibia::BitmapFonts::Tiny::glyphSize.y
+        );
+
+        mainWindow->draw(statusText);
+
+        // EXP
+        statusText.setText(&m_bitmapFontTiny, std::to_string(m_player->getExp()), tibia::Colors::white);
+        statusText.setPosition
+        (
+            tibia::GuiData::StatusWindow::Stats::Exp::x + tibia::GuiData::StatusWindow::Icons::width + 1 - statusText.getVertexArray()->getBounds().width,
+            tibia::GuiData::StatusWindow::Stats::Exp::y + tibia::GuiData::StatusWindow::Icons::width + 1 - tibia::BitmapFonts::Tiny::glyphSize.y
+        );
+
+        mainWindow->draw(statusText);
+
+        // MANA
+        statusText.setText(&m_bitmapFontTiny, std::to_string(m_player->getMp()), tibia::Colors::white);
+        statusText.setPosition
+        (
+            tibia::GuiData::StatusWindow::Stats::Mp::x + tibia::GuiData::StatusWindow::Icons::width + 1 - statusText.getVertexArray()->getBounds().width,
+            tibia::GuiData::StatusWindow::Stats::Mp::y + tibia::GuiData::StatusWindow::Icons::width + 1 - tibia::BitmapFonts::Tiny::glyphSize.y
+        );
+
+        mainWindow->draw(statusText);
+
+        // LEV
+        statusText.setText(&m_bitmapFontTiny, std::to_string(m_player->getLevel()), tibia::Colors::white);
+        statusText.setPosition
+        (
+            tibia::GuiData::StatusWindow::Stats::Level::x + tibia::GuiData::StatusWindow::Icons::width + 1 - statusText.getVertexArray()->getBounds().width,
+            tibia::GuiData::StatusWindow::Stats::Level::y + tibia::GuiData::StatusWindow::Icons::width + 1 - tibia::BitmapFonts::Tiny::glyphSize.y
+        );
+
+        mainWindow->draw(statusText);
+
+        // MAG
+        statusText.setText(&m_bitmapFontTiny, std::to_string(m_player->getMagicLevel()), tibia::Colors::white);
+        statusText.setPosition
+        (
+            tibia::GuiData::StatusWindow::Stats::magicLevel::x + tibia::GuiData::StatusWindow::Icons::width + 1 - statusText.getVertexArray()->getBounds().width,
+            tibia::GuiData::StatusWindow::Stats::magicLevel::y + tibia::GuiData::StatusWindow::Icons::width + 1 - tibia::BitmapFonts::Tiny::glyphSize.y
+        );
+
+        mainWindow->draw(statusText);
     }
 
     void drawEquipmentWindow(sf::RenderWindow* mainWindow)
@@ -4049,7 +4624,7 @@ public:
 
         if (this->gui.isInventorySplit == true)
         {
-            inventoryWindow.setTexture(tibia::Textures::inventory2);
+            inventoryWindow.setTexture(tibia::Textures::inventorySplit);
         }
         else
         {
@@ -4058,12 +4633,110 @@ public:
 
         inventoryWindow.setPosition(tibia::GuiData::InventoryWindow::position);
 
-        tibia::Sprite iconContainer1;
-        iconContainer1.setId(tibia::SpriteData::backpack);
-        iconContainer1.setPosition(tibia::GuiData::InventoryWindow::Icons::Container1::position);
+        tibia::Sprite inventoryIconContainer;
+        inventoryIconContainer.setId(tibia::SpriteData::backpack);
+        inventoryIconContainer.setPosition(tibia::GuiData::InventoryWindow::Icons::Container::position);
 
         mainWindow->draw(inventoryWindow);
-        mainWindow->draw(iconContainer1);
+        mainWindow->draw(inventoryIconContainer);
+
+        tibia::Creature::InventoryItemList* inventoryList = m_player->getInventoryItemList();
+
+        if (inventoryList->size() > tibia::GuiData::InventoryWindow::Slots::numSlotsVisible)
+        {
+            int inventorySlotsWindowViewMaxScrollY = getInventoryWindowSlotsViewMaxScrollY();
+
+            if (tibia::Utility::getViewPosition(m_inventorySlotsWindowView).y < inventorySlotsWindowViewMaxScrollY)
+            {
+                tibia::Sprite inventoryButtonScrollDown;
+                inventoryButtonScrollDown.setId(tibia::SpriteData::Gui::scrollButtonDown[1]);
+                inventoryButtonScrollDown.setPosition(tibia::GuiData::InventoryWindow::Buttons::ScrollDown::position);
+
+                mainWindow->draw(inventoryButtonScrollDown);
+
+                this->gui.inventoryButtonScrollDown = true;
+            }
+            else
+            {
+                this->gui.inventoryButtonScrollDown = false;
+            }
+        }
+        else
+        {
+            this->gui.inventoryButtonScrollDown = false;
+        }
+
+        if (tibia::Utility::getViewPosition(m_inventorySlotsWindowView).y > 0)
+        {
+            tibia::Sprite inventoryButtonScrollUp;
+            inventoryButtonScrollUp.setId(tibia::SpriteData::Gui::scrollButtonUp[1]);
+            inventoryButtonScrollUp.setPosition(tibia::GuiData::InventoryWindow::Buttons::ScrollUp::position);
+
+            mainWindow->draw(inventoryButtonScrollUp);
+
+            this->gui.inventoryButtonScrollUp = true;
+        }
+        else
+        {
+            this->gui.inventoryButtonScrollUp = false;
+        }
+
+        tibia::Creature::InventoryItemList* inventoryItemList = m_player->getInventoryItemList();
+
+        if (inventoryItemList->size() != 0)
+        {
+            m_inventorySlotsWindow.setView(m_inventorySlotsWindowView);
+            m_inventorySlotsWindow.clear(tibia::Colors::transparent);
+
+            tibia::BitmapFontText bftInventoryItemCount;
+
+            int inventoryItemIndex = 0;
+
+            sf::Vector2f inventoryItemPosition(0, 0);
+
+            for (auto& inventoryItem : *inventoryItemList)
+            {
+                tibia::Sprite sprInventoryItem;
+                sprInventoryItem.setId(inventoryItem.id);
+                sprInventoryItem.setPosition(inventoryItemPosition);
+
+                m_inventorySlotsWindow.draw(sprInventoryItem);
+
+                if (inventoryItem.count > 1)
+                {
+                    bftInventoryItemCount.setText(&m_bitmapFontTiny, std::to_string(inventoryItem.count), tibia::Colors::white);
+
+                    bftInventoryItemCount.setPosition
+                    (
+                        inventoryItemPosition.x + 32 + 1 - bftInventoryItemCount.getVertexArray()->getBounds().width,
+                        inventoryItemPosition.y + 32 + 1 - tibia::BitmapFonts::Tiny::glyphSize.y
+                    );
+
+                    m_inventorySlotsWindow.draw(bftInventoryItemCount);
+                }
+
+                if (inventoryItemIndex % tibia::GuiData::InventoryWindow::Slots::numSlotsHorizontal == 2)
+                {
+                    inventoryItemPosition.x = 0;
+
+                    inventoryItemPosition.y += tibia::TILE_SIZE + tibia::GuiData::InventoryWindow::Slots::distanceBetweenSlots;
+                }
+                else
+                {
+                    inventoryItemPosition.x += tibia::TILE_SIZE + tibia::GuiData::InventoryWindow::Slots::distanceBetweenSlots;
+                }
+
+                inventoryItemIndex++;
+            }
+
+            m_inventorySlotsWindow.display();
+
+            m_inventorySlotsWindowSprite.setTexture(m_inventorySlotsWindow.getTexture());
+            m_inventorySlotsWindowSprite.setTextureRect(sf::IntRect(0, 0, tibia::GuiData::InventoryWindow::Slots::Window::width, tibia::GuiData::InventoryWindow::Slots::Window::height));
+            m_inventorySlotsWindowSprite.setPosition(tibia::GuiData::InventoryWindow::Slots::Window::position);
+
+            mainWindow->draw(m_inventorySlotsWindowSprite);
+        }
     }
 
     void drawSkillsWindow(sf::RenderWindow* mainWindow)
@@ -4073,6 +4746,65 @@ public:
         skillsWindow.setPosition(tibia::GuiData::SkillsWindow::position);
 
         mainWindow->draw(skillsWindow);
+
+        std::vector<int> skillList =
+        {
+            m_player->skills.fistFighting,
+            m_player->skills.clubFighting,
+            m_player->skills.swordFighting,
+            m_player->skills.axeFighting,
+            m_player->skills.distanceFighting,
+            m_player->skills.shielding,
+            m_player->skills.fishing,
+        };
+
+        int skillTextX = tibia::GuiData::SkillsWindow::Text::startX;
+        int skillTextY = tibia::GuiData::SkillsWindow::Text::startY;
+
+        tibia::BitmapFontText skillText;
+
+        for (auto skillValue : skillList)
+        {
+            skillText.setText(&m_bitmapFontTiny, std::to_string(skillValue), tibia::Colors::white);
+            skillText.setPosition
+            (
+                skillTextX + tibia::GuiData::SkillsWindow::Text::alignTextRightOffset - skillText.getVertexArray()->getBounds().width,
+                skillTextY
+            );
+
+            mainWindow->draw(skillText);
+
+            skillTextY += tibia::GuiData::SkillsWindow::Text::distanceBetweenText;
+        }
+    }
+
+    void drawOutfitButtons(sf::RenderWindow* mainWindow)
+    {
+        tibia::Sprite outfitButtonHead;
+        outfitButtonHead.setId(tibia::SpriteData::Gui::outfitButtonHead);
+        outfitButtonHead.setPosition(tibia::GuiData::OutfitButtons::Head::position);
+
+        tibia::Sprite outfitButtonBody;
+        outfitButtonBody.setId(tibia::SpriteData::Gui::outfitButtonBody);
+        outfitButtonBody.setPosition(tibia::GuiData::OutfitButtons::Body::position);
+
+        tibia::Sprite outfitButtonLegs;
+        outfitButtonLegs.setId(tibia::SpriteData::Gui::outfitButtonLegs);
+        outfitButtonLegs.setPosition(tibia::GuiData::OutfitButtons::Legs::position);
+
+        tibia::Sprite outfitButtonFeet;
+        outfitButtonFeet.setId(tibia::SpriteData::Gui::outfitButtonFeet);
+        outfitButtonFeet.setPosition(tibia::GuiData::OutfitButtons::Feet::position);
+
+        tibia::Sprite outfitButtonAll;
+        outfitButtonAll.setId(tibia::SpriteData::Gui::outfitButtonAll);
+        outfitButtonAll.setPosition(tibia::GuiData::OutfitButtons::All::position);
+
+        mainWindow->draw(outfitButtonHead);
+        mainWindow->draw(outfitButtonBody);
+        mainWindow->draw(outfitButtonLegs);
+        mainWindow->draw(outfitButtonFeet);
+        mainWindow->draw(outfitButtonAll);
     }
 
     void drawCombatWindow(sf::RenderWindow* mainWindow)
@@ -4082,6 +4814,48 @@ public:
         combatWindow.setPosition(tibia::GuiData::CombatWindow::position);
 
         mainWindow->draw(combatWindow);
+    }
+
+    void drawCombatButtons(sf::RenderWindow* mainWindow)
+    {
+        int spriteIndex = 0;
+
+        if (this->gui.combatButtonsState == tibia::GuiData::CombatButtons::State::fullOffense)
+        {
+            spriteIndex = 1;
+        }
+
+        tibia::Sprite combatButtonFullOffense;
+        combatButtonFullOffense.setId(tibia::SpriteData::Gui::combatButtonFullOffense[spriteIndex]);
+        combatButtonFullOffense.setPosition(tibia::GuiData::CombatButtons::FullOffense::position);
+
+        mainWindow->draw(combatButtonFullOffense);
+
+        spriteIndex = 0;
+
+        if (this->gui.combatButtonsState == tibia::GuiData::CombatButtons::State::halfOffenseDefense)
+        {
+            spriteIndex = 1;
+        }
+
+        tibia::Sprite combatButtonHalfOffenseDefense;
+        combatButtonHalfOffenseDefense.setId(tibia::SpriteData::Gui::combatButtonHalfOffenseDefense[spriteIndex]);
+        combatButtonHalfOffenseDefense.setPosition(tibia::GuiData::CombatButtons::HalfOffenseDefense::position);
+
+        mainWindow->draw(combatButtonHalfOffenseDefense);
+
+        spriteIndex = 0;
+
+        if (this->gui.combatButtonsState == tibia::GuiData::CombatButtons::State::fullDefense)
+        {
+            spriteIndex = 1;
+        }
+
+        tibia::Sprite combatButtonFullDefense;
+        combatButtonFullDefense.setId(tibia::SpriteData::Gui::combatButtonFullDefense[spriteIndex]);
+        combatButtonFullDefense.setPosition(tibia::GuiData::CombatButtons::FullDefense::position);
+
+        mainWindow->draw(combatButtonFullDefense);
     }
 
     bool isTileMapVisible(tibia::TileMap* tileMap)
@@ -4401,9 +5175,16 @@ private:
     sf::RenderTexture m_gameWindowLayer;
     sf::Sprite m_gameWindowLayerSprite;
 
+    float m_gameWindowZoomLevel  = 1.0f;
+    float m_gameWindowZoomFactor = 0.4f;
+
     sf::View m_miniMapWindowView;
     sf::RenderTexture m_miniMapWindow;
     sf::Sprite m_miniMapWindowSprite;
+
+    sf::View m_inventorySlotsWindowView;
+    sf::RenderTexture m_inventorySlotsWindow;
+    sf::Sprite m_inventorySlotsWindowSprite;
 
     int m_miniMapWindowZoom;
 

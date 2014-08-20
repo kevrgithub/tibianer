@@ -23,13 +23,15 @@ class GameText : public tibia::DrawableAndTransformable
 
 public:
 
-    void setText(tibia::BitmapFont& bitmapFont, sf::Vector2u tileCoords, int z, std::string text, sf::Color textColor)
+    void setText(tibia::BitmapFont& bitmapFont, sf::Vector2u tileCoords, int z, int type, std::string text, sf::Color textColor)
     {
         m_texture = bitmapFont.getTexture();
 
         m_tilePosition = tileCoords;
 
         m_z = z;
+
+        m_type = type;
 
         m_numTextLines = 0;
 
@@ -49,7 +51,18 @@ public:
 
         if (textLines.size())
         {
-            textPosition.y -= tibia::TILE_SIZE * (textLines.size() / 4);
+            //std::cout << "textLines.size(): " << textLines.size() << std::endl;
+
+            if (type == tibia::GameTextTypes::default)
+            {
+                textPosition.y += tibia::TILE_SIZE / 2;
+
+                textPosition.y -= ((textLines.size() * bitmapFont.getGlyphSize()->y) / 2);
+            }
+            else if (type == tibia::GameTextTypes::speech)
+            {
+                textPosition.y -= ((textLines.size() - 1) * bitmapFont.getGlyphSize()->y);
+            }
 
             m_numTextLines = textLines.size();
         }
@@ -97,6 +110,8 @@ private:
     sf::Vector2u m_tilePosition;
 
     int m_z;
+
+    int m_type;
 
     int m_numTextLines;
 

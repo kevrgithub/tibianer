@@ -20,7 +20,7 @@ public:
     typedef std::shared_ptr<tibia::Object> Ptr;
     typedef std::vector<tibia::Object::Ptr> List;
 
-    struct ObjectProperties_t
+    struct Properties_t
     {
         std::string signName = "a sign";
         std::string signText;
@@ -35,7 +35,7 @@ public:
         std::string changeMapName;
     };
 
-    ObjectProperties_t properties;
+    Properties_t properties;
 
     Object::Object(sf::Vector2u tileCoords, int z, int id)
     {

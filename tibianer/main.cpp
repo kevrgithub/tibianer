@@ -44,9 +44,6 @@ bool g_windowIsFocused = true;
 
 unsigned int g_windowFrameRateLimit = 60;
 
-float g_zoomLevel  = 1.0f;
-float g_zoomFactor = 0.4f;
-
 std::string g_mapFile = "test.tmx";
 
 bool loadConfig()
@@ -68,6 +65,7 @@ bool loadConfig()
     g_game.options.isGameShowFloatingTextEnabled = pt.get<bool>("Game.ShowFloatingText", g_game.options.isGameShowFloatingTextEnabled);
     g_game.options.isGameShowNamesEnabled        = pt.get<bool>("Game.ShowNames",        g_game.options.isGameShowNamesEnabled);
     g_game.options.isGameShowCreatureBarsEnabled = pt.get<bool>("Game.ShowCreatureBars", g_game.options.isGameShowCreatureBarsEnabled);
+    g_game.options.isGameSmoothLightingEnabled   = pt.get<bool>("Game.ShowCreatureBars", g_game.options.isGameSmoothLightingEnabled);
     g_game.options.isGameFriendlyFireEnabled     = pt.get<bool>("Game.FriendlyFire",     g_game.options.isGameFriendlyFireEnabled);
 
     g_game.options.isAudioSoundEnabled           = pt.get<bool>("Audio.Sound",           g_game.options.isAudioSoundEnabled);
@@ -231,9 +229,6 @@ int main(int argc, char* argv[])
     std::cout << "Loading windows" << std::endl;
     g_game.loadWindows();
 
-    std::cout << "Loading game view" << std::endl;
-    sf::View* gameView = g_game.getGameWindowView();
-
     std::cout << "Creating player" << std::endl;
     g_game.createPlayer();
 
@@ -313,10 +308,12 @@ int main(int argc, char* argv[])
         else if (g_game.gui.bottomSkills == true)
         {
             g_game.drawSkillsWindow(&g_mainWindow);
+            g_game.drawOutfitButtons(&g_mainWindow);
         }
         else if (g_game.gui.bottomCombat == true)
         {
             g_game.drawCombatWindow(&g_mainWindow);
+            g_game.drawCombatButtons(&g_mainWindow);
         }
 
         g_game.drawBars(&g_mainWindow);
@@ -327,6 +324,7 @@ int main(int argc, char* argv[])
 
         if (g_game.options.isMouseUseDefaultMouseCursorEnabled == false)
         {
+            g_game.updateMouseWindowPosition(&g_mainWindow);
             g_game.drawMouseCursor(&g_mainWindow);
         }
 
@@ -381,20 +379,7 @@ int main(int argc, char* argv[])
 
             else if (event.type == sf::Event::MouseWheelMoved)
             {
-                if (event.mouseWheel.delta > 0)
-                {
-                    g_zoomLevel -= g_zoomFactor;
-
-                    if (g_zoomLevel < 1) g_zoomLevel = 1;
-
-                    gameView->setSize(sf::Vector2f(tibia::TILES_WIDTH * g_zoomLevel, tibia::TILES_HEIGHT * g_zoomLevel));
-                }
-                else if (event.mouseWheel.delta < 0)
-                {
-                    g_zoomLevel += g_zoomFactor;
-
-                    gameView->setSize(sf::Vector2f(tibia::TILES_WIDTH * g_zoomLevel, tibia::TILES_HEIGHT * g_zoomLevel));
-                }
+                g_game.handleMouseWheelEvent(event);
             }
         }
 

@@ -61,6 +61,9 @@ namespace tibia
 
     const float VOLUME_MULTIPLIER = 12.0f;
 
+    const int INVENTORY_ITEMS_MAX      = 4096; //96;
+    const int INVENTORY_ITEM_COUNT_MAX = 100;
+
     const std::string CREATURE_NAME_DEFAULT = "Creature";
     const std::string CREATURE_NAME_PLAYER  = "Player";
 
@@ -69,15 +72,16 @@ namespace tibia
         sf::Texture cursor;
         sf::Texture loading;
         sf::Texture sprites;
-        sf::Texture sprites2;
+        sf::Texture spritesNumbered;
         sf::Texture lights;
-        sf::Texture lights2;
+        sf::Texture lightsSmooth;
         sf::Texture background;
         sf::Texture bars;
         sf::Texture status;
         sf::Texture equipment;
         sf::Texture inventory;
-        sf::Texture inventory2;
+        sf::Texture inventorySplit;
+        sf::Texture inventorySlot;
         sf::Texture combat;
         sf::Texture skills;
         sf::Texture book;
@@ -85,21 +89,22 @@ namespace tibia
 
     std::unordered_map<std::string, sf::Texture&> umapTextureFiles =
     {
-        {"images/cursor.png",     tibia::Textures::cursor},
-        {"images/loading.png",    tibia::Textures::loading},
-        {"images/sprites.png",    tibia::Textures::sprites},
-        {"images/sprites2.png",   tibia::Textures::sprites2},
-        {"images/lights.png",     tibia::Textures::lights},
-        {"images/lights2.png",    tibia::Textures::lights2},
-        {"images/background.png", tibia::Textures::background},
-        {"images/bars.png",       tibia::Textures::bars},
-        {"images/status.png",     tibia::Textures::status},
-        {"images/equipment.png",  tibia::Textures::equipment},
-        {"images/inventory.png",  tibia::Textures::inventory},
-        {"images/inventory2.png", tibia::Textures::inventory2},
-        {"images/combat.png",     tibia::Textures::combat},
-        {"images/skills.png",     tibia::Textures::skills},
-        {"images/book.png",       tibia::Textures::book},
+        {"images/cursor.png",           tibia::Textures::cursor},
+        {"images/loading.png",          tibia::Textures::loading},
+        {"images/sprites.png",          tibia::Textures::sprites},
+        {"images/sprites_numbered.png", tibia::Textures::spritesNumbered},
+        {"images/lights.png",           tibia::Textures::lights},
+        {"images/lights_smooth.png",    tibia::Textures::lightsSmooth},
+        {"images/background.png",       tibia::Textures::background},
+        {"images/bars.png",             tibia::Textures::bars},
+        {"images/status.png",           tibia::Textures::status},
+        {"images/equipment.png",        tibia::Textures::equipment},
+        {"images/inventory.png",        tibia::Textures::inventory},
+        {"images/inventory_split.png",  tibia::Textures::inventorySplit},
+        {"images/inventory_slot.png",   tibia::Textures::inventorySlot},
+        {"images/combat.png",           tibia::Textures::combat},
+        {"images/skills.png",           tibia::Textures::skills},
+        {"images/book.png",             tibia::Textures::book},
     };
 
     namespace Fonts
@@ -145,7 +150,7 @@ namespace tibia
 
         namespace Tiny
         {
-            std::string filename = "images/font2.png";
+            std::string filename = "images/font_tiny.png";
 
             sf::Vector2u glyphSize(7, 10);
 
@@ -163,7 +168,7 @@ namespace tibia
 
         namespace Modern
         {
-            std::string filename = "images/font3.png";
+            std::string filename = "images/font_modern.png";
 
             sf::Vector2u glyphSize(16, 12);
 
@@ -178,6 +183,15 @@ namespace tibia
                 8,  8, 7, 7, 7,  8,  8,  10, 8, 8, 7, 8, 4, 8,  9,  8,
             };
         }
+    }
+
+    namespace GameTextTypes
+    {
+        enum
+        {
+            default,
+            speech,
+        };
     }
 
     namespace MouseCursor
@@ -576,10 +590,10 @@ namespace tibia
             {
                 enum
                 {
-                    buttonInventory,
-                    buttonStatus,
-                    buttonCombat,
-                    buttonMiniMap,
+                    inventory,
+                    status,
+                    combat,
+                    miniMap,
                 };
             }
 
@@ -641,8 +655,8 @@ namespace tibia
             int x = 519;
             int y = 11;
 
-            int width  = 110; //128;
-            int height = 110; //88;
+            int width  = 110;
+            int height = 110;
 
             sf::Vector2f position(x, y);
 
@@ -664,6 +678,93 @@ namespace tibia
             sf::Vector2f position(x, y);
 
             sf::IntRect rect(x, y, width, height);
+
+            namespace Icons
+            {
+                int width  = 32;
+                int height = 32;
+            }
+
+            namespace Stats
+            {
+                namespace Hp
+                {
+                    int x = 541;
+                    int y = 14;
+
+                    int width  = 32;
+                    int height = 32;
+
+                    sf::Vector2f position(x, y);
+
+                    sf::IntRect rect(x, y, width, height);
+                }
+
+                namespace Cap
+                {
+                    int x = 576;
+                    int y = 14;
+
+                    int width  = 32;
+                    int height = 32;
+
+                    sf::Vector2f position(x, y);
+
+                    sf::IntRect rect(x, y, width, height);
+                }
+
+                namespace Exp
+                {
+                    int x = 522;
+                    int y = 49;
+
+                    int width  = 32;
+                    int height = 32;
+
+                    sf::Vector2f position(x, y);
+
+                    sf::IntRect rect(x, y, width, height);
+                }
+
+                namespace Mp
+                {
+                    int x = 594;
+                    int y = 49;
+
+                    int width  = 32;
+                    int height = 32;
+
+                    sf::Vector2f position(x, y);
+
+                    sf::IntRect rect(x, y, width, height);
+                }
+
+                namespace Level
+                {
+                    int x = 540;
+                    int y = 84;
+
+                    int width  = 32;
+                    int height = 32;
+
+                    sf::Vector2f position(x, y);
+
+                    sf::IntRect rect(x, y, width, height);
+                }
+
+                namespace magicLevel
+                {
+                    int x = 576;
+                    int y = 84;
+
+                    int width  = 32;
+                    int height = 32;
+
+                    sf::Vector2f position(x, y);
+
+                    sf::IntRect rect(x, y, width, height);
+                }
+            }
         }
 
         namespace EquipmentWindow
@@ -707,12 +808,106 @@ namespace tibia
 
             sf::IntRect rect(x, y, width, height);
 
+            namespace Slots
+            {
+                namespace Window
+                {
+                    int x = 523;
+                    int y = 206;
+
+                    int width  = 102;
+                    int height = 263;
+
+                    sf::Vector2f position(x, y);
+
+                    sf::IntRect rect(x, y, width, height);
+
+                    namespace TotalSize
+                    {
+                        int width  = 102;  // 32 + 3 + 32 + 3 + 32
+                        int height = 1120; // 96 slots total; 24 slots (3 by 8), 4 times: (((32 + 3) * 8) * 4)
+                    }
+                }
+
+                int size = 35; // 32 + 3
+
+                int distanceBetweenSlots = 3; // white space between slots
+
+                int numSlotsHorizontal = 3;
+
+                int numSlotsVisible  = 21; // last 3 are half visible
+                int numSlotsVisible2 = 9;  // for split-inventory window
+            }
+
+            namespace Buttons
+            {
+                namespace ScrollDown
+                {
+                    int x = 523;
+                    int y = 171;
+
+                    int width  = 32;
+                    int height = 32;
+
+                    sf::Vector2f position(x, y);
+
+                    sf::IntRect rect(x, y, width, height);
+                }
+
+                namespace ScrollUp
+                {
+                    int x = 593;
+                    int y = 171;
+
+                    int width  = 32;
+                    int height = 32;
+
+                    sf::Vector2f position(x, y);
+
+                    sf::IntRect rect(x, y, width, height);
+                }
+
+                namespace ScrollDown2
+                {
+                    int x = 523;
+                    int y = 329;
+
+                    int width  = 32;
+                    int height = 32;
+
+                    sf::Vector2f position(x, y);
+
+                    sf::IntRect rect(x, y, width, height);
+                }
+
+                namespace ScrollUp2
+                {
+                    int x = 593;
+                    int y = 329;
+
+                    int width  = 32;
+                    int height = 32;
+
+                    sf::Vector2f position(x, y);
+
+                    sf::IntRect rect(x, y, width, height);
+                }
+            }
+
             namespace Icons
             {
-                namespace Container1
+                namespace Container
                 {
                     int x = 558;
                     int y = 171;
+
+                    sf::Vector2f position(x, y);
+                }
+
+                namespace Container2
+                {
+                    int x = 558;
+                    int y = 329;
 
                     sf::Vector2f position(x, y);
                 }
@@ -730,6 +925,84 @@ namespace tibia
             sf::Vector2f position(x, y);
 
             sf::IntRect rect(x, y, width, height);
+
+            namespace Text
+            {
+                int startX = 626;
+                int startY = 169;
+
+                int distanceBetweenText = 12;
+
+                int alignTextRightOffset = 2;
+            }
+        }
+
+        namespace OutfitButtons
+        {
+            namespace Head
+            {
+                int x = 521;
+                int y = 401;
+
+                int width  = 32;
+                int height = 32;
+
+                sf::Vector2f position(x, y);
+
+                sf::IntRect rect(x, y, width, height);
+            }
+
+            namespace Body
+            {
+                int x = 558;
+                int y = 401;
+
+                int width  = 32;
+                int height = 32;
+
+                sf::Vector2f position(x, y);
+
+                sf::IntRect rect(x, y, width, height);
+            }
+
+            namespace Legs
+            {
+                int x = 521;
+                int y = 438;
+
+                int width  = 32;
+                int height = 32;
+
+                sf::Vector2f position(x, y);
+
+                sf::IntRect rect(x, y, width, height);
+            }
+
+            namespace Feet
+            {
+                int x = 558;
+                int y = 438;
+
+                int width  = 32;
+                int height = 32;
+
+                sf::Vector2f position(x, y);
+
+                sf::IntRect rect(x, y, width, height);
+            }
+
+            namespace All
+            {
+                int x = 595;
+                int y = 419;
+
+                int width  = 32;
+                int height = 32;
+
+                sf::Vector2f position(x, y);
+
+                sf::IntRect rect(x, y, width, height);
+            }
         }
 
         namespace CombatWindow
@@ -743,6 +1016,87 @@ namespace tibia
             sf::Vector2f position(x, y);
 
             sf::IntRect rect(x, y, width, height);
+
+            namespace Buttons
+            {
+                namespace ScrollDown
+                {
+                    int x = 532;
+                    int y = 171;
+
+                    int width  = 32;
+                    int height = 32;
+
+                    sf::Vector2f position(x, y);
+
+                    sf::IntRect rect(x, y, width, height);
+                }
+
+                namespace ScrollUp
+                {
+                    int x = 584;
+                    int y = 171;
+
+                    int width  = 32;
+                    int height = 32;
+
+                    sf::Vector2f position(x, y);
+
+                    sf::IntRect rect(x, y, width, height);
+                }
+            }
+        }
+
+        namespace CombatButtons
+        {
+            namespace State
+            {
+                enum
+                {
+                    fullOffense,
+                    halfOffenseDefense,
+                    fullDefense,
+                };
+            }
+
+            namespace FullOffense
+            {
+                int x = 521;
+                int y = 401;
+
+                int width  = 32;
+                int height = 32;
+
+                sf::Vector2f position(x, y);
+
+                sf::IntRect rect(x, y, width, height);
+            }
+
+            namespace HalfOffenseDefense
+            {
+                int x = 558;
+                int y = 401;
+
+                int width  = 32;
+                int height = 32;
+
+                sf::Vector2f position(x, y);
+
+                sf::IntRect rect(x, y, width, height);
+            }
+
+            namespace FullDefense
+            {
+                int x = 595;
+                int y = 401;
+
+                int width  = 32;
+                int height = 32;
+
+                sf::Vector2f position(x, y);
+
+                sf::IntRect rect(x, y, width, height);
+            }
         }
 
         namespace StatusEffectIcons
@@ -1607,9 +1961,10 @@ namespace tibia
             moveable         = 1 << 16,
             modifyHpOnTouch  = 1 << 17,
             stackable        = 1 << 18,
-            food             = 1 << 19,
-            instrument       = 1 << 20,
-            currency         = 1 << 21,
+            pickupable       = 1 << 19,
+            food             = 1 << 20,
+            instrument       = 1 << 21,
+            currency         = 1 << 22,
         };
     }
 
@@ -1706,7 +2061,28 @@ namespace tibia
 
         const int runeBlank = 1277;
 
+        const int spellBook = 511;
+
+        const int watch = 498;
+
+        const int broom      = 41;
+        const int scythe     = 73;
+        const int rake       = 332;
+        const int pick       = 374;
+        const int hoe        = 668;
+        const int shovel     = 669;
+        const int rope       = 995;
         const int fishingRod = 1470;
+        const int machete    = 3238;
+
+        const int keySilver = 1061;
+        const int keyBlue   = 1062;
+        const int keyGreen  = 1063;
+        const int keyRed    = 1064;
+        const int keyWhite  = 1065;
+        const int keyGold   = 2184;
+
+        const int keyRing = 1876;
 
         const int dustBin = 1472;
 
@@ -1727,12 +2103,27 @@ namespace tibia
 
         namespace Gui
         {
+            std::vector<int> scrollButtonDown  = {63, 61};
+            std::vector<int> scrollButtonUp    = {64, 62};
+            std::vector<int> scrollButtonLeft  = {3554, 3552};
+            std::vector<int> scrollButtonRight = {3555, 3553};
+
             const int optionsButton = 3559;
 
             std::vector<int> tabButtonInventory = {3544, 3545};
             std::vector<int> tabButtonStatus    = {3546, 3547};
             std::vector<int> tabButtonCombat    = {3548, 3549};
             std::vector<int> tabButtonMiniMap   = {3550, 3551};
+
+            const int outfitButtonHead = 3521;
+            const int outfitButtonBody = 3522;
+            const int outfitButtonLegs = 3523;
+            const int outfitButtonFeet = 3524;
+            const int outfitButtonAll  = 3525;
+
+            std::vector<int> combatButtonFullOffense        = {3534, 3535};
+            std::vector<int> combatButtonHalfOffenseDefense = {3536, 3537};
+            std::vector<int> combatButtonFullDefense        = {3538, 3539};
 
             const int statusEffectBurning     = 3556;
             const int statusEffectElectrified = 3557;
@@ -2021,8 +2412,8 @@ namespace tibia
         std::vector<int> offsetObjects =
         {
             88,
-            394, 395, 396, 397,
-            524, 525, 526, 527,
+            //394, 395, 396, 397, // candles
+            //524, 525, 526, 527, // candles
             1004, 1005, 1043, 1044, 1046, 1048,
             1274,
             1652,
@@ -2084,6 +2475,58 @@ namespace tibia
             3201, 3202, 3203, 3204, 3205, 3206, 3207, 3208, 3209, 3230, 3231, 3238, 3239, 3240,
             3280, 3281, 3282, 3283, 3284, 3285, 3286, 3287, 3288, 3289, 3290, 3291, 3314, 3315, 3316, 3317, 3318, 3322, 3326,
             3331, 3332, 3333, 3334, 3335, 3336, 3357, 3358, 3359, 3360, 3361, 3367, 3368, 3369, 3370, 3371, 3372, 3373, 3374, 3380, 3381,
+        };
+
+        std::vector<int> stackable =
+        {
+            410, 411, 412, 413, 414, 415, 416, 417,
+        };
+
+        std::vector<int> pickupable =
+        {
+            3, 4, 5, 6, 7, 8, 9, 41, 45, 73, 115, 117, 128, 164, 200, 206,
+            207, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 280, 281, 282,
+            295, 296, 297, 298, 299, 300, 301, 306, 307, 308, 309, 310, 332, 374, 389, 410,
+            411, 412, 413, 414, 415, 416, 417, 418, 419, 420, 421, 445, 488, 490, 498, 499,
+            500, 501, 502, 503, 504, 505, 506, 507, 508, 509, 510, 511,
+            //514, // book
+            515, 516, 517,
+            518, 519, 520, 528, 668, 669, 678, 679, 680, 681, 682, 683, 684, 708, 709, 710,
+            711, 712, 744, 787, 927, 928, 929, 971, 988, 989, 990, 991, 992, 993, 994, 995,
+            1010, 1011, 1016, 1034, 1049, 1050, 1051, 1052, 1053, 1056, 1057, 1058, 1059, 1061, 1062, 1063,
+            1064, 1065, 1088, 1089, 1090, 1091, 1123, 1124, 1125, 1126, 1127, 1128, 1129, 1130, 1131, 1132,
+            1133, 1134, 1135, 1136, 1200, 1201, 1202, 1219,
+            //1220, // book
+            1225, 1226, 1227, 1228, 1229, 1230, 1231,
+            1232, 1233, 1234, 1235, 1236, 1237, 1238, 1239, 1240, 1242, 1244, 1245, 1246, 1247, 1248, 1249,
+            1250, 1251, 1252, 1263, 1268, 1269, 1270, 1271, 1272, 1277, 1278, 1279, 1280, 1281, 1282, 1283,
+            1284, 1285, 1286, 1287, 1288, 1289, 1290, 1291, 1292, 1293, 1294, 1295, 1296, 1297, 1298, 1299,
+            1300, 1301, 1302, 1303, 1304, 1305, 1306, 1307, 1308, 1309, 1310, 1311, 1312, 1313, 1314, 1315,
+            1316, 1317, 1318, 1319, 1320, 1321, 1322, 1323, 1324, 1325, 1326, 1327, 1328, 1329, 1330, 1331,
+            1332, 1333, 1334, 1335, 1336, 1337, 1338, 1339, 1340, 1341, 1342, 1343, 1344, 1345, 1346, 1347,
+            1354, 1469, 1470, 1471, 1556, 1557, 1558, 1559, 1560, 1561, 1562, 1563, 1568, 1569, 1575, 1576,
+            1577, 1578, 1579, 1580, 1581, 1587, 1588, 1589, 1590, 1605, 1647, 1652, 1862, 1863, 1864, 1865,
+            1866, 1867, 1868, 1869, 1870, 1871, 1872, 1873, 1874, 1875, 1876, 1877, 1878, 1881, 1882, 1883,
+            1884, 1885, 1886, 1887, 1888, 1889, 1890, 1891, 1892, 1893, 1894, 1895, 1896, 1897, 1898, 1899,
+            1900, 1901, 1902, 1903, 1904, 1917, 1918, 1919, 1920, 1921, 1922, 1923, 1928, 1929, 1930, 1931,
+            1932, 1933, 1934, 1935, 1936, 1937, 2119, 2160, 2182, 2183, 2184, 2195, 2196, 2197, 2198, 2199,
+            2200, 2201, 2202, 2203, 2204, 2205, 2206, 2207, 2208, 2209, 2210, 2211, 2212, 2213, 2214, 2215, 2216, 2217,
+            2218, 2219, 2220, 2221, 2222, 2223, 2224, 2225, 2226, 2227, 2228, 2229, 2230, 2231, 2232, 2233, 2234, 2235,
+            2236, 2237, 2238, 2239, 2240, 2241, 2242, 2243, 2244, 2245, 2246, 2247, 2248, 2269, 2270, 2287, 2288, 2334,
+            2335, 2336, 2347, 2348, 2349, 2360, 2361, 2362,
+            //2468, 2469, 2470, 2471, 2472, 2473, 2474, 2475, 2476, 2477, 2478, 2479, 2480, 2481, 2482, // book
+            2500, 2501, 2502, 2503, 2504, 2505, 2506, 2507, 2508, 2509,
+            2510, 2511, 2512, 2513, 2514, 2515, 2516, 2517, 2518, 2519, 2520, 2521, 2522, 2523, 2524, 2525, 2535, 2536,
+            2537, 2538, 2539, 2540, 2541, 2542, 2543, 2544, 2545, 2546, 2609, 2610, 2611, 2612, 2613, 2614, 2615, 2616,
+            2617, 2618, 2619, 2620, 2621, 2622, 2719, 2720, 2721, 2722, 2723, 2724, 2889, 2890, 2891, 2892, 2893, 2894,
+            2895, 2896, 2945, 2946, 2947, 2948, 2949, 2950, 2951, 2952, 2953, 2954, 2955, 2960, 2961, 2962, 2963, 2976,
+            2977, 2978, 2979, 2980, 2981, 2982, 2983, 2984, 2985, 3007, 3015, 3017, 3018, 3019, 3020, 3021, 3022, 3023,
+            3024, 3071, 3072, 3073, 3074, 3075, 3076, 3077, 3078, 3085, 3090, 3187, 3188, 3189, 3190, 3191, 3192, 3193,
+            3194, 3195, 3196, 3197, 3198, 3199, 3200, 3201, 3202, 3203, 3204, 3205, 3206, 3207, 3208, 3209, 3238, 3280,
+            3281, 3282, 3283, 3284, 3285, 3286, 3287, 3288, 3289, 3290, 3291,
+            //3314, 3315, 3316, 3317, 3318, // book
+            3331, 3332, 3333, 3334, 3335, 3336, 3367,
+            3368, 3369, 3370, 3371, 3372, 3373, 3374, 3380, 3381,
         };
 
         std::vector<int> moveAbove =
@@ -2635,6 +3078,17 @@ namespace tibia
         {tibia::CreatureTypes::poisonSpider, tibia::Sounds::Creatures::Human::death},
         {tibia::CreatureTypes::santaClaus, tibia::Sounds::Creatures::Human::death},
     };
+
+    namespace CreatureAddInventoryItemResult
+    {
+        enum
+        {
+            fail,
+            success,
+            inventoryItemCountMax,
+            inventoryItemsMax,
+        };
+    }
 
 } // namespace tibia
 

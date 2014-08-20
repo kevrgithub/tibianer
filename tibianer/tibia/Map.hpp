@@ -29,7 +29,7 @@ class Map
 
 public:
 
-    struct MapProperties_t
+    struct Properties_t
     {
         std::string name        = "Unknown Map";
         std::string description = "";
@@ -42,7 +42,7 @@ public:
         unsigned int timeOfDay = tibia::TimeOfDay::day;
     };
 
-    MapProperties_t properties;
+    Properties_t properties;
 
     tibia::TileMap tileMapTiles[tibia::NUM_Z_LEVELS];
     tibia::TileMap tileMapTileEdges[tibia::NUM_Z_LEVELS];

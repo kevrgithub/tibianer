@@ -25,7 +25,20 @@ public:
     typedef std::shared_ptr<tibia::Creature> Ptr;
     typedef std::vector<tibia::Creature::Ptr> List;
 
-    struct CreatureStatusEffect_t
+    struct Skills_t
+    {
+        int fistFighting     = 10;
+        int clubFighting     = 20;
+        int swordFighting    = 30;
+        int axeFighting      = 40;
+        int distanceFighting = 50;
+        int shielding        = 60;
+        int fishing          = 70;
+    };
+
+    Skills_t skills;
+
+    struct StatusEffect_t
     {
         int type;
         int damage;
@@ -37,7 +50,16 @@ public:
         std::string name;
     };
 
-    typedef std::vector<tibia::Creature::CreatureStatusEffect_t> StatusEffectList;
+    typedef std::vector<tibia::Creature::StatusEffect_t> StatusEffectList;
+
+    struct InventoryItem_t
+    {
+        int id;
+        int count;
+        unsigned int flags;
+    };
+
+    typedef std::vector<tibia::Creature::InventoryItem_t> InventoryItemList;
 
     Creature::Creature(int tileX, int tileY, int z)
     {
@@ -82,6 +104,13 @@ public:
         m_outfit[1] = tibia::Outfits::default[1];
         m_outfit[2] = tibia::Outfits::default[2];
         m_outfit[3] = tibia::Outfits::default[3];
+
+        m_level      = 1;
+        m_magicLevel = 1;
+
+        m_exp = 0;
+
+        m_cap = tibia::INVENTORY_ITEMS_MAX;
 
         m_hp    = 100;
         m_hpMax = 100;
@@ -470,9 +499,9 @@ public:
         (
             m_statusEffectList.begin(),
             m_statusEffectList.end(),
-            [&type](tibia::Creature::CreatureStatusEffect_t const& se)
+            [&type](tibia::Creature::StatusEffect_t const& statusEffect)
             { 
-                return se.type == type;
+                return statusEffect.type == type;
             }
         );
     }
@@ -495,7 +524,7 @@ public:
             return;
         }
 
-        tibia::Creature::CreatureStatusEffect_t statusEffect;
+        tibia::Creature::StatusEffect_t statusEffect;
         statusEffect.type        = type;
         statusEffect.damage      = damage;
         statusEffect.ticks       = ticks;
@@ -506,6 +535,62 @@ public:
         statusEffect.clock.restart();
 
         m_statusEffectList.push_back(statusEffect);
+    }
+
+    tibia::Creature::InventoryItemList::iterator findInventoryItem(int id)
+    {
+        return std::find_if
+        (
+            m_inventoryItemList.begin(),
+            m_inventoryItemList.end(),
+            [&id](tibia::Creature::InventoryItem_t const& inventoryItem)
+            { 
+                return inventoryItem.id == id;
+            }
+        );
+    }
+
+    bool hasInventoryItem(int id)
+    {
+        auto findInventoryItemIt = findInventoryItem(id);
+
+        return findInventoryItemIt != m_inventoryItemList.end();
+    }
+
+    int addInventoryItem(int id, int count, unsigned int flags)
+    {
+        auto findInventoryItemIt = findInventoryItem(id);
+
+        if (findInventoryItemIt != m_inventoryItemList.end())
+        {
+            if ((findInventoryItemIt->count + count) > tibia::INVENTORY_ITEM_COUNT_MAX)
+            {
+                return tibia::CreatureAddInventoryItemResult::inventoryItemCountMax;
+            }
+
+            findInventoryItemIt->count += count;
+            return tibia::CreatureAddInventoryItemResult::success;
+        }
+
+        if (m_inventoryItemList.size() == tibia::INVENTORY_ITEMS_MAX)
+        {
+            return tibia::CreatureAddInventoryItemResult::inventoryItemsMax;
+        }
+
+        tibia::Creature::InventoryItem_t inventoryItem;
+        inventoryItem.id    = id;
+        inventoryItem.count = count;
+        inventoryItem.flags = flags;
+
+        m_inventoryItemList.insert(m_inventoryItemList.begin(), inventoryItem);
+        //m_inventoryItemList.push_back(inventoryItem);
+
+        return tibia::CreatureAddInventoryItemResult::success;
+    }
+
+    void removeInventoryItem(int index)
+    {
+        m_inventoryItemList.erase(m_inventoryItemList.begin() + index);
     }
 
     bool isDead()
@@ -690,6 +775,46 @@ public:
         m_mpMax = mp;
     }
 
+    int getLevel()
+    {
+        return m_level;
+    }
+
+    void setLevel(int level)
+    {
+        m_level = level;
+    }
+
+    int getMagicLevel()
+    {
+        return m_magicLevel;
+    }
+
+    void setMagicLevel(int magicLevel)
+    {
+        m_magicLevel = magicLevel;
+    }
+
+    unsigned int getExp()
+    {
+        return m_exp;
+    }
+
+    void setExp(unsigned int exp)
+    {
+        m_exp = exp;
+    }
+
+    int getCap()
+    {
+        return m_cap;
+    }
+
+    void setCap(int cap)
+    {
+        m_cap = cap;
+    }
+
     bool hasOutfit()
     {
         return m_hasOutfit;
@@ -785,6 +910,11 @@ public:
         return &m_statusEffectList;
     }
 
+    tibia::Creature::InventoryItemList* getInventoryItemList()
+    {
+        return &m_inventoryItemList;
+    }
+
 private:
 
     int m_tileOffset;
@@ -824,7 +954,7 @@ private:
     int m_gold;
     int m_platinum;
 
-    int m_exp;
+    unsigned int m_exp; // experience points
 
     int m_level;
     int m_magicLevel;
@@ -860,6 +990,8 @@ private:
     tibia::Creature::Ptr m_lastAttacker;
 
     tibia::Creature::StatusEffectList m_statusEffectList;
+
+    tibia::Creature::InventoryItemList m_inventoryItemList;
 
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const
     {

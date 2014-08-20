@@ -202,6 +202,12 @@ namespace ThingSort
                 }
             }
 
+            // attempt to fix draw order: fixes trees overlapping trees, breaks walls overlapping objects
+            //if (a->getTileX() != b->getTileX() && a->getTileY() != b->getTileY())
+            //{
+                //return a->getTileY() < b->getTileY();
+            //}
+
             return a->getTileX() < b->getTileX();
         }
     };

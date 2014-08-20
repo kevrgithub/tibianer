@@ -3,6 +3,9 @@
 
 #include <cmath>
 
+#include <vector>
+#include <algorithm>
+
 #include <SFML/Graphics.hpp>
 
 #include <Thor/Vectors/VectorAlgebra2D.hpp>
@@ -14,6 +17,23 @@ namespace tibia
 
     namespace Utility
     {
+
+        template <typename T>
+        void vectorMoveToFront(std::vector<T>& vec, typename std::vector<T>::iterator element)
+        {
+            T temp(*element);
+            std::copy_backward(vec.begin(), std::prev(element), element);
+            *vec.begin() = temp;
+        }
+
+        sf::Vector2f getViewPosition(sf::View& view)
+        {
+            sf::Vector2f center = view.getCenter();
+
+            sf::Vector2f half   = view.getSize() / 2.0f;
+
+            return center - half;
+        }
 
         sf::IntRect getSpriteRectById(int id)
         {
@@ -222,6 +242,24 @@ namespace tibia
                 if (id == spriteId)
                 {
                     flags |= tibia::SpriteFlags::moveable;
+                    break;
+                }
+            }
+
+            for (auto spriteId : tibia::SpriteData::stackable)
+            {
+                if (id == spriteId)
+                {
+                    flags |= tibia::SpriteFlags::stackable;
+                    break;
+                }
+            }
+
+            for (auto spriteId : tibia::SpriteData::pickupable)
+            {
+                if (id == spriteId)
+                {
+                    flags |= tibia::SpriteFlags::pickupable;
                     break;
                 }
             }

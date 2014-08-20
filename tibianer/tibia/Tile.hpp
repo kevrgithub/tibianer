@@ -19,7 +19,7 @@ public:
     typedef std::shared_ptr<tibia::Tile> Ptr;
     typedef std::vector<tibia::Tile::Ptr> List;
 
-    struct TileProperties_t
+    struct Properties_t
     {
         bool isSolid     = false;
         bool isMoveAbove = false;
