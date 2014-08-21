@@ -78,6 +78,9 @@ public:
 
         bool isInventorySplit = false;
 
+        bool chatLogButtonScrollUp   = false;
+        bool chatLogButtonScrollDown = false;
+
         bool inventoryButtonScrollUp   = false;
         bool inventoryButtonScrollDown = false;
     };
@@ -91,7 +94,9 @@ public:
         m_miniMapWindowZoom = tibia::GuiData::MiniMapWindow::zoomDefault;
         m_miniMapWindowView.setSize(sf::Vector2f(tibia::TILES_WIDTH * tibia::GuiData::MiniMapWindow::zoomDefault, tibia::TILES_WIDTH * tibia::GuiData::MiniMapWindow::zoomDefault));
 
-        m_inventorySlotsWindowView.reset(sf::FloatRect(0, 0, tibia::GuiData::InventoryWindow::Slots::Window::TotalSize::width, tibia::GuiData::InventoryWindow::Slots::Window::TotalSize::height));
+        m_chatLogWindowView.reset(sf::FloatRect(0, 0, tibia::GuiData::ChatLogWindow::width, tibia::GuiData::ChatLogWindow::height));
+
+        m_inventorySlotsWindowView.reset(sf::FloatRect(0, 0, tibia::GuiData::InventoryWindow::Slots::Window::width, tibia::GuiData::InventoryWindow::Slots::Window::height));
 
         m_tileMapTileVertices.setPrimitiveType(sf::Quads);
 
@@ -124,7 +129,12 @@ public:
             return false;
         }
 
-        if (m_inventorySlotsWindow.create(tibia::GuiData::InventoryWindow::Slots::Window::TotalSize::width, tibia::GuiData::InventoryWindow::Slots::Window::TotalSize::height) == false)
+        if (m_chatLogWindow.create(tibia::GuiData::ChatLogWindow::width, tibia::GuiData::ChatLogWindow::height) == false)
+        {
+            return false;
+        }
+
+        if (m_inventorySlotsWindow.create(tibia::GuiData::InventoryWindow::Slots::Window::width, tibia::GuiData::InventoryWindow::Slots::Window::height) == false)
         {
             return false;
         }
@@ -223,8 +233,8 @@ public:
         player->setHasCustomName(true);
         player->setHasOutfit(true);
         player->setTeam(tibia::Teams::good);
-        player->setHpMax(10000);
-        player->setHp(10000);
+        player->setHpMax(100);
+        player->setHp(100);
         player->setMovementSpeed(tibia::MovementSpeeds::player);
 
         m_player = std::move(player);
@@ -232,6 +242,13 @@ public:
         tibia::Tile::Ptr tile = getThingTile(m_player);
 
         tile->addCreature(m_player);
+
+        ////////
+        //for (int i = 1; i < 33; i++)
+        //{
+            //doChatLogWindowAddText(std::to_string(i));
+        //}
+        ////////
 
         ////////
         for (int i = 1; i < 4096; i++)
@@ -253,7 +270,15 @@ public:
         std::stringstream ss;
         ss << m_map.properties.name << "\nby " << m_map.properties.author;
 
-        spawnGameText(m_player->getTilePosition(), m_player->getZ(), tibia::GameTextTypes::default, ss.str(), tibia::Colors::Text::white);
+        spawnGameText(m_player->getTilePosition(), m_player->getZ(), ss.str(), tibia::Colors::Text::white);
+
+        ss.str("");
+
+        ss << m_map.properties.name << " by " << m_map.properties.author;
+
+        doChatLogWindowAddText(ss.str(), sf::Color::Red);
+
+        doChatLogWindowAddText(m_map.properties.description, sf::Color::Red);
     }
 
     void doEnterGame()
@@ -290,8 +315,6 @@ public:
 
         m_mouseCursor.setTexture(tibia::Textures::cursor);
 
-        tibia::Textures::inventorySlot.setRepeated(true);
-
         updateLightingStyle();
 
         return true;
@@ -305,6 +328,11 @@ public:
         }
 
         if (m_fontConsole.loadFromFile(tibia::Fonts::Console::filename) == false)
+        {
+            return false;
+        }
+
+        if (m_fontChatLog.loadFromFile(tibia::Fonts::ChatLog::filename) == false)
         {
             return false;
         }
@@ -372,10 +400,6 @@ public:
                 doPlayerInteractWithPlayerTileObjects();
                 break;
 
-            case sf::Keyboard::L:
-                tibia::Textures::lights.loadFromFile("images/lights2.png");
-                break;
-
             case sf::Keyboard::B:
                 spawnAnimation(m_player->getTilePosition(), m_player->getZ(), tibia::Animations::spellBlue);
                 break;
@@ -385,7 +409,8 @@ public:
                 break;
 
             case sf::Keyboard::H:
-                spawnGameText(sf::Vector2u(m_player->getTilePosition().x, m_player->getTilePosition().y - tibia::TILE_SIZE), m_player->getZ(), tibia::GameTextTypes::speech, "You say:\nHello!", tibia::Colors::Text::yellow);
+                spawnGameText(m_player->getTilePosition(), m_player->getZ(), "You say:\nHello!", tibia::Colors::Text::yellow);
+                doChatLogWindowAddText("You say: Hello");
                 break;
 
             case sf::Keyboard::M:
@@ -435,7 +460,7 @@ public:
 
             case sf::Keyboard::G:
             {
-                m_player->modifyHp(-m_player->getHp());
+                handleCreatureModifyHp(nullptr, m_player, -(m_player->getHp()), tibia::ModifyHpTypes::blood);
                 break;
             }
 
@@ -543,6 +568,20 @@ public:
                 this->gui.topMiniMap   = true;
                 this->gui.topStatus    = false;
                 this->gui.topEquipment = false;
+            }
+            else if (tibia::GuiData::ChatLogWindow::Buttons::ScrollDown::rect.contains(getMouseWindowPosition()) == true)
+            {
+                if (this->gui.chatLogButtonScrollDown == true)
+                {
+                    doChatLogWindowViewScrollDown();
+                }
+            }
+            else if (tibia::GuiData::ChatLogWindow::Buttons::ScrollUp::rect.contains(getMouseWindowPosition()) == true)
+            {
+                if (this->gui.chatLogButtonScrollUp == true)
+                {
+                    doChatLogWindowViewScrollUp();
+                }
             }
 
             if (this->gui.bottomInventory == true)
@@ -730,6 +769,20 @@ public:
                     }
                 }
             }
+            else if (tibia::GuiData::ChatLogWindow::Buttons::ScrollDown::rect.contains(getMouseWindowPosition()) == true)
+            {
+                if (this->gui.chatLogButtonScrollDown == true)
+                {
+                    doChatLogWindowViewScrollToBottom();
+                }
+            }
+            else if (tibia::GuiData::ChatLogWindow::Buttons::ScrollUp::rect.contains(getMouseWindowPosition()) == true)
+            {
+                if (this->gui.chatLogButtonScrollUp == true)
+                {
+                    doChatLogWindowViewScrollToTop();
+                }
+            }
 
             if (this->gui.bottomInventory == true)
             {
@@ -737,7 +790,6 @@ public:
                 {
                     if (this->gui.inventoryButtonScrollDown == true)
                     {
-                        // scroll to end of inventory
                         doInventoryWindowSlotsViewScrollToBottom();
                     }
                 }
@@ -745,7 +797,6 @@ public:
                 {
                     if (this->gui.inventoryButtonScrollUp == true)
                     {
-                        // scroll to begin of inventory
                         doInventoryWindowSlotsViewScrollToTop();
                     }
                 }
@@ -824,13 +875,20 @@ public:
         }
         else if (event.mouseButton.button == sf::Mouse::Button::XButton1)
         {
+            if (tibia::GuiData::ChatLogWindow::rect.contains(getMouseWindowPosition()) == true)
+            {
+                if (this->gui.chatLogButtonScrollDown == true)
+                {
+                    doChatLogWindowViewScrollToBottom();
+                }
+            }
+
             if (this->gui.bottomInventory == true)
             {
                 if (tibia::GuiData::InventoryWindow::rect.contains(getMouseWindowPosition()) == true)
                 {
                     if (this->gui.inventoryButtonScrollUp == true)
                     {
-                        // scroll to begin of inventory
                         doInventoryWindowSlotsViewScrollToTop();
                     }
                 }
@@ -838,13 +896,20 @@ public:
         }
         else if (event.mouseButton.button == sf::Mouse::Button::XButton2)
         {
+            if (tibia::GuiData::ChatLogWindow::rect.contains(getMouseWindowPosition()) == true)
+            {
+                if (this->gui.chatLogButtonScrollUp == true)
+                {
+                    doChatLogWindowViewScrollToTop();
+                }
+            }
+
             if (this->gui.bottomInventory == true)
             {
                 if (tibia::GuiData::InventoryWindow::rect.contains(getMouseWindowPosition()) == true)
                 {
                     if (this->gui.inventoryButtonScrollDown == true)
                     {
-                        // scroll to end of inventory
                         doInventoryWindowSlotsViewScrollToBottom();
                     }
                 }
@@ -880,6 +945,13 @@ public:
                 }
 
                 updateMiniMapWindowZoom();
+            }
+            else if (tibia::GuiData::ChatLogWindow::rect.contains(getMouseWindowPosition()) == true)
+            {
+                if (this->gui.chatLogButtonScrollUp == true)
+                {
+                    doChatLogWindowViewScrollUp();
+                }
             }
 
             if (this->gui.bottomInventory == true)
@@ -919,6 +991,13 @@ public:
 
                 updateMiniMapWindowZoom();
             }
+            else if (tibia::GuiData::ChatLogWindow::rect.contains(getMouseWindowPosition()) == true)
+            {
+                if (this->gui.chatLogButtonScrollDown == true)
+                {
+                    doChatLogWindowViewScrollDown();
+                }
+            }
 
             if (this->gui.bottomInventory == true)
             {
@@ -956,6 +1035,65 @@ public:
         m_miniMapWindowView.setSize(sf::Vector2f(tibia::TILES_WIDTH * m_miniMapWindowZoom, tibia::TILES_WIDTH * m_miniMapWindowZoom));
     }
 
+    void doChatLogWindowAddText(const std::string& text, sf::Color color = sf::Color::Black)
+    {
+        sf::Text chatLogWindowText;
+        chatLogWindowText.setFont(m_fontChatLog);
+        chatLogWindowText.setString(text);
+        chatLogWindowText.setCharacterSize(tibia::GuiData::ChatLogWindow::textCharacterSize);
+        chatLogWindowText.setColor(color);
+
+        m_chatLogWindowTextList.push_back(chatLogWindowText);
+    }
+
+    void doChatLogWindowViewScrollDown()
+    {
+        m_chatLogWindowView.move(0, (tibia::GuiData::ChatLogWindow::textHeight + tibia::GuiData::ChatLogWindow::textOffset));
+    }
+
+    void doChatLogWindowViewScrollUp()
+    {
+        m_chatLogWindowView.move(0, -(tibia::GuiData::ChatLogWindow::textHeight + tibia::GuiData::ChatLogWindow::textOffset));
+    }
+
+    int getChatLogWindowViewMaxScrollY()
+    {
+        return
+            -(
+                (m_chatLogWindowTextList.size() - tibia::GuiData::ChatLogWindow::numLinesVisible)
+                *
+                (tibia::GuiData::ChatLogWindow::textHeight + tibia::GuiData::ChatLogWindow::textOffset)
+            );
+    }
+
+    void doChatLogWindowViewScrollToTop()
+    {
+        m_chatLogWindowView.reset
+        (
+            sf::FloatRect
+            (
+                0,
+                getChatLogWindowViewMaxScrollY(),
+                tibia::GuiData::ChatLogWindow::width,
+                tibia::GuiData::ChatLogWindow::height
+            )
+        );
+    }
+
+    void doChatLogWindowViewScrollToBottom()
+    {
+        m_chatLogWindowView.reset
+        (
+            sf::FloatRect
+            (
+                0,
+                0,
+                tibia::GuiData::ChatLogWindow::width,
+                tibia::GuiData::ChatLogWindow::height
+            )
+        );
+    }
+    
     void doInventoryWindowSlotsViewScrollUp()
     {
         m_inventorySlotsWindowView.move(0, -tibia::GuiData::InventoryWindow::Slots::size);
@@ -974,8 +1112,8 @@ public:
             (
                 0,
                 0,
-                tibia::GuiData::InventoryWindow::Slots::Window::TotalSize::width,
-                tibia::GuiData::InventoryWindow::Slots::Window::TotalSize::height
+                tibia::GuiData::InventoryWindow::Slots::Window::width,
+                tibia::GuiData::InventoryWindow::Slots::Window::height
             )
         );
     }
@@ -988,8 +1126,8 @@ public:
             (
                 0,
                 getInventoryWindowSlotsViewMaxScrollY(),
-                tibia::GuiData::InventoryWindow::Slots::Window::TotalSize::width,
-                tibia::GuiData::InventoryWindow::Slots::Window::TotalSize::height
+                tibia::GuiData::InventoryWindow::Slots::Window::width,
+                tibia::GuiData::InventoryWindow::Slots::Window::height
             )
         );
     }
@@ -1929,7 +2067,7 @@ public:
 
             std::cout << signText.str() << std::endl;
 
-            spawnGameText(object->getTilePosition(), creature->getZ(), tibia::GameTextTypes::default, signText.str(), tibia::Colors::Text::green);
+            spawnGameText(object->getTilePosition(), creature->getZ(), signText.str(), tibia::Colors::Text::green);
 
             return true;
         }
@@ -3071,10 +3209,11 @@ public:
                     (
                         defender->getTilePosition(),
                         defender->getZ(),
-                        tibia::GameTextTypes::default,
                         "You are dead.",
                         tibia::Colors::Text::white
                     );
+
+                    doChatLogWindowAddText("You are dead.", sf::Color::Red);
                 }
 
                 auto itDeathSound = umapCreatureDeathSounds.find(defender->getType());
@@ -4257,7 +4396,7 @@ public:
         }
     }
 
-    void spawnGameText(const sf::Vector2u& tilePosition, int z, int type, const std::string& text, sf::Color textColor)
+    void spawnGameText(const sf::Vector2u& tilePosition, int z, const std::string& text, sf::Color textColor)
     {
         if (z != m_player->getZ())
         {
@@ -4265,7 +4404,7 @@ public:
         }
 
         tibia::GameText gt;
-        gt.setText(m_bitmapFontDefault, tilePosition, z, type, text, textColor);
+        gt.setText(m_bitmapFontDefault, tilePosition, z, text, textColor);
 
         m_gameTextList.push_back(gt);
     }
@@ -4496,6 +4635,83 @@ public:
         mainWindow->draw(optionsButton);
     }
 
+    void drawChatLogWindow(sf::RenderWindow* mainWindow)
+    {
+        if (m_chatLogWindowTextList.size() == 0)
+        {
+            return;
+        }
+        else if (m_chatLogWindowTextList.size() > tibia::GuiData::ChatLogWindow::maxLines)
+        {
+            m_chatLogWindowTextList.erase(m_chatLogWindowTextList.begin(), m_chatLogWindowTextList.end() - tibia::GuiData::ChatLogWindow::maxLines);
+        }
+
+        if (tibia::Utility::getViewPosition(m_chatLogWindowView).y < 0)
+        {
+            tibia::Sprite chatLogButtonScrollDown;
+            chatLogButtonScrollDown.setId(tibia::SpriteData::Gui::scrollButtonDown[1]);
+            chatLogButtonScrollDown.setPosition(tibia::GuiData::ChatLogWindow::Buttons::ScrollDown::position);
+
+            mainWindow->draw(chatLogButtonScrollDown);
+
+            this->gui.chatLogButtonScrollDown = true;
+        }
+        else
+        {
+            this->gui.chatLogButtonScrollDown = false;
+        }
+
+        if (m_chatLogWindowTextList.size() > tibia::GuiData::ChatLogWindow::numLinesVisible)
+        {
+            if (tibia::Utility::getViewPosition(m_chatLogWindowView).y > getChatLogWindowViewMaxScrollY())
+            {
+                tibia::Sprite chatLogButtonScrollUp;
+                chatLogButtonScrollUp.setId(tibia::SpriteData::Gui::scrollButtonUp[1]);
+                chatLogButtonScrollUp.setPosition(tibia::GuiData::ChatLogWindow::Buttons::ScrollUp::position);
+
+                mainWindow->draw(chatLogButtonScrollUp);
+
+                this->gui.chatLogButtonScrollUp = true;
+            }
+            else
+            {
+                this->gui.chatLogButtonScrollUp = false;
+            }
+        }
+        else
+        {
+            this->gui.chatLogButtonScrollUp = false;
+        }
+
+        m_chatLogWindow.setView(m_chatLogWindowView);
+        m_chatLogWindow.clear(tibia::Colors::transparent);
+
+        sf::Vector2f chatLogWindowTextPosition
+        (
+            tibia::GuiData::ChatLogWindow::textOffset,
+            tibia::GuiData::ChatLogWindow::height
+        );
+
+        for (auto chatLogWindowTextIt = m_chatLogWindowTextList.rbegin(); chatLogWindowTextIt != m_chatLogWindowTextList.rend(); ++chatLogWindowTextIt)
+        {
+            //std::cout << chatLogWindowTextIt->getString().toAnsiString() << std::endl;
+
+            chatLogWindowTextPosition.y -= tibia::GuiData::ChatLogWindow::textHeight + tibia::GuiData::ChatLogWindow::textOffset;
+
+            chatLogWindowTextIt->setPosition(chatLogWindowTextPosition);
+
+            m_chatLogWindow.draw(*chatLogWindowTextIt);
+        }
+
+        m_chatLogWindow.display();
+
+        m_chatLogWindowSprite.setTexture(m_chatLogWindow.getTexture());
+        m_chatLogWindowSprite.setTextureRect(sf::IntRect(0, 0, tibia::GuiData::ChatLogWindow::width, tibia::GuiData::ChatLogWindow::height));
+        m_chatLogWindowSprite.setPosition(tibia::GuiData::ChatLogWindow::position);
+
+        mainWindow->draw(m_chatLogWindowSprite);
+    }
+
     void drawTabButtons(sf::RenderWindow* mainWindow)
     {
         int tabButtonId = tibia::SpriteData::Gui::tabButtonMiniMap[1];
@@ -4644,9 +4860,7 @@ public:
 
         if (inventoryList->size() > tibia::GuiData::InventoryWindow::Slots::numSlotsVisible)
         {
-            int inventorySlotsWindowViewMaxScrollY = getInventoryWindowSlotsViewMaxScrollY();
-
-            if (tibia::Utility::getViewPosition(m_inventorySlotsWindowView).y < inventorySlotsWindowViewMaxScrollY)
+            if (tibia::Utility::getViewPosition(m_inventorySlotsWindowView).y < getInventoryWindowSlotsViewMaxScrollY())
             {
                 tibia::Sprite inventoryButtonScrollDown;
                 inventoryButtonScrollDown.setId(tibia::SpriteData::Gui::scrollButtonDown[1]);
@@ -5157,6 +5371,7 @@ private:
 
     sf::Font m_fontDefault;
     sf::Font m_fontConsole;
+    sf::Font m_fontChatLog;
 
     tibia::BitmapFont m_bitmapFontDefault;
     tibia::BitmapFont m_bitmapFontTiny;
@@ -5169,8 +5384,8 @@ private:
     sf::Clock m_clockStatusBar;
     tibia::BitmapFontText m_statusBarText;
 
-    sf::View m_gameWindowView;
     sf::RenderTexture m_gameWindow;
+    sf::View m_gameWindowView;
     sf::Sprite m_gameWindowSprite;
     sf::RenderTexture m_gameWindowLayer;
     sf::Sprite m_gameWindowLayerSprite;
@@ -5182,11 +5397,17 @@ private:
     sf::RenderTexture m_miniMapWindow;
     sf::Sprite m_miniMapWindowSprite;
 
-    sf::View m_inventorySlotsWindowView;
-    sf::RenderTexture m_inventorySlotsWindow;
-    sf::Sprite m_inventorySlotsWindowSprite;
-
     int m_miniMapWindowZoom;
+
+    sf::RenderTexture m_chatLogWindow;
+    sf::View m_chatLogWindowView;
+    sf::Sprite m_chatLogWindowSprite;
+
+    std::vector<sf::Text> m_chatLogWindowTextList;
+
+    sf::RenderTexture m_inventorySlotsWindow;
+    sf::View m_inventorySlotsWindowView;
+    sf::Sprite m_inventorySlotsWindowSprite;
 
     sf::RenderTexture m_lightLayer;
     sf::Sprite m_lightLayerSprite;

@@ -81,7 +81,6 @@ namespace tibia
         sf::Texture equipment;
         sf::Texture inventory;
         sf::Texture inventorySplit;
-        sf::Texture inventorySlot;
         sf::Texture combat;
         sf::Texture skills;
         sf::Texture book;
@@ -101,7 +100,6 @@ namespace tibia
         {"images/equipment.png",        tibia::Textures::equipment},
         {"images/inventory.png",        tibia::Textures::inventory},
         {"images/inventory_split.png",  tibia::Textures::inventorySplit},
-        {"images/inventory_slot.png",   tibia::Textures::inventorySlot},
         {"images/combat.png",           tibia::Textures::combat},
         {"images/skills.png",           tibia::Textures::skills},
         {"images/book.png",             tibia::Textures::book},
@@ -117,6 +115,11 @@ namespace tibia
         namespace Console
         {
             std::string filename = "fonts/Inconsolata.ttf";
+        }
+
+        namespace ChatLog
+        {
+            std::string filename = "fonts/Fixedsys.ttf";
         }
     }
 
@@ -183,15 +186,6 @@ namespace tibia
                 8,  8, 7, 7, 7,  8,  8,  10, 8, 8, 7, 8, 4, 8,  9,  8,
             };
         }
-    }
-
-    namespace GameTextTypes
-    {
-        enum
-        {
-            default,
-            speech,
-        };
     }
 
     namespace MouseCursor
@@ -584,6 +578,58 @@ namespace tibia
             sf::IntRect rect(x, y, width, height);
         }
 
+        namespace ChatLogWindow
+        {
+            int x = 11;
+            int y = 361;
+
+            int width  = 496;
+            int height = 72; // (16 + 2) * 4 || (12 * 6)
+
+            sf::Vector2f position(x, y);
+
+            sf::IntRect rect(x, y, width, height);
+
+            int numLinesVisible = 4;
+
+            int maxLines = 32; // every line is drawn
+
+            unsigned int textCharacterSize = 16;
+
+            int textHeight = 16;
+
+            int textOffset = 2;
+
+            namespace Buttons
+            {
+                namespace ScrollDown
+                {
+                    int x = 471;
+                    int y = 401;
+
+                    int width  = 32;
+                    int height = 32;
+
+                    sf::Vector2f position(x, y);
+
+                    sf::IntRect rect(x, y, width, height);
+                }
+
+                namespace ScrollUp
+                {
+                    int x = 471;
+                    int y = 361;
+
+                    int width  = 32;
+                    int height = 32;
+
+                    sf::Vector2f position(x, y);
+
+                    sf::IntRect rect(x, y, width, height);
+                }
+            }
+        }
+
         namespace TabButtons
         {
             namespace State
@@ -821,12 +867,6 @@ namespace tibia
                     sf::Vector2f position(x, y);
 
                     sf::IntRect rect(x, y, width, height);
-
-                    namespace TotalSize
-                    {
-                        int width  = 102;  // 32 + 3 + 32 + 3 + 32
-                        int height = 1120; // 96 slots total; 24 slots (3 by 8), 4 times: (((32 + 3) * 8) * 4)
-                    }
                 }
 
                 int size = 35; // 32 + 3
@@ -2412,8 +2452,8 @@ namespace tibia
         std::vector<int> offsetObjects =
         {
             88,
-            //394, 395, 396, 397, // candles
-            //524, 525, 526, 527, // candles
+            394, 395, 396, 397, // candles
+            524, 525, 526, 527, // candles
             1004, 1005, 1043, 1044, 1046, 1048,
             1274,
             1652,

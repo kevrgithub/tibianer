@@ -98,6 +98,30 @@ void createMainWindow()
     }
 }
 
+sf::View calculateMainWindowView(const sf::Vector2u &windowSize, const sf::Vector2u &designedSize)
+{
+    sf::FloatRect viewPort(0.0f, 0.0f, 1.0f, 1.0f);
+
+    float screenWidth  = windowSize.x / static_cast<float>(designedSize.x);
+    float screenHeight = windowSize.y / static_cast<float>(designedSize.y);
+
+    if(screenWidth > screenHeight)
+    {
+        viewPort.width = screenHeight / screenWidth;
+        viewPort.left = (1.0f - viewPort.width) / 2.0f;
+    }
+    else if(screenWidth < screenHeight)
+    {
+        viewPort.height = screenWidth / screenHeight;
+        viewPort.top = (1.0f - viewPort.height) / 2.0f;
+    }
+
+    sf::View view(sf::FloatRect(0, 0, designedSize.x, designedSize.y));
+    view.setViewport(viewPort);
+
+    return view;
+}
+
 bool doSaveScreenshot()
 {
     sf::Image screenshot = g_mainWindow.capture();
@@ -263,11 +287,10 @@ int main(int argc, char* argv[])
             doEnterGame = false;
         }
 
-        g_mainWindow.clear(tibia::Colors::white);
+        g_mainWindow.clear(tibia::Colors::black);
 
         sf::Sprite background;
         background.setTexture(tibia::Textures::background);
-        background.setPosition(0, 0);
         g_mainWindow.draw(background);
 
         g_game.updateMouseWindowPosition(&g_mainWindow);
@@ -284,6 +307,8 @@ int main(int argc, char* argv[])
         g_game.drawGameWindow(&g_mainWindow);
 
         g_game.drawOptionsButton(&g_mainWindow);
+
+        g_game.drawChatLogWindow(&g_mainWindow);
 
         g_game.drawTabButtons(&g_mainWindow);
 
@@ -348,6 +373,12 @@ int main(int argc, char* argv[])
             {
                 g_windowIsFocused = true;
             }
+
+            //else if (event.type == sf::Event::Resized)
+            //{
+                // aspect ratio correction
+                //g_mainWindow.setView(calculateMainWindowView(g_mainWindow.getSize(), sf::Vector2u(g_windowWidth, g_windowHeight)));
+            //}
 
             else if (event.type == sf::Event::KeyPressed)
             {
