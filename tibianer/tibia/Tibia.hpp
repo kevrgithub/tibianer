@@ -117,18 +117,12 @@ namespace tibia
             std::string filename = "fonts/Inconsolata.ttf";
         }
 
-        namespace ChatLog
+        namespace System
         {
-            std::string filename = "fonts/Fixedsys.ttf";
-        }
-    }
+            std::string filename = "fonts/System.ttf";
 
-    namespace FontSizes
-    {
-        const int default = 48;
-        const int small   = 16;
-        const int game    = 24;
-        const int title   = 128;
+            unsigned int characterSize = 13;
+        }
     }
 
     namespace BitmapFonts
@@ -555,7 +549,7 @@ namespace tibia
         namespace GameWindow
         {
             int x = 51;
-            int y = 22;
+            int y = 23;
 
             int width  = tibia::TILES_WIDTH;
             int height = tibia::TILES_HEIGHT;
@@ -568,7 +562,7 @@ namespace tibia
         namespace OptionsButton
         {
             int x = 13;
-            int y = 18;
+            int y = 19;
 
             int width  = 24;
             int height = 24;
@@ -581,10 +575,10 @@ namespace tibia
         namespace ChatLogWindow
         {
             int x = 11;
-            int y = 361;
+            int y = 363;
 
             int width  = 496;
-            int height = 72; // (16 + 2) * 4 || (12 * 6)
+            int height = 70;
 
             sf::Vector2f position(x, y);
 
@@ -593,8 +587,6 @@ namespace tibia
             int numLinesVisible = 4;
 
             int maxLines = 32; // every line is drawn
-
-            unsigned int textCharacterSize = 16;
 
             int textHeight = 16;
 
@@ -618,7 +610,7 @@ namespace tibia
                 namespace ScrollUp
                 {
                     int x = 471;
-                    int y = 361;
+                    int y = 363;
 
                     int width  = 32;
                     int height = 32;
@@ -856,6 +848,9 @@ namespace tibia
 
             namespace Slots
             {
+                int width  = 32;
+                int height = 32;
+
                 namespace Window
                 {
                     int x = 523;
@@ -979,6 +974,11 @@ namespace tibia
 
         namespace OutfitButtons
         {
+            int width  = 32;
+            int height = 32;
+
+            int borderSize = 3;
+
             namespace Head
             {
                 int x = 521;
@@ -1057,6 +1057,40 @@ namespace tibia
 
             sf::IntRect rect(x, y, width, height);
 
+            namespace Creatures
+            {
+                int width  = 32;
+                int height = 32;
+
+                namespace Window
+                {
+                    int x = 519;
+                    int y = 207;
+
+                    int width  = 110;
+                    int height = 183;
+
+                    sf::Vector2f position(x, y);
+
+                    sf::IntRect rect(x, y, width, height);
+
+                }
+
+                float timeSecondsToShowDeadCreatures = 5.0f;
+
+                int numCreaturesVisible = 5;
+
+                int numCreaturePixelsHalfVisible = 8;
+
+                int creatureIconLeftOffset = 2;
+
+                int creatureTextLeftOffsetFromIcon = 4;
+
+                int distanceBetweenText = 3;
+
+                int distanceBetweenCreatures = 3;
+            }
+
             namespace Buttons
             {
                 namespace ScrollDown
@@ -1093,9 +1127,9 @@ namespace tibia
             {
                 enum
                 {
-                    fullOffense,
-                    halfOffenseDefense,
-                    fullDefense,
+                    offense,
+                    normal,
+                    defense,
                 };
             }
 
@@ -1142,7 +1176,7 @@ namespace tibia
         namespace StatusEffectIcons
         {
             int x = 481;
-            int y = 18;
+            int y = 19;
 
             sf::Vector2f position(x, y);
 
@@ -1152,7 +1186,7 @@ namespace tibia
         namespace StatusBarText
         {
             int x = 259;
-            int y = 297;
+            int y = 298;
 
             sf::Vector2f position(x, y);
         }
@@ -1162,7 +1196,7 @@ namespace tibia
             namespace Hp
             {
                 int x = 51;
-                int y = 322;
+                int y = 323;
 
                 sf::Vector2f position(x, y);
             }
@@ -1170,7 +1204,7 @@ namespace tibia
             namespace Mp
             {
                 int x = 265;
-                int y = 322;
+                int y = 323;
 
                 sf::Vector2f position(x, y);
             }
@@ -1246,6 +1280,56 @@ namespace tibia
         {"good",    tibia::Teams::good},
         {"evil",    tibia::Teams::evil},
         {"other",   tibia::Teams::other},
+    };
+
+    namespace Vocations
+    {
+        enum
+        {
+            none,
+            knight,
+            paladin,
+            sorcerer,
+            druid,
+        };
+    }
+
+    std::unordered_map<int, std::string> umapVocations =
+    {
+        {tibia::Vocations::none,     "None"},
+        {tibia::Vocations::knight,   "Knight"},
+        {tibia::Vocations::paladin,  "Paladim"},
+        {tibia::Vocations::sorcerer, "Sorcerer"},
+        {tibia::Vocations::druid,    "Druid"},
+    };
+
+    namespace HealthStates
+    {
+        enum
+        {
+            healthy,        // 91 -> 100%
+            barelyWounded,  // 76 -> 90%
+            lightlyWounded, // 51 -> 75%
+            heavilyWounded, // 26 -> 50%
+            critical,       // 11 -> 25%
+            nearlyDead,     // 1  -> 10%
+            dead,           //       0%
+
+            unknown,
+        };
+    }
+
+    std::unordered_map<int, std::string> umapHealthStates =
+    {
+        {tibia::HealthStates::healthy,        "healthy"},
+        {tibia::HealthStates::barelyWounded,  "barely wounded"},
+        {tibia::HealthStates::lightlyWounded, "lightly wounded"},
+        {tibia::HealthStates::heavilyWounded, "heavily wounded"},
+        {tibia::HealthStates::critical,       "critical"},
+        {tibia::HealthStates::nearlyDead,     "nearly dead"},
+        {tibia::HealthStates::dead,           "dead"},
+
+        {tibia::HealthStates::unknown,        "unknown"},
     };
 
     namespace TileMapTypes
@@ -1562,21 +1646,30 @@ namespace tibia
             human,
 
             bear,
+            behemoth,
+            beholder,
             cacodemon, // Doom
+            cyclops,
             citizenMale,
             citizenFemale,
             demon,
             demonSkeleton,
             gameMaster,
+            giantSpider,
             ghoul,
+            greenDragon,
             hero,
+            lion,
             monk,
             necromancer,
             orc,
             poisonSpider,
+            polarBear,
+            redDragon,
             santaClaus,
             skeleton,
             spider,
+            stoneGolem,
             witch,
         };
     }
@@ -1586,12 +1679,31 @@ namespace tibia
         {"human", tibia::CreatureTypes::human},
 
         {"bear", tibia::CreatureTypes::bear},
+        {"behemoth", tibia::CreatureTypes::behemoth},
+        {"beholder", tibia::CreatureTypes::beholder},
         {"cacodemon", tibia::CreatureTypes::cacodemon},
+        {"cyclops", tibia::CreatureTypes::cyclops},
         {"citizen_male", tibia::CreatureTypes::citizenMale},
         {"citizen_female", tibia::CreatureTypes::citizenFemale},
         {"demon", tibia::CreatureTypes::demon},
+        {"demon_skeleton", tibia::CreatureTypes::demonSkeleton},
+        {"gamemaster", tibia::CreatureTypes::gameMaster},
+        {"giant_spider", tibia::CreatureTypes::giantSpider},
+        {"ghoul", tibia::CreatureTypes::ghoul},
+        {"green_dragon", tibia::CreatureTypes::greenDragon},
+        {"hero", tibia::CreatureTypes::hero},
+        {"lion", tibia::CreatureTypes::lion},
+        {"monk", tibia::CreatureTypes::monk},
+        {"necromancer", tibia::CreatureTypes::necromancer},
+        {"orc", tibia::CreatureTypes::orc},
         {"poison_spider", tibia::CreatureTypes::poisonSpider},
+        {"polar_bear", tibia::CreatureTypes::polarBear},
+        {"red_dragon", tibia::CreatureTypes::redDragon},
         {"santa_claus", tibia::CreatureTypes::santaClaus},
+        {"skeleton", tibia::CreatureTypes::skeleton},
+        {"spider", tibia::CreatureTypes::spider},
+        {"stone_golem", tibia::CreatureTypes::stoneGolem},
+        {"witch", tibia::CreatureTypes::witch},
     };
 
     std::unordered_map<int, std::string> umapCreatureNames =
@@ -1599,12 +1711,31 @@ namespace tibia
         {tibia::CreatureTypes::human, "human"},
 
         {tibia::CreatureTypes::bear, "bear"},
+        {tibia::CreatureTypes::behemoth, "behemoth"},
+        {tibia::CreatureTypes::beholder, "beholder"},
         {tibia::CreatureTypes::cacodemon, "cacodemon"},
+        {tibia::CreatureTypes::cyclops, "cyclops"},
         {tibia::CreatureTypes::citizenMale, "citizen"},
         {tibia::CreatureTypes::citizenFemale, "citizen"},
         {tibia::CreatureTypes::demon, "demon"},
+        {tibia::CreatureTypes::demonSkeleton, "demon skeleton"},
+        {tibia::CreatureTypes::gameMaster, "gamemaster"},
+        {tibia::CreatureTypes::giantSpider, "giant spider"},
+        {tibia::CreatureTypes::ghoul, "ghoul"},
+        {tibia::CreatureTypes::greenDragon, "green dragon"},
+        {tibia::CreatureTypes::hero, "hero"},
+        {tibia::CreatureTypes::lion, "lion"},
+        {tibia::CreatureTypes::monk, "monk"},
+        {tibia::CreatureTypes::necromancer, "necromancer"},
+        {tibia::CreatureTypes::orc, "orc"},
         {tibia::CreatureTypes::poisonSpider, "poison spider"},
+        {tibia::CreatureTypes::polarBear, "polar bear"},
+        {tibia::CreatureTypes::redDragon, "red dragon"},
         {tibia::CreatureTypes::santaClaus, "Santa Claus"},
+        {tibia::CreatureTypes::skeleton, "skeleton"},
+        {tibia::CreatureTypes::spider, "spider"},
+        {tibia::CreatureTypes::stoneGolem, "stone golem"},
+        {tibia::CreatureTypes::witch, "witch"},
     };
 
     namespace CreatureSizes

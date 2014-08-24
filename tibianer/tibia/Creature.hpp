@@ -82,6 +82,8 @@ public:
 
         m_team = tibia::Teams::good;
 
+        m_vocation = tibia::Vocations::none;
+
         m_type = tibia::CreatureTypes::human;
 
         m_size = tibia::CreatureSizes::small;
@@ -593,6 +595,53 @@ public:
         m_inventoryItemList.erase(m_inventoryItemList.begin() + index);
     }
 
+    int getHealthState()
+    {
+        if (m_hp <= 0 || m_hpMax <= 0)
+        {
+            return tibia::HealthStates::dead;
+        }
+
+        float hpPercent = ((float)m_hp / (float)m_hpMax) * 100.0;
+
+        //std::cout << "name:      " << m_name << std::endl;
+        //std::cout << "hp:        " << m_hp << std::endl;
+        //std::cout << "hpMax:     " << m_hpMax << std::endl;
+        //std::cout << "hpPercent: " << hpPercent << std::endl;
+        //std::cout << std::endl;
+
+        if (hpPercent >= 91)
+        {
+            return tibia::HealthStates::healthy;
+        }
+        else if (hpPercent >= 76 && hpPercent <= 90)
+        {
+            return tibia::HealthStates::barelyWounded;
+        }
+        else if (hpPercent >= 51 && hpPercent <= 75)
+        {
+            return tibia::HealthStates::lightlyWounded;
+        }
+        else if (hpPercent >= 26 && hpPercent <= 50)
+        {
+            return tibia::HealthStates::heavilyWounded;
+        }
+        else if (hpPercent >= 11 && hpPercent <= 25)
+        {
+            return tibia::HealthStates::critical;
+        }
+        else if (hpPercent >= 1 && hpPercent <= 10)
+        {
+            return tibia::HealthStates::nearlyDead;
+        }
+        else if (hpPercent <= 0)
+        {
+            return tibia::HealthStates::dead;
+        }
+
+        return tibia::HealthStates::unknown;
+    }
+
     bool isDead()
     {
         return m_isDead;
@@ -605,6 +654,8 @@ public:
         if (m_isDead == true)
         {
             m_clockCorpse.restart();
+
+            m_clockDead.restart();
         }
     }
 
@@ -728,6 +779,16 @@ public:
     void setTeam(int team)
     {
         m_team = team;
+    }
+
+    int getVocation()
+    {
+        return m_vocation;
+    }
+
+    void setVocation(int vocation)
+    {
+        m_vocation = vocation;
     }
 
     int getBloodType()
@@ -900,6 +961,11 @@ public:
         return &m_clockCorpse;
     }
 
+    sf::Clock* getClockDead()
+    {
+        return &m_clockDead;
+    }
+
     sf::Clock* getClockAnimation()
     {
         return &m_clockAnimation;
@@ -913,6 +979,11 @@ public:
     tibia::Creature::InventoryItemList* getInventoryItemList()
     {
         return &m_inventoryItemList;
+    }
+
+    std::vector<int>* getSpritesList()
+    {
+        return &m_spritesList;
     }
 
 private:
@@ -945,6 +1016,8 @@ private:
 
     int m_team;
 
+    int m_vocation;
+
     int m_hp;
     int m_hpMax;
 
@@ -970,6 +1043,8 @@ private:
 
     sf::Clock m_clockCorpse;
     sf::Time m_timeCorpse;
+
+    sf::Clock m_clockDead;
 
     std::vector<int> m_spritesList;
     std::vector<int> m_spritesCorpseList;

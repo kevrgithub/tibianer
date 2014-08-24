@@ -306,7 +306,7 @@ int main(int argc, char* argv[])
 
         g_game.drawGameWindow(&g_mainWindow);
 
-        g_game.drawOptionsButton(&g_mainWindow);
+        //g_game.drawOptionsButton(&g_mainWindow);
 
         g_game.drawChatLogWindow(&g_mainWindow);
 
