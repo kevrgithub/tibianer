@@ -92,64 +92,33 @@ public:
 
     Game::Game()
     {
-        m_gameWindowView.setSize(sf::Vector2f(tibia::GuiData::GameWindow::width, tibia::GuiData::GameWindow::height));
+        m_gameWindow.create(tibia::GuiData::GameWindow::width, tibia::GuiData::GameWindow::height);
+        m_gameWindowView.reset(sf::FloatRect(0, 0, tibia::GuiData::GameWindow::width, tibia::GuiData::GameWindow::height));
 
-        m_miniMapWindowZoom = tibia::GuiData::MiniMapWindow::zoomDefault;
-        m_miniMapWindowView.setSize(sf::Vector2f(tibia::TILES_WIDTH * tibia::GuiData::MiniMapWindow::zoomDefault, tibia::TILES_WIDTH * tibia::GuiData::MiniMapWindow::zoomDefault));
+        m_gameWindowLayer.create(tibia::GuiData::GameWindow::width, tibia::GuiData::GameWindow::height);
 
-        m_chatLogWindowView.reset(sf::FloatRect(0, 0, tibia::GuiData::ChatLogWindow::width, tibia::GuiData::ChatLogWindow::height));
+        m_lightLayer.create(tibia::LIGHT_WIDTH, tibia::LIGHT_HEIGHT);
 
-        m_inventorySlotsWindowView.reset(sf::FloatRect(0, 0, tibia::GuiData::InventoryWindow::Slots::Window::width, tibia::GuiData::InventoryWindow::Slots::Window::height));
-
-        m_combatCreaturesWindowView.reset(sf::FloatRect(0, 0, tibia::GuiData::CombatWindow::Creatures::Window::width, tibia::GuiData::CombatWindow::Creatures::Window::height));
-
-        m_tileMapTileVertices.setPrimitiveType(sf::Quads);
-
-        m_statusBarText.setPosition(tibia::GuiData::StatusBarText::position);
-
-        m_gameWindowLayer.create(tibia::MAP_TILE_XY_MAX, tibia::MAP_TILE_XY_MAX);
-
-        m_gameWindowLayerSprite.setPosition(0, 0);
-        m_gameWindowLayerSprite.setTextureRect(sf::IntRect(0, 0, tibia::MAP_TILE_XY_MAX, tibia::MAP_TILE_XY_MAX));
-
-        m_lightLayer.create(tibia::MAP_TILE_XY_MAX, tibia::MAP_TILE_XY_MAX);
-
-        m_lightLayerSprite.setPosition(0, 0);
-        m_lightLayerSprite.setTextureRect(sf::IntRect(0, 0, tibia::MAP_TILE_XY_MAX, tibia::MAP_TILE_XY_MAX));
+        m_lightBrightness = tibia::LightBrightnesses::day;
 
         m_timeOfDay = tibia::TimeOfDay::day;
 
-        m_lightBrightness = tibia::LightBrightnesses::day;
-    }
+        m_miniMapWindow.create(tibia::GuiData::MiniMapWindow::width, tibia::GuiData::MiniMapWindow::height);
+        m_miniMapWindowView.reset(sf::FloatRect(0, 0, tibia::TILES_WIDTH * tibia::GuiData::MiniMapWindow::zoomDefault, tibia::TILES_WIDTH * tibia::GuiData::MiniMapWindow::zoomDefault));
+        m_miniMapWindowZoom = tibia::GuiData::MiniMapWindow::zoomDefault;
 
-    bool createWindows()
-    {
-        if (m_gameWindow.create(tibia::GuiData::GameWindow::width, tibia::GuiData::GameWindow::height) == false)
-        {
-            return false;
-        }
+        m_chatLogWindow.create(tibia::GuiData::ChatLogWindow::width, tibia::GuiData::ChatLogWindow::height);
+        m_chatLogWindowView.reset(sf::FloatRect(0, 0, tibia::GuiData::ChatLogWindow::width, tibia::GuiData::ChatLogWindow::height));
 
-        if (m_miniMapWindow.create(tibia::GuiData::MiniMapWindow::width, tibia::GuiData::MiniMapWindow::height) == false)
-        {
-            return false;
-        }
+        m_inventorySlotsWindow.create(tibia::GuiData::InventoryWindow::Slots::Window::width, tibia::GuiData::InventoryWindow::Slots::Window::height);
+        m_inventorySlotsWindowView.reset(sf::FloatRect(0, 0, tibia::GuiData::InventoryWindow::Slots::Window::width, tibia::GuiData::InventoryWindow::Slots::Window::height));
 
-        if (m_chatLogWindow.create(tibia::GuiData::ChatLogWindow::width, tibia::GuiData::ChatLogWindow::height) == false)
-        {
-            return false;
-        }
+        m_combatCreaturesWindow.create(tibia::GuiData::CombatWindow::Creatures::Window::width, tibia::GuiData::CombatWindow::Creatures::Window::height);
+        m_combatCreaturesWindowView.reset(sf::FloatRect(0, 0, tibia::GuiData::CombatWindow::Creatures::Window::width, tibia::GuiData::CombatWindow::Creatures::Window::height));
 
-        if (m_inventorySlotsWindow.create(tibia::GuiData::InventoryWindow::Slots::Window::width, tibia::GuiData::InventoryWindow::Slots::Window::height) == false)
-        {
-            return false;
-        }
+        m_statusBarText.setPosition(tibia::GuiData::StatusBarText::position);
 
-        if (m_combatCreaturesWindow.create(tibia::GuiData::CombatWindow::Creatures::Window::width, tibia::GuiData::CombatWindow::Creatures::Window::height) == false)
-        {
-            return false;
-        }
-
-        return true;
+        m_tileMapTileVertices.setPrimitiveType(sf::Quads);
     }
 
     void setMouseCursorVisible(sf::RenderWindow* mainWindow, bool isVisible)
@@ -3894,6 +3863,20 @@ public:
         tile->addAnimation(animation);
     }
 
+    sf::IntRect getGameWindowViewDrawRect()
+    {
+        int x1 = ((m_gameWindowView.getCenter().x - (tibia::TILE_SIZE / 2)) / tibia::TILE_SIZE);
+        int y1 = ((m_gameWindowView.getCenter().y - (tibia::TILE_SIZE / 2)) / tibia::TILE_SIZE);
+
+        x1 = x1 - tibia::NUM_TILES_FROM_CENTER_X - 1;
+        y1 = y1 - tibia::NUM_TILES_FROM_CENTER_Y - 1;
+
+        int x2 = tibia::NUM_TILES_X + 2;
+        int y2 = tibia::NUM_TILES_Y + 2;
+
+        return sf::IntRect(x1, y1, x2, y2);
+    }
+
     void drawTileMap(tibia::TileMap* tileMap)
     {
         tibia::Tile::List* tileList = tileMap->getTileList();
@@ -3905,22 +3888,19 @@ public:
 
         m_tileMapTileVertices.clear();
 
-        int x1 = ((m_gameWindowView.getCenter().x - (tibia::TILE_SIZE / 2)) / tibia::TILE_SIZE);
-        int y1 = ((m_gameWindowView.getCenter().y - (tibia::TILE_SIZE / 2)) / tibia::TILE_SIZE);
+        int x1 = getGameWindowViewDrawRect().left;
+        int y1 = getGameWindowViewDrawRect().top;
 
-        x1 = x1 - NUM_TILES_FROM_CENTER_X - 1;
-        y1 = y1 - NUM_TILES_FROM_CENTER_Y - 1;
-
-        if (x1 < 0) x1 = 0;
-        if (y1 < 0) y1 = 0;
-
-        int x2 = tibia::NUM_TILES_X + 2;
-        int y2 = tibia::NUM_TILES_Y + 2;
+        int x2 = getGameWindowViewDrawRect().width;
+        int y2 = getGameWindowViewDrawRect().height;
 
         for (int i = x1; i < x1 + x2; i++)
         {
             for (int j = y1; j < y1 + y2; j++)
             {
+                if (i < 0) continue;
+                if (j < 0) continue;
+
                 if (i > tibia::MAP_SIZE - 1) continue;
                 if (j > tibia::MAP_SIZE - 1) continue;
 
@@ -4029,22 +4009,19 @@ public:
             return;
         }
 
-        int x1 = ((m_gameWindowView.getCenter().x - (tibia::TILE_SIZE / 2)) / tibia::TILE_SIZE);
-        int y1 = ((m_gameWindowView.getCenter().y - (tibia::TILE_SIZE / 2)) / tibia::TILE_SIZE);
+        int x1 = getGameWindowViewDrawRect().left;
+        int y1 = getGameWindowViewDrawRect().top;
 
-        x1 = x1 - NUM_TILES_FROM_CENTER_X - 1;
-        y1 = y1 - NUM_TILES_FROM_CENTER_Y - 1;
-
-        if (x1 < 0) x1 = 0;
-        if (y1 < 0) y1 = 0;
-
-        int x2 = tibia::NUM_TILES_X + 2;
-        int y2 = tibia::NUM_TILES_Y + 2;
+        int x2 = getGameWindowViewDrawRect().width;
+        int y2 = getGameWindowViewDrawRect().height;
 
         for (int i = x1; i < x1 + x2; i++)
         {
             for (int j = y1; j < y1 + y2; j++)
             {
+                if (i < 0) continue;
+                if (j < 0) continue;
+
                 if (i > tibia::MAP_SIZE - 1) continue;
                 if (j > tibia::MAP_SIZE - 1) continue;
 
@@ -4223,13 +4200,19 @@ public:
 
     void drawLightAtTilePosition(tibia::Light& light, sf::Vector2u tilePosition)
     {
-        light.setPosition(tilePosition.x + (tibia::TILE_SIZE / 2), tilePosition.y + (tibia::TILE_SIZE / 2));
+        light.setPosition
+        (
+            tilePosition.x + (tibia::TILE_SIZE / 2),
+            tilePosition.y + (tibia::TILE_SIZE / 2)
+        );
 
         m_lightLayer.draw(light, sf::BlendAdd);
     }
 
     void drawTileMapLights(int z)
     {
+        m_lightLayer.setView(m_gameWindowView);
+
         if (z < tibia::ZAxis::ground)
         {
             m_lightLayer.clear(sf::Color(tibia::LightBrightnesses::underground, tibia::LightBrightnesses::underground, tibia::LightBrightnesses::underground));
@@ -4295,11 +4278,14 @@ public:
 
         m_lightLayerSprite.setTexture(m_lightLayer.getTexture());
 
+        m_lightLayerSprite.setPosition(getGameWindowViewDrawRect().left * tibia::TILE_SIZE, getGameWindowViewDrawRect().top * tibia::TILE_SIZE);
+
         m_gameWindowLayer.draw(m_lightLayerSprite, sf::BlendMultiply);
     }
 
     void drawGameLayer(int z)
     {
+        m_gameWindowLayer.setView(m_gameWindowView);
         m_gameWindowLayer.clear(tibia::Colors::transparent);
 
         drawTileMap(&m_map.tileMapTiles[z]);
@@ -4350,6 +4336,8 @@ public:
 
         m_gameWindowLayerSprite.setTexture(m_gameWindowLayer.getTexture());
 
+        m_gameWindowLayerSprite.setPosition((getGameWindowViewDrawRect().left + 1) * tibia::TILE_SIZE, (getGameWindowViewDrawRect().top + 1) * tibia::TILE_SIZE);
+
         m_gameWindow.draw(m_gameWindowLayerSprite);
     }
 
@@ -4361,7 +4349,7 @@ public:
             m_player->getTileY() + (tibia::TILE_SIZE / 2)
         );
 
-        m_gameWindow.setView(m_gameWindowView);
+        m_gameWindow.setView(m_gameWindowView); // setView to m_gameWindowLayer instead
         m_gameWindow.clear(tibia::Colors::black);
 
         for (unsigned int i = tibia::ZAxis::floor; i < tibia::ZAxis::ceiling + 1; i++)
@@ -5485,22 +5473,19 @@ public:
             return false;
         }
 
-        int x1 = ((m_gameWindowView.getCenter().x - (tibia::TILE_SIZE / 2)) / tibia::TILE_SIZE);
-        int y1 = ((m_gameWindowView.getCenter().y - (tibia::TILE_SIZE / 2)) / tibia::TILE_SIZE);
+        int x1 = getGameWindowViewDrawRect().left;
+        int y1 = getGameWindowViewDrawRect().top;
 
-        x1 = x1 - NUM_TILES_FROM_CENTER_X - 1;
-        y1 = y1 - NUM_TILES_FROM_CENTER_Y - 1;
-
-        if (x1 < 0) x1 = 0;
-        if (y1 < 0) y1 = 0;
-
-        int x2 = tibia::NUM_TILES_X + 2;
-        int y2 = tibia::NUM_TILES_Y + 2;
+        int x2 = getGameWindowViewDrawRect().width;
+        int y2 = getGameWindowViewDrawRect().height;
 
         for (int i = x1; i < x1 + x2; i++)
         {
             for (int j = y1; j < y1 + y2; j++)
             {
+                if (i < 0) continue;
+                if (j < 0) continue;
+
                 if (i > tibia::MAP_SIZE - 1) continue;
                 if (j > tibia::MAP_SIZE - 1) continue;
 
@@ -5598,22 +5583,19 @@ public:
 
     bool isWaterVisible()
     {
-        int x1 = ((m_gameWindowView.getCenter().x - (tibia::TILE_SIZE / 2)) / tibia::TILE_SIZE);
-        int y1 = ((m_gameWindowView.getCenter().y - (tibia::TILE_SIZE / 2)) / tibia::TILE_SIZE);
+        int x1 = getGameWindowViewDrawRect().left;
+        int y1 = getGameWindowViewDrawRect().top;
 
-        x1 = x1 - NUM_TILES_FROM_CENTER_X;
-        y1 = y1 - NUM_TILES_FROM_CENTER_Y;
-
-        if (x1 < 0) x1 = 0;
-        if (y1 < 0) y1 = 0;
-
-        int x2 = tibia::NUM_TILES_X;
-        int y2 = tibia::NUM_TILES_Y;
+        int x2 = getGameWindowViewDrawRect().width;
+        int y2 = getGameWindowViewDrawRect().height;
 
         for (int i = x1; i < x1 + x2; i++)
         {
             for (int j = y1; j < y1 + y2; j++)
             {
+                if (i < 0) continue;
+                if (j < 0) continue;
+
                 if (i > tibia::MAP_SIZE - 1) continue;
                 if (j > tibia::MAP_SIZE - 1) continue;
 
@@ -5791,6 +5773,7 @@ private:
     sf::RenderTexture m_gameWindow;
     sf::View m_gameWindowView;
     sf::Sprite m_gameWindowSprite;
+
     sf::RenderTexture m_gameWindowLayer;
     sf::Sprite m_gameWindowLayerSprite;
 

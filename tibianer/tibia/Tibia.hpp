@@ -14,7 +14,7 @@
 
 namespace tibia
 {
-    const int TEXTURE_SIZE_MAX = 4096;
+    const unsigned int TEXTURE_SIZE_MAX = 2048; // video card maximum supported texture size
 
     const int SPRITES_TOTAL = 4096;
 
@@ -1298,7 +1298,7 @@ namespace tibia
     {
         {tibia::Vocations::none,     "None"},
         {tibia::Vocations::knight,   "Knight"},
-        {tibia::Vocations::paladin,  "Paladim"},
+        {tibia::Vocations::paladin,  "Paladin"},
         {tibia::Vocations::sorcerer, "Sorcerer"},
         {tibia::Vocations::druid,    "Druid"},
     };
@@ -1657,7 +1657,8 @@ namespace tibia
             gameMaster,
             giantSpider,
             ghoul,
-            greenDragon,
+            dragon,
+            dragonLord,
             hero,
             lion,
             monk,
@@ -1665,7 +1666,6 @@ namespace tibia
             orc,
             poisonSpider,
             polarBear,
-            redDragon,
             santaClaus,
             skeleton,
             spider,
@@ -1690,7 +1690,8 @@ namespace tibia
         {"gamemaster", tibia::CreatureTypes::gameMaster},
         {"giant_spider", tibia::CreatureTypes::giantSpider},
         {"ghoul", tibia::CreatureTypes::ghoul},
-        {"green_dragon", tibia::CreatureTypes::greenDragon},
+        {"dragon", tibia::CreatureTypes::dragon},
+        {"dragon_lord", tibia::CreatureTypes::dragonLord},
         {"hero", tibia::CreatureTypes::hero},
         {"lion", tibia::CreatureTypes::lion},
         {"monk", tibia::CreatureTypes::monk},
@@ -1698,7 +1699,6 @@ namespace tibia
         {"orc", tibia::CreatureTypes::orc},
         {"poison_spider", tibia::CreatureTypes::poisonSpider},
         {"polar_bear", tibia::CreatureTypes::polarBear},
-        {"red_dragon", tibia::CreatureTypes::redDragon},
         {"santa_claus", tibia::CreatureTypes::santaClaus},
         {"skeleton", tibia::CreatureTypes::skeleton},
         {"spider", tibia::CreatureTypes::spider},
@@ -1722,7 +1722,8 @@ namespace tibia
         {tibia::CreatureTypes::gameMaster, "gamemaster"},
         {tibia::CreatureTypes::giantSpider, "giant spider"},
         {tibia::CreatureTypes::ghoul, "ghoul"},
-        {tibia::CreatureTypes::greenDragon, "green dragon"},
+        {tibia::CreatureTypes::dragon, "dragon"},
+        {tibia::CreatureTypes::dragonLord, "dragon lord"},
         {tibia::CreatureTypes::hero, "hero"},
         {tibia::CreatureTypes::lion, "lion"},
         {tibia::CreatureTypes::monk, "monk"},
@@ -1730,7 +1731,6 @@ namespace tibia
         {tibia::CreatureTypes::orc, "orc"},
         {tibia::CreatureTypes::poisonSpider, "poison spider"},
         {tibia::CreatureTypes::polarBear, "polar bear"},
-        {tibia::CreatureTypes::redDragon, "red dragon"},
         {tibia::CreatureTypes::santaClaus, "Santa Claus"},
         {tibia::CreatureTypes::skeleton, "skeleton"},
         {tibia::CreatureTypes::spider, "spider"},

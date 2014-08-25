@@ -222,13 +222,6 @@ int main(int argc, char* argv[])
     g_mainWindow.draw(loadingText);
     g_mainWindow.display();
 
-    std::cout << "Creating game windows" << std::endl;
-    if (g_game.createWindows() == false)
-    {
-        std::cout << "Error: Failed to create game windows" << std::endl;
-        return EXIT_FAILURE;
-    }
-
     std::cout << "Loading textures" << std::endl;
     if (g_game.loadTextures() == false)
     {
