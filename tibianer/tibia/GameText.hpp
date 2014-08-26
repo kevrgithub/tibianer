@@ -31,43 +31,25 @@ public:
 
         m_z = z;
 
+        m_text = text;
+
+        m_textColor = textColor;
+
         m_numTextLines = 0;
 
-        std::vector<std::string> textLines;
-        boost::split(textLines, text, boost::is_any_of("\n"));
-        //std::stringstream ss(text);
-        //std::string line;
-        //while (std::getline(ss, line, '\n'))
-        //{
-            //textLines.push_back(line);
-        //}
+        m_textLines.clear();
+
+        boost::split(m_textLines, text, boost::is_any_of("\n"));
+
+        m_numTextLines = m_textLines.size();
 
         sf::Vector2f textPosition = static_cast<sf::Vector2f>(tileCoords);
 
-        textPosition.x += tibia::TILE_SIZE / 2;
-        //textPosition.y += tibia::TILE_SIZE / 2;
-
-        if (textLines.size())
-        {
-            //std::cout << "textLines.size(): " << textLines.size() << std::endl;
-
-            if (textLines.size() < 3)
-            {
-                textPosition.y -= ((textLines.size() * bitmapFont.getGlyphSize()->y) + 8);
-            }
-            else
-            {
-                textPosition.y += tibia::TILE_SIZE / 2;
-
-                textPosition.y -= ((textLines.size() * bitmapFont.getGlyphSize()->y) / 2);
-            }
-
-            m_numTextLines = textLines.size();
-        }
-
         int textHeight = bitmapFont.getGlyphSize()->y;
 
-        for (auto& textLine : textLines)
+        m_bitmapFontTextList.clear();
+
+        for (auto& textLine : m_textLines)
         {
             tibia::BitmapFontText bitmapFontText;
 
@@ -91,9 +73,24 @@ public:
         return m_tilePosition;
     }
 
+    std::string getText()
+    {
+        return m_text;
+    }
+
+    sf::Color* getTextColor()
+    {
+        return &m_textColor;
+    }
+
     int getNumTextLines()
     {
         return m_numTextLines;
+    }
+
+    std::vector<std::string>* getTextLines()
+    {
+        return &m_textLines;
     }
 
     sf::Clock* getClock()
@@ -107,11 +104,17 @@ private:
 
     sf::Vector2u m_tilePosition;
 
+    std::string m_text;
+
+    sf::Color m_textColor;
+
     int m_z;
 
     int m_type;
 
     int m_numTextLines;
+
+    std::vector<std::string> m_textLines;
 
     std::vector<tibia::BitmapFontText> m_bitmapFontTextList;
 

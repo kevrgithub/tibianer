@@ -45,41 +45,6 @@ namespace tibia
             return sf::IntRect(u, v, tibia::TILE_SIZE, tibia::TILE_SIZE);
         }
 
-        template <class T>
-        int getTileNumberByTileCoords(T tileCoords)
-        {
-            int x = tileCoords.x / tibia::TILE_SIZE;
-            int y = tileCoords.y / tibia::TILE_SIZE;
-
-            return x + (y * tibia::MAP_SIZE);
-        }
-
-        bool isTileNumberOutOfBounds(int tileNumber)
-        {
-            if (tileNumber < 0 || tileNumber > tibia::TILE_NUMBER_MAX)
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        bool isTilePositionOutOfBounds(const sf::Vector2u& tilePosition)
-        {
-            if
-            (
-                tilePosition.x < 0 ||
-                tilePosition.y < 0 ||
-                tilePosition.x > tibia::MAP_TILE_XY_MAX ||
-                tilePosition.y > tibia::MAP_TILE_XY_MAX
-            )
-            {
-                return true;
-            }
-
-            return false;
-        }
-
         int calculateTileDistance(int x1, int y1, int x2, int y2)
         {
             return std::max(std::abs(x1 - x2), std::abs(y1 - y2)) / tibia::TILE_SIZE;

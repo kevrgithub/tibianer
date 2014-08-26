@@ -173,7 +173,7 @@ public:
     {
         m_id = id;
 
-        m_flags = tibia::umapSpriteFlags[m_id];
+        m_flags = tibia::UMaps::spriteFlags[m_id];
     }
 
     int getId()

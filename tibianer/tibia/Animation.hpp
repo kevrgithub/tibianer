@@ -42,7 +42,7 @@ public:
 
         m_sprite.setId(m_id);
 
-        m_flags = tibia::umapSpriteFlags[m_id];
+        m_flags = tibia::UMaps::spriteFlags[m_id];
 
         m_numRepeat = 0;
 

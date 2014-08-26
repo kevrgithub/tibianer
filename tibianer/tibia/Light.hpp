@@ -44,9 +44,9 @@ public:
 
     void setColorbyId(unsigned int id)
     {
-        auto lightColorIt = umapLightColors.find(id);
+        auto lightColorIt = tibia::UMaps::lightColors.find(id);
 
-        if (lightColorIt != umapLightColors.end())
+        if (lightColorIt != tibia::UMaps::lightColors.end())
         {
             setColor(lightColorIt->second);
         }

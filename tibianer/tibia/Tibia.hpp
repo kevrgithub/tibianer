@@ -14,15 +14,14 @@
 
 namespace tibia
 {
+    unsigned int mapWidth  = 128;
+    unsigned int mapHeight = 128;
+
     const unsigned int TEXTURE_SIZE_MAX = 2048; // video card maximum supported texture size
 
     const int SPRITES_TOTAL = 4096;
 
     const int NUM_Z_LEVELS = 5;
-
-    const int MAP_SIZE = 128;
-
-    const int TILE_NUMBER_MAX = (MAP_SIZE * MAP_SIZE) - 1;
 
     const int TILE_SIZE = 32;
 
@@ -34,38 +33,39 @@ namespace tibia
 
     const int NUM_TILES_TOTAL = NUM_TILES_X * NUM_TILES_Y;
 
-    const int MAP_XY_MAX = MAP_SIZE;
-
-    const int MAP_TILE_XY_MAX = MAP_SIZE * TILE_SIZE;
-
     const int TILES_WIDTH  = NUM_TILES_X * TILE_SIZE;
     const int TILES_HEIGHT = NUM_TILES_Y * TILE_SIZE;
 
     const int TILE_NULL = 0;
 
-    const int TILE_HEIGHT_MOVEMENT_DIFFERENCE = 2;
+    const int TILE_HEIGHT_MOVEMENT_DIFFERENCE = 2; // height needed to be able to move to a stacked object
 
     const int TILE_HEIGHT_MAX = 4; // 5 - 1
 
-    const int TILE_CLIMB_HEIGHT = 3;
+    const int TILE_CLIMB_HEIGHT = 3; // height needed to climb up or down using stacked objects
 
     const int THING_DRAW_OFFSET = 8;
 
-    const int LIGHT_WIDTH  = 480;
-    const int LIGHT_HEIGHT = 352;
+    const int LIGHT_WIDTH  = 480; // 416 + (32 * 2)
+    const int LIGHT_HEIGHT = 352; // 288 + (32 * 2)
 
     const int NUM_CREATURE_SPRITES = 4;
     const int NUM_OBJECT_SPRITES   = 8;
 
-    const int DRAW_INDEX_LAST = 256;
+    const int DRAW_INDEX_FIRST   = 0;
+    const int DRAW_INDEX_DECALS  = 32;
+    const int DRAW_INDEX_DEFAULT = 128;
+    const int DRAW_INDEX_LAST    = 256;
 
     const float VOLUME_MULTIPLIER = 12.0f;
 
-    const int INVENTORY_ITEMS_MAX      = 4096; //96;
+    const int INVENTORY_ITEMS_MAX      = 96;
     const int INVENTORY_ITEM_COUNT_MAX = 100;
 
     const std::string CREATURE_NAME_DEFAULT = "Creature";
     const std::string CREATURE_NAME_PLAYER  = "Player";
+
+    const int CREATURE_NUM_ANIMATIONS_DEFAULT = 1;
 
     namespace Textures
     {
@@ -86,24 +86,27 @@ namespace tibia
         sf::Texture book;
     }
 
-    std::unordered_map<std::string, sf::Texture&> umapTextureFiles =
+    namespace UMaps
     {
-        {"images/cursor.png",           tibia::Textures::cursor},
-        {"images/loading.png",          tibia::Textures::loading},
-        {"images/sprites.png",          tibia::Textures::sprites},
-        {"images/sprites_numbered.png", tibia::Textures::spritesNumbered},
-        {"images/lights.png",           tibia::Textures::lights},
-        {"images/lights_smooth.png",    tibia::Textures::lightsSmooth},
-        {"images/background.png",       tibia::Textures::background},
-        {"images/bars.png",             tibia::Textures::bars},
-        {"images/status.png",           tibia::Textures::status},
-        {"images/equipment.png",        tibia::Textures::equipment},
-        {"images/inventory.png",        tibia::Textures::inventory},
-        {"images/inventory_split.png",  tibia::Textures::inventorySplit},
-        {"images/combat.png",           tibia::Textures::combat},
-        {"images/skills.png",           tibia::Textures::skills},
-        {"images/book.png",             tibia::Textures::book},
-    };
+        std::unordered_map<std::string, sf::Texture&> textureFiles =
+        {
+            {"images/cursor.png",           tibia::Textures::cursor},
+            {"images/loading.png",          tibia::Textures::loading},
+            {"images/sprites.png",          tibia::Textures::sprites},
+            {"images/sprites_numbered.png", tibia::Textures::spritesNumbered},
+            {"images/lights.png",           tibia::Textures::lights},
+            {"images/lights_smooth.png",    tibia::Textures::lightsSmooth},
+            {"images/background.png",       tibia::Textures::background},
+            {"images/bars.png",             tibia::Textures::bars},
+            {"images/status.png",           tibia::Textures::status},
+            {"images/equipment.png",        tibia::Textures::equipment},
+            {"images/inventory.png",        tibia::Textures::inventory},
+            {"images/inventory_split.png",  tibia::Textures::inventorySplit},
+            {"images/combat.png",           tibia::Textures::combat},
+            {"images/skills.png",           tibia::Textures::skills},
+            {"images/book.png",             tibia::Textures::book},
+        };
+    }
 
     namespace Fonts
     {
@@ -232,6 +235,11 @@ namespace tibia
         const float time = 5.0f;
     }
 
+    namespace GameWindowTextData
+    {
+        const float time = 5.0f;
+    }
+
     namespace AnimatedObjects
     {
         const float time = 1.0f;
@@ -273,12 +281,15 @@ namespace tibia
         const float updateTime = 1.0f;
     }
 
-    std::unordered_map<int, sf::Color> umapLightColors =
+    namespace UMaps
     {
-        {3271, sf::Color(0, 255, 255, 192)},
-        {3275, sf::Color(0, 255, 255, 192)},
-        {3279, sf::Color(0, 255, 255, 192)},
-    };
+        std::unordered_map<int, sf::Color> lightColors =
+        {
+            {3271, sf::Color(0, 255, 255, 192)},
+            {3275, sf::Color(0, 255, 255, 192)},
+            {3279, sf::Color(0, 255, 255, 192)},
+        };
+    }
 
     namespace TimeOfDay
     {
@@ -289,11 +300,14 @@ namespace tibia
         };
     }
 
-    std::unordered_map<std::string, int> umapTimeOfDay
+    namespace UMaps
     {
-        {"day",   tibia::TimeOfDay::day},
-        {"night", tibia::TimeOfDay::night},
-    };
+        std::unordered_map<std::string, int> timeOfDay
+        {
+            {"day",   tibia::TimeOfDay::day},
+            {"night", tibia::TimeOfDay::night},
+        };
+    }
 
     namespace Colors
     {
@@ -352,197 +366,200 @@ namespace tibia
         }
     }
 
-    std::unordered_map<int, sf::Color> umapMiniMapColors =
+    namespace UMaps
     {
-        {2,    tibia::Colors::MiniMap::wood},
-        {38,   tibia::Colors::MiniMap::dirt},
-        {43,   tibia::Colors::MiniMap::grass},
-        {116,  tibia::Colors::MiniMap::shallowWater},
-        {118,  tibia::Colors::MiniMap::dirt},
-        {119,  tibia::Colors::MiniMap::dirt},
-        {120,  tibia::Colors::MiniMap::dirt},
-        {121,  tibia::Colors::MiniMap::dirt},
-        {122,  tibia::Colors::MiniMap::dirt},
-        {123,  tibia::Colors::MiniMap::dirt},
-        {124,  tibia::Colors::MiniMap::dirt},
-        {125,  tibia::Colors::MiniMap::dirt},
-        {126,  tibia::Colors::MiniMap::dirt},
-        {127,  tibia::Colors::MiniMap::ice},
-        {193,  tibia::Colors::MiniMap::dirt},
-        {194,  tibia::Colors::MiniMap::dirt},
-        {195,  tibia::Colors::MiniMap::dirt},
-        {196,  tibia::Colors::MiniMap::dirt},
-        {388,  tibia::Colors::MiniMap::wood},
-        {461,  tibia::Colors::MiniMap::dirt},
-        {462,  tibia::Colors::MiniMap::dirt},
-        {463,  tibia::Colors::MiniMap::dirt},
-        {464,  tibia::Colors::MiniMap::dirt},
-        {465,  tibia::Colors::MiniMap::dirt},
-        {466,  tibia::Colors::MiniMap::cave},
-        {467,  tibia::Colors::MiniMap::cave},
-        {468,  tibia::Colors::MiniMap::cave},
-        {469,  tibia::Colors::MiniMap::cave},
-        {470,  tibia::Colors::MiniMap::cave},
-        {471,  tibia::Colors::MiniMap::cave},
-        {472,  tibia::Colors::MiniMap::cave},
-        {473,  tibia::Colors::MiniMap::cave},
-        {474,  tibia::Colors::MiniMap::cave},
-        {475,  tibia::Colors::MiniMap::cave},
-        {476,  tibia::Colors::MiniMap::cave},
-        {477,  tibia::Colors::MiniMap::cave},
-        {1060, tibia::Colors::MiniMap::tree},
-        {1066, tibia::Colors::MiniMap::mountain},
-        {1067, tibia::Colors::MiniMap::mountain},
-        {1068, tibia::Colors::MiniMap::mountain},
-        {1069, tibia::Colors::MiniMap::mountain},
-        {1070, tibia::Colors::MiniMap::mountain},
-        {1075, tibia::Colors::MiniMap::grass},
-        {1076, tibia::Colors::MiniMap::grass},
-        {1077, tibia::Colors::MiniMap::grass},
-        {1078, tibia::Colors::MiniMap::grass},
-        {1079, tibia::Colors::MiniMap::grass},
-        {1080, tibia::Colors::MiniMap::grass},
-        {1081, tibia::Colors::MiniMap::grass},
-        {1082, tibia::Colors::MiniMap::grass},
-        {1083, tibia::Colors::MiniMap::grass},
-        {1084, tibia::Colors::MiniMap::grass},
-        {1085, tibia::Colors::MiniMap::grass},
-        {1086, tibia::Colors::MiniMap::grass},
-        {1092, tibia::Colors::MiniMap::cave},
-        {1093, tibia::Colors::MiniMap::cave},
-        {1094, tibia::Colors::MiniMap::cave},
-        {1095, tibia::Colors::MiniMap::cave},
-        {1096, tibia::Colors::MiniMap::cave},
-        {1097, tibia::Colors::MiniMap::cave},
-        {1098, tibia::Colors::MiniMap::cave},
-        {1099, tibia::Colors::MiniMap::cave},
-        {1100, tibia::Colors::MiniMap::cave},
-        {1101, tibia::Colors::MiniMap::cave},
-        {1102, tibia::Colors::MiniMap::cave},
-        {1103, tibia::Colors::MiniMap::cave},
-        {1140, tibia::Colors::MiniMap::tree},
-        {1144, tibia::Colors::MiniMap::tree},
-        {1152, tibia::Colors::MiniMap::wood},
-        {1160, tibia::Colors::MiniMap::wood},
-        {1164, tibia::Colors::MiniMap::tree},
-        {1168, tibia::Colors::MiniMap::tree},
-        {1172, tibia::Colors::MiniMap::tree},
-        {1176, tibia::Colors::MiniMap::tree},
-        {1180, tibia::Colors::MiniMap::tree},
-        {1185, tibia::Colors::MiniMap::tree},
-        {1186, tibia::Colors::MiniMap::wood},
-        {1191, tibia::Colors::black},
-        {1203, tibia::Colors::MiniMap::tree},
-        {1495, tibia::Colors::MiniMap::cave},
-        {1496, tibia::Colors::MiniMap::cave},
-        {1564, tibia::Colors::MiniMap::swamp},
-        {1565, tibia::Colors::MiniMap::cave},
-        {1566, tibia::Colors::MiniMap::cave},
-        {1567, tibia::Colors::MiniMap::cave},
-        {1606, tibia::Colors::MiniMap::snow},
-        {1610, tibia::Colors::MiniMap::tree},
-        {1614, tibia::Colors::MiniMap::tree},
-        {1618, tibia::Colors::MiniMap::tree},
-        {1622, tibia::Colors::MiniMap::tree},
-        {1623, tibia::Colors::MiniMap::wood},
-        {1624, tibia::Colors::MiniMap::wood},
-        {1625, tibia::Colors::MiniMap::wood},
-        {1626, tibia::Colors::MiniMap::wood},
-        {1630, tibia::Colors::MiniMap::tree},
-        {1634, tibia::Colors::MiniMap::tree},
-        {1635, tibia::Colors::MiniMap::tree},
-        {1636, tibia::Colors::MiniMap::wood},
-        {1637, tibia::Colors::MiniMap::tree},
-        {1638, tibia::Colors::MiniMap::tree},
-        {1651, tibia::Colors::MiniMap::tree},
-        {1669, tibia::Colors::MiniMap::tree},
-        {1676, tibia::Colors::MiniMap::tree},
-        {1680, tibia::Colors::MiniMap::wood},
-        {1684, tibia::Colors::MiniMap::wood},
-        {1688, tibia::Colors::MiniMap::wood},
-        {1692, tibia::Colors::MiniMap::wood},
-        {1760, tibia::Colors::MiniMap::wood},
-        {1764, tibia::Colors::MiniMap::wood},
-        {1768, tibia::Colors::MiniMap::tree},
-        {1772, tibia::Colors::MiniMap::tree},
-        {1993, tibia::Colors::MiniMap::tree},
-        {1994, tibia::Colors::MiniMap::tree},
-        {1995, tibia::Colors::MiniMap::tree},
-        {1996, tibia::Colors::MiniMap::tree},
-        {1997, tibia::Colors::MiniMap::tree},
-        {1998, tibia::Colors::MiniMap::tree},
-        {1999, tibia::Colors::MiniMap::tree},
-        {2000, tibia::Colors::MiniMap::tree},
-        {2001, tibia::Colors::MiniMap::tree},
-        {2002, tibia::Colors::MiniMap::tree},
-        {2003, tibia::Colors::MiniMap::tree},
-        {2004, tibia::Colors::MiniMap::tree},
-        {2005, tibia::Colors::MiniMap::tree},
-        {2006, tibia::Colors::MiniMap::tree},
-        {2007, tibia::Colors::MiniMap::tree},
-        {2008, tibia::Colors::MiniMap::tree},
-        {2009, tibia::Colors::MiniMap::tree},
-        {2010, tibia::Colors::MiniMap::tree},
-        {2011, tibia::Colors::MiniMap::tree},
-        {2012, tibia::Colors::MiniMap::tree},
-        {2013, tibia::Colors::MiniMap::tree},
-        {2014, tibia::Colors::MiniMap::tree},
-        {2015, tibia::Colors::MiniMap::tree},
-        {2016, tibia::Colors::MiniMap::tree},
-        {2017, tibia::Colors::MiniMap::tree},
-        {2018, tibia::Colors::MiniMap::tree},
-        {2019, tibia::Colors::MiniMap::tree},
-        {2020, tibia::Colors::MiniMap::tree},
-        {2021, tibia::Colors::MiniMap::sand},
-        {2022, tibia::Colors::MiniMap::sand},
-        {2023, tibia::Colors::MiniMap::sand},
-        {2024, tibia::Colors::MiniMap::sand},
-        {2025, tibia::Colors::MiniMap::sand},
-        {2026, tibia::Colors::MiniMap::sand},
-        {2027, tibia::Colors::MiniMap::sand},
-        {2028, tibia::Colors::MiniMap::sand},
-        {2029, tibia::Colors::MiniMap::sand},
-        {2030, tibia::Colors::MiniMap::sand},
-        {2031, tibia::Colors::MiniMap::sand},
-        {2032, tibia::Colors::MiniMap::sand},
-        {2033, tibia::Colors::MiniMap::sand},
-        {2034, tibia::Colors::MiniMap::shallowWater},
-        {2035, tibia::Colors::MiniMap::shallowWater},
-        {2036, tibia::Colors::MiniMap::shallowWater},
-        {2037, tibia::Colors::MiniMap::shallowWater},
-        {2038, tibia::Colors::MiniMap::shallowWater},
-        {2039, tibia::Colors::MiniMap::shallowWater},
-        {2040, tibia::Colors::MiniMap::shallowWater},
-        {2041, tibia::Colors::MiniMap::shallowWater},
-        {2042, tibia::Colors::MiniMap::shallowWater},
-        {2043, tibia::Colors::MiniMap::shallowWater},
-        {2044, tibia::Colors::MiniMap::shallowWater},
-        {2045, tibia::Colors::MiniMap::shallowWater},
-        {2046, tibia::Colors::MiniMap::shallowWater},
-        {2123, tibia::Colors::MiniMap::tree},
-        {2127, tibia::Colors::MiniMap::tree},
-        {2131, tibia::Colors::MiniMap::tree},
-        {2164, tibia::Colors::MiniMap::tree},
-        {2168, tibia::Colors::MiniMap::tree},
-        {2172, tibia::Colors::MiniMap::tree},
-        {2185, tibia::Colors::MiniMap::sand},
-        {2186, tibia::Colors::MiniMap::sand},
-        {2187, tibia::Colors::MiniMap::sand},
-        {2188, tibia::Colors::MiniMap::sand},
-        {2191, tibia::Colors::MiniMap::sand},
-        {2192, tibia::Colors::MiniMap::sand},
-        {2193, tibia::Colors::MiniMap::sand},
-        {2194, tibia::Colors::MiniMap::sand},
-        {3254, tibia::Colors::MiniMap::mountain},
-        {3255, tibia::Colors::MiniMap::mountain},
-        {3256, tibia::Colors::MiniMap::mountain},
-        {3257, tibia::Colors::MiniMap::mountain},
-        {3322, tibia::Colors::MiniMap::tree},
-        {3326, tibia::Colors::MiniMap::tree},
-        {3337, tibia::Colors::MiniMap::snow},
-        {3344, tibia::Colors::MiniMap::wood},
-        {3375, tibia::Colors::MiniMap::tree},
-    };
+        std::unordered_map<int, sf::Color> miniMapColors =
+        {
+            {2,    tibia::Colors::MiniMap::wood},
+            {38,   tibia::Colors::MiniMap::dirt},
+            {43,   tibia::Colors::MiniMap::grass},
+            {116,  tibia::Colors::MiniMap::shallowWater},
+            {118,  tibia::Colors::MiniMap::dirt},
+            {119,  tibia::Colors::MiniMap::dirt},
+            {120,  tibia::Colors::MiniMap::dirt},
+            {121,  tibia::Colors::MiniMap::dirt},
+            {122,  tibia::Colors::MiniMap::dirt},
+            {123,  tibia::Colors::MiniMap::dirt},
+            {124,  tibia::Colors::MiniMap::dirt},
+            {125,  tibia::Colors::MiniMap::dirt},
+            {126,  tibia::Colors::MiniMap::dirt},
+            {127,  tibia::Colors::MiniMap::ice},
+            {193,  tibia::Colors::MiniMap::dirt},
+            {194,  tibia::Colors::MiniMap::dirt},
+            {195,  tibia::Colors::MiniMap::dirt},
+            {196,  tibia::Colors::MiniMap::dirt},
+            {388,  tibia::Colors::MiniMap::wood},
+            {461,  tibia::Colors::MiniMap::dirt},
+            {462,  tibia::Colors::MiniMap::dirt},
+            {463,  tibia::Colors::MiniMap::dirt},
+            {464,  tibia::Colors::MiniMap::dirt},
+            {465,  tibia::Colors::MiniMap::dirt},
+            {466,  tibia::Colors::MiniMap::cave},
+            {467,  tibia::Colors::MiniMap::cave},
+            {468,  tibia::Colors::MiniMap::cave},
+            {469,  tibia::Colors::MiniMap::cave},
+            {470,  tibia::Colors::MiniMap::cave},
+            {471,  tibia::Colors::MiniMap::cave},
+            {472,  tibia::Colors::MiniMap::cave},
+            {473,  tibia::Colors::MiniMap::cave},
+            {474,  tibia::Colors::MiniMap::cave},
+            {475,  tibia::Colors::MiniMap::cave},
+            {476,  tibia::Colors::MiniMap::cave},
+            {477,  tibia::Colors::MiniMap::cave},
+            {1060, tibia::Colors::MiniMap::tree},
+            {1066, tibia::Colors::MiniMap::mountain},
+            {1067, tibia::Colors::MiniMap::mountain},
+            {1068, tibia::Colors::MiniMap::mountain},
+            {1069, tibia::Colors::MiniMap::mountain},
+            {1070, tibia::Colors::MiniMap::mountain},
+            {1075, tibia::Colors::MiniMap::grass},
+            {1076, tibia::Colors::MiniMap::grass},
+            {1077, tibia::Colors::MiniMap::grass},
+            {1078, tibia::Colors::MiniMap::grass},
+            {1079, tibia::Colors::MiniMap::grass},
+            {1080, tibia::Colors::MiniMap::grass},
+            {1081, tibia::Colors::MiniMap::grass},
+            {1082, tibia::Colors::MiniMap::grass},
+            {1083, tibia::Colors::MiniMap::grass},
+            {1084, tibia::Colors::MiniMap::grass},
+            {1085, tibia::Colors::MiniMap::grass},
+            {1086, tibia::Colors::MiniMap::grass},
+            {1092, tibia::Colors::MiniMap::cave},
+            {1093, tibia::Colors::MiniMap::cave},
+            {1094, tibia::Colors::MiniMap::cave},
+            {1095, tibia::Colors::MiniMap::cave},
+            {1096, tibia::Colors::MiniMap::cave},
+            {1097, tibia::Colors::MiniMap::cave},
+            {1098, tibia::Colors::MiniMap::cave},
+            {1099, tibia::Colors::MiniMap::cave},
+            {1100, tibia::Colors::MiniMap::cave},
+            {1101, tibia::Colors::MiniMap::cave},
+            {1102, tibia::Colors::MiniMap::cave},
+            {1103, tibia::Colors::MiniMap::cave},
+            {1140, tibia::Colors::MiniMap::tree},
+            {1144, tibia::Colors::MiniMap::tree},
+            {1152, tibia::Colors::MiniMap::wood},
+            {1160, tibia::Colors::MiniMap::wood},
+            {1164, tibia::Colors::MiniMap::tree},
+            {1168, tibia::Colors::MiniMap::tree},
+            {1172, tibia::Colors::MiniMap::tree},
+            {1176, tibia::Colors::MiniMap::tree},
+            {1180, tibia::Colors::MiniMap::tree},
+            {1185, tibia::Colors::MiniMap::tree},
+            {1186, tibia::Colors::MiniMap::wood},
+            {1191, tibia::Colors::black},
+            {1203, tibia::Colors::MiniMap::tree},
+            {1495, tibia::Colors::MiniMap::cave},
+            {1496, tibia::Colors::MiniMap::cave},
+            {1564, tibia::Colors::MiniMap::swamp},
+            {1565, tibia::Colors::MiniMap::cave},
+            {1566, tibia::Colors::MiniMap::cave},
+            {1567, tibia::Colors::MiniMap::cave},
+            {1606, tibia::Colors::MiniMap::snow},
+            {1610, tibia::Colors::MiniMap::tree},
+            {1614, tibia::Colors::MiniMap::tree},
+            {1618, tibia::Colors::MiniMap::tree},
+            {1622, tibia::Colors::MiniMap::tree},
+            {1623, tibia::Colors::MiniMap::wood},
+            {1624, tibia::Colors::MiniMap::wood},
+            {1625, tibia::Colors::MiniMap::wood},
+            {1626, tibia::Colors::MiniMap::wood},
+            {1630, tibia::Colors::MiniMap::tree},
+            {1634, tibia::Colors::MiniMap::tree},
+            {1635, tibia::Colors::MiniMap::tree},
+            {1636, tibia::Colors::MiniMap::wood},
+            {1637, tibia::Colors::MiniMap::tree},
+            {1638, tibia::Colors::MiniMap::tree},
+            {1651, tibia::Colors::MiniMap::tree},
+            {1669, tibia::Colors::MiniMap::tree},
+            {1676, tibia::Colors::MiniMap::tree},
+            {1680, tibia::Colors::MiniMap::wood},
+            {1684, tibia::Colors::MiniMap::wood},
+            {1688, tibia::Colors::MiniMap::wood},
+            {1692, tibia::Colors::MiniMap::wood},
+            {1760, tibia::Colors::MiniMap::wood},
+            {1764, tibia::Colors::MiniMap::wood},
+            {1768, tibia::Colors::MiniMap::tree},
+            {1772, tibia::Colors::MiniMap::tree},
+            {1993, tibia::Colors::MiniMap::tree},
+            {1994, tibia::Colors::MiniMap::tree},
+            {1995, tibia::Colors::MiniMap::tree},
+            {1996, tibia::Colors::MiniMap::tree},
+            {1997, tibia::Colors::MiniMap::tree},
+            {1998, tibia::Colors::MiniMap::tree},
+            {1999, tibia::Colors::MiniMap::tree},
+            {2000, tibia::Colors::MiniMap::tree},
+            {2001, tibia::Colors::MiniMap::tree},
+            {2002, tibia::Colors::MiniMap::tree},
+            {2003, tibia::Colors::MiniMap::tree},
+            {2004, tibia::Colors::MiniMap::tree},
+            {2005, tibia::Colors::MiniMap::tree},
+            {2006, tibia::Colors::MiniMap::tree},
+            {2007, tibia::Colors::MiniMap::tree},
+            {2008, tibia::Colors::MiniMap::tree},
+            {2009, tibia::Colors::MiniMap::tree},
+            {2010, tibia::Colors::MiniMap::tree},
+            {2011, tibia::Colors::MiniMap::tree},
+            {2012, tibia::Colors::MiniMap::tree},
+            {2013, tibia::Colors::MiniMap::tree},
+            {2014, tibia::Colors::MiniMap::tree},
+            {2015, tibia::Colors::MiniMap::tree},
+            {2016, tibia::Colors::MiniMap::tree},
+            {2017, tibia::Colors::MiniMap::tree},
+            {2018, tibia::Colors::MiniMap::tree},
+            {2019, tibia::Colors::MiniMap::tree},
+            {2020, tibia::Colors::MiniMap::tree},
+            {2021, tibia::Colors::MiniMap::sand},
+            {2022, tibia::Colors::MiniMap::sand},
+            {2023, tibia::Colors::MiniMap::sand},
+            {2024, tibia::Colors::MiniMap::sand},
+            {2025, tibia::Colors::MiniMap::sand},
+            {2026, tibia::Colors::MiniMap::sand},
+            {2027, tibia::Colors::MiniMap::sand},
+            {2028, tibia::Colors::MiniMap::sand},
+            {2029, tibia::Colors::MiniMap::sand},
+            {2030, tibia::Colors::MiniMap::sand},
+            {2031, tibia::Colors::MiniMap::sand},
+            {2032, tibia::Colors::MiniMap::sand},
+            {2033, tibia::Colors::MiniMap::sand},
+            {2034, tibia::Colors::MiniMap::shallowWater},
+            {2035, tibia::Colors::MiniMap::shallowWater},
+            {2036, tibia::Colors::MiniMap::shallowWater},
+            {2037, tibia::Colors::MiniMap::shallowWater},
+            {2038, tibia::Colors::MiniMap::shallowWater},
+            {2039, tibia::Colors::MiniMap::shallowWater},
+            {2040, tibia::Colors::MiniMap::shallowWater},
+            {2041, tibia::Colors::MiniMap::shallowWater},
+            {2042, tibia::Colors::MiniMap::shallowWater},
+            {2043, tibia::Colors::MiniMap::shallowWater},
+            {2044, tibia::Colors::MiniMap::shallowWater},
+            {2045, tibia::Colors::MiniMap::shallowWater},
+            {2046, tibia::Colors::MiniMap::shallowWater},
+            {2123, tibia::Colors::MiniMap::tree},
+            {2127, tibia::Colors::MiniMap::tree},
+            {2131, tibia::Colors::MiniMap::tree},
+            {2164, tibia::Colors::MiniMap::tree},
+            {2168, tibia::Colors::MiniMap::tree},
+            {2172, tibia::Colors::MiniMap::tree},
+            {2185, tibia::Colors::MiniMap::sand},
+            {2186, tibia::Colors::MiniMap::sand},
+            {2187, tibia::Colors::MiniMap::sand},
+            {2188, tibia::Colors::MiniMap::sand},
+            {2191, tibia::Colors::MiniMap::sand},
+            {2192, tibia::Colors::MiniMap::sand},
+            {2193, tibia::Colors::MiniMap::sand},
+            {2194, tibia::Colors::MiniMap::sand},
+            {3254, tibia::Colors::MiniMap::mountain},
+            {3255, tibia::Colors::MiniMap::mountain},
+            {3256, tibia::Colors::MiniMap::mountain},
+            {3257, tibia::Colors::MiniMap::mountain},
+            {3322, tibia::Colors::MiniMap::tree},
+            {3326, tibia::Colors::MiniMap::tree},
+            {3337, tibia::Colors::MiniMap::snow},
+            {3344, tibia::Colors::MiniMap::wood},
+            {3375, tibia::Colors::MiniMap::tree},
+        };
+    }
 
     namespace GuiData
     {
@@ -1245,17 +1262,23 @@ namespace tibia
             begin = up,
             end   = downLeft,
 
+            beginDiagonal = upLeft,
+            endDiagonal   = downLeft,
+
             null,
         };
     }
 
-    std::unordered_map<std::string, int> umapDirections
+    namespace UMaps
     {
-        {"up",    tibia::Directions::up},
-        {"right", tibia::Directions::right},
-        {"down",  tibia::Directions::down},
-        {"left",  tibia::Directions::left},
-    };
+        std::unordered_map<std::string, int> directions
+        {
+            {"up",    tibia::Directions::up},
+            {"right", tibia::Directions::right},
+            {"down",  tibia::Directions::down},
+            {"left",  tibia::Directions::left},
+        };
+    }
 
     namespace MovementSpeeds
     {
@@ -1274,13 +1297,16 @@ namespace tibia
         };
     }
 
-    std::unordered_map<std::string, int> umapTeams
+    namespace UMaps
     {
-        {"neutral", tibia::Teams::neutral},
-        {"good",    tibia::Teams::good},
-        {"evil",    tibia::Teams::evil},
-        {"other",   tibia::Teams::other},
-    };
+        std::unordered_map<std::string, int> teams
+        {
+            {"neutral", tibia::Teams::neutral},
+            {"good",    tibia::Teams::good},
+            {"evil",    tibia::Teams::evil},
+            {"other",   tibia::Teams::other},
+        };
+    }
 
     namespace Vocations
     {
@@ -1294,14 +1320,17 @@ namespace tibia
         };
     }
 
-    std::unordered_map<int, std::string> umapVocations =
+    namespace UMaps
     {
-        {tibia::Vocations::none,     "None"},
-        {tibia::Vocations::knight,   "Knight"},
-        {tibia::Vocations::paladin,  "Paladin"},
-        {tibia::Vocations::sorcerer, "Sorcerer"},
-        {tibia::Vocations::druid,    "Druid"},
-    };
+        std::unordered_map<int, std::string> vocations =
+        {
+            {tibia::Vocations::none,     "None"},
+            {tibia::Vocations::knight,   "Knight"},
+            {tibia::Vocations::paladin,  "Paladin"},
+            {tibia::Vocations::sorcerer, "Sorcerer"},
+            {tibia::Vocations::druid,    "Druid"},
+        };
+    }
 
     namespace HealthStates
     {
@@ -1319,18 +1348,21 @@ namespace tibia
         };
     }
 
-    std::unordered_map<int, std::string> umapHealthStates =
+    namespace UMaps
     {
-        {tibia::HealthStates::healthy,        "healthy"},
-        {tibia::HealthStates::barelyWounded,  "barely wounded"},
-        {tibia::HealthStates::lightlyWounded, "lightly wounded"},
-        {tibia::HealthStates::heavilyWounded, "heavily wounded"},
-        {tibia::HealthStates::critical,       "critical"},
-        {tibia::HealthStates::nearlyDead,     "nearly dead"},
-        {tibia::HealthStates::dead,           "dead"},
+        std::unordered_map<int, std::string> healthStates =
+        {
+            {tibia::HealthStates::healthy,        "healthy"},
+            {tibia::HealthStates::barelyWounded,  "barely wounded"},
+            {tibia::HealthStates::lightlyWounded, "lightly wounded"},
+            {tibia::HealthStates::heavilyWounded, "heavily wounded"},
+            {tibia::HealthStates::critical,       "critical"},
+            {tibia::HealthStates::nearlyDead,     "nearly dead"},
+            {tibia::HealthStates::dead,           "dead"},
 
-        {tibia::HealthStates::unknown,        "unknown"},
-    };
+            {tibia::HealthStates::unknown,        "unknown"},
+        };
+    }
 
     namespace TileMapTypes
     {
@@ -1368,20 +1400,23 @@ namespace tibia
         };
     }
 
-    std::unordered_map<std::string, int> umapObjectTypes
+    namespace UMaps
     {
-        {"null",        tibia::ObjectTypes::null},
-        {"sign",        tibia::ObjectTypes::sign},
-        {"teleporter",  tibia::ObjectTypes::teleporter},
-        {"door",        tibia::ObjectTypes::door},
-        {"bed",         tibia::ObjectTypes::bed},
-        {"lever",       tibia::ObjectTypes::lever},
-        {"changemap",   tibia::ObjectTypes::changeMap},
-        {"creature",    tibia::ObjectTypes::creature},
-        {"book",        tibia::ObjectTypes::book},
-        {"playmusic",   tibia::ObjectTypes::playMusic},
-        {"playsound",   tibia::ObjectTypes::playSound},
-    };
+        std::unordered_map<std::string, int> objectTypes
+        {
+            {"null",        tibia::ObjectTypes::null},
+            {"sign",        tibia::ObjectTypes::sign},
+            {"teleporter",  tibia::ObjectTypes::teleporter},
+            {"door",        tibia::ObjectTypes::door},
+            {"bed",         tibia::ObjectTypes::bed},
+            {"lever",       tibia::ObjectTypes::lever},
+            {"change_map",  tibia::ObjectTypes::changeMap},
+            {"creature",    tibia::ObjectTypes::creature},
+            {"book",        tibia::ObjectTypes::book},
+            {"play_music",  tibia::ObjectTypes::playMusic},
+            {"play_sound",  tibia::ObjectTypes::playSound},
+        };
+    }
 
     namespace Outfits
     {
@@ -1478,49 +1513,81 @@ namespace tibia
         };
     }
 
-    std::unordered_map<int, sf::Color> umapModifyHpTextColors =
+    namespace UMaps
     {
-        {tibia::ModifyHpTypes::fire,        tibia::Colors::Text::orange},
-        {tibia::ModifyHpTypes::electricity, tibia::Colors::Text::teal},
-        {tibia::ModifyHpTypes::poison,      tibia::Colors::Text::green},
-        {tibia::ModifyHpTypes::poisoned,    tibia::Colors::Text::green},
-    };
+        std::unordered_map<int, sf::Color> modifyHpTextColors =
+        {
+            {tibia::ModifyHpTypes::fire,        tibia::Colors::Text::orange},
+            {tibia::ModifyHpTypes::electricity, tibia::Colors::Text::teal},
+            {tibia::ModifyHpTypes::poison,      tibia::Colors::Text::green},
+            {tibia::ModifyHpTypes::poisoned,    tibia::Colors::Text::green},
+        };
 
-    std::unordered_map<int, int> umapModifyHpOnTouchTypes =
+        std::unordered_map<int, int> modifyHpOnTouchTypes =
+        {
+            {1489, tibia::ModifyHpTypes::fire},
+            {1490, tibia::ModifyHpTypes::fire},
+            {1491, tibia::ModifyHpTypes::fire},
+            {1492, tibia::ModifyHpTypes::fire},
+            //{1493, tibia::ModifyHpTypes::fire},
+            //{1494, tibia::ModifyHpTypes::fire},
+
+            {1497, tibia::ModifyHpTypes::electricity},
+            {1498, tibia::ModifyHpTypes::electricity},
+
+            {3158, tibia::ModifyHpTypes::poisoned},
+            {3159, tibia::ModifyHpTypes::poisoned},
+            {3160, tibia::ModifyHpTypes::poisoned},
+            {3161, tibia::ModifyHpTypes::poisoned},
+        };
+
+        std::unordered_map<int, int> modifyHpOnTouchDamages =
+        {
+            {1489, 25},
+            {1490, 25},
+            {1491, 10},
+            {1492, 10},
+            //{1493, 1},
+            //{1494, 1},
+
+            {1497, 25},
+            {1498, 25},
+
+            {3158, 0},
+            {3159, 0},
+            {3160, 0},
+            {3161, 0},
+        };
+    }
+
+    namespace SpeechTypes
     {
-        {1489, tibia::ModifyHpTypes::fire},
-        {1490, tibia::ModifyHpTypes::fire},
-        {1491, tibia::ModifyHpTypes::fire},
-        {1492, tibia::ModifyHpTypes::fire},
-        //{1493, tibia::ModifyHpTypes::fire},
-        //{1494, tibia::ModifyHpTypes::fire},
+        enum
+        {
+            say,
+            yell,
+            whisper,
+            monster,
+        };
+    }
 
-        {1497, tibia::ModifyHpTypes::electricity},
-        {1498, tibia::ModifyHpTypes::electricity},
-
-        {3158, tibia::ModifyHpTypes::poisoned},
-        {3159, tibia::ModifyHpTypes::poisoned},
-        {3160, tibia::ModifyHpTypes::poisoned},
-        {3161, tibia::ModifyHpTypes::poisoned},
-    };
-
-    std::unordered_map<int, int> umapModifyHpOnTouchDamages =
+    namespace UMaps
     {
-        {1489, 25},
-        {1490, 25},
-        {1491, 10},
-        {1492, 10},
-        //{1493, 1},
-        //{1494, 1},
+        std::unordered_map<int, std::string> speechTypes =
+        {
+            {tibia::SpeechTypes::say,     "say"},
+            {tibia::SpeechTypes::yell,    "yell"},
+            {tibia::SpeechTypes::whisper, "whisper"},
+        };
 
-        {1497, 25},
-        {1498, 25},
-
-        {3158, 0},
-        {3159, 0},
-        {3160, 0},
-        {3161, 0},
-    };
+        std::unordered_map<int, sf::Color> speechTypesTextColors =
+        {
+            {tibia::SpeechTypes::say,     tibia::Colors::Text::yellow},
+            {tibia::SpeechTypes::yell,    tibia::Colors::Text::yellow},
+            {tibia::SpeechTypes::whisper, tibia::Colors::Text::yellow},
+            {tibia::SpeechTypes::monster, tibia::Colors::Text::red},
+        };
+    }
 
     namespace CreatureStatusEffects
     {
@@ -1541,103 +1608,106 @@ namespace tibia
         };
     }
 
-    std::unordered_map<int, int> umapModifyHpOnTouchStatusEffects =
+    namespace UMaps
     {
-        {1489, tibia::CreatureStatusEffects::burning},
-        {1490, tibia::CreatureStatusEffects::burning},
-        {1491, tibia::CreatureStatusEffects::burning},
-        {1492, tibia::CreatureStatusEffects::burning},
-        //{1493, tibia::CreatureStatusEffects::burning},
-        //{1494, tibia::CreatureStatusEffects::burning},
+        std::unordered_map<int, int> modifyHpOnTouchStatusEffects =
+        {
+            {1489, tibia::CreatureStatusEffects::burning},
+            {1490, tibia::CreatureStatusEffects::burning},
+            {1491, tibia::CreatureStatusEffects::burning},
+            {1492, tibia::CreatureStatusEffects::burning},
+            //{1493, tibia::CreatureStatusEffects::burning},
+            //{1494, tibia::CreatureStatusEffects::burning},
 
-        {1497, tibia::CreatureStatusEffects::electrified},
-        {1498, tibia::CreatureStatusEffects::electrified},
+            {1497, tibia::CreatureStatusEffects::electrified},
+            {1498, tibia::CreatureStatusEffects::electrified},
 
-        {3158, tibia::CreatureStatusEffects::poisoned},
-        {3159, tibia::CreatureStatusEffects::poisoned},
-        {3160, tibia::CreatureStatusEffects::poisoned},
-        {3161, tibia::CreatureStatusEffects::poisoned},
-    };
+            {3158, tibia::CreatureStatusEffects::poisoned},
+            {3159, tibia::CreatureStatusEffects::poisoned},
+            {3160, tibia::CreatureStatusEffects::poisoned},
+            {3161, tibia::CreatureStatusEffects::poisoned},
+        };
 
-    std::unordered_map<int, std::string> umapCreatureStatusEffectsNames =
-    {
-        {tibia::CreatureStatusEffects::burning,       "Burning"},
-        {tibia::CreatureStatusEffects::cursed,        "Cursed"},
-        {tibia::CreatureStatusEffects::dazzled,       "Dazzled"},
-        {tibia::CreatureStatusEffects::drowning,      "Drowning"},
-        {tibia::CreatureStatusEffects::drunk,         "Drunk"},
-        {tibia::CreatureStatusEffects::electrified,   "Electrified"},
-        {tibia::CreatureStatusEffects::freezing,      "Freezing"},
-        {tibia::CreatureStatusEffects::hasted,        "Hasted"},
-        {tibia::CreatureStatusEffects::magicShielded, "Magic Shielded"},
-        {tibia::CreatureStatusEffects::poisoned,      "Poisoned"},
-        {tibia::CreatureStatusEffects::slowed,        "Slowed"},
-        {tibia::CreatureStatusEffects::strengthened,  "Strengthened"},
-    };
+        std::unordered_map<int, std::string> creatureStatusEffectsNames =
+        {
+            {tibia::CreatureStatusEffects::burning,       "Burning"},
+            {tibia::CreatureStatusEffects::cursed,        "Cursed"},
+            {tibia::CreatureStatusEffects::dazzled,       "Dazzled"},
+            {tibia::CreatureStatusEffects::drowning,      "Drowning"},
+            {tibia::CreatureStatusEffects::drunk,         "Drunk"},
+            {tibia::CreatureStatusEffects::electrified,   "Electrified"},
+            {tibia::CreatureStatusEffects::freezing,      "Freezing"},
+            {tibia::CreatureStatusEffects::hasted,        "Hasted"},
+            {tibia::CreatureStatusEffects::magicShielded, "Magic Shielded"},
+            {tibia::CreatureStatusEffects::poisoned,      "Poisoned"},
+            {tibia::CreatureStatusEffects::slowed,        "Slowed"},
+            {tibia::CreatureStatusEffects::strengthened,  "Strengthened"},
+        };
 
-    std::unordered_map<int, int> umapCreatureStatusEffectsModifyHpTypes =
-    {
-        {tibia::CreatureStatusEffects::burning,       tibia::ModifyHpTypes::fire},
-        {tibia::CreatureStatusEffects::cursed,        tibia::ModifyHpTypes::none},
-        {tibia::CreatureStatusEffects::dazzled,       tibia::ModifyHpTypes::none},
-        {tibia::CreatureStatusEffects::drowning,      tibia::ModifyHpTypes::none},
-        {tibia::CreatureStatusEffects::drunk,         tibia::ModifyHpTypes::none},
-        {tibia::CreatureStatusEffects::electrified,   tibia::ModifyHpTypes::electricity},
-        {tibia::CreatureStatusEffects::freezing,      tibia::ModifyHpTypes::none},
-        {tibia::CreatureStatusEffects::hasted,        tibia::ModifyHpTypes::none},
-        {tibia::CreatureStatusEffects::magicShielded, tibia::ModifyHpTypes::none},
-        {tibia::CreatureStatusEffects::poisoned,      tibia::ModifyHpTypes::poisoned},
-        {tibia::CreatureStatusEffects::slowed,        tibia::ModifyHpTypes::none},
-        {tibia::CreatureStatusEffects::strengthened,  tibia::ModifyHpTypes::none},
-    };
+        std::unordered_map<int, int> creatureStatusEffectsModifyHpTypes =
+        {
+            {tibia::CreatureStatusEffects::burning,       tibia::ModifyHpTypes::fire},
+            {tibia::CreatureStatusEffects::cursed,        tibia::ModifyHpTypes::none},
+            {tibia::CreatureStatusEffects::dazzled,       tibia::ModifyHpTypes::none},
+            {tibia::CreatureStatusEffects::drowning,      tibia::ModifyHpTypes::none},
+            {tibia::CreatureStatusEffects::drunk,         tibia::ModifyHpTypes::none},
+            {tibia::CreatureStatusEffects::electrified,   tibia::ModifyHpTypes::electricity},
+            {tibia::CreatureStatusEffects::freezing,      tibia::ModifyHpTypes::none},
+            {tibia::CreatureStatusEffects::hasted,        tibia::ModifyHpTypes::none},
+            {tibia::CreatureStatusEffects::magicShielded, tibia::ModifyHpTypes::none},
+            {tibia::CreatureStatusEffects::poisoned,      tibia::ModifyHpTypes::poisoned},
+            {tibia::CreatureStatusEffects::slowed,        tibia::ModifyHpTypes::none},
+            {tibia::CreatureStatusEffects::strengthened,  tibia::ModifyHpTypes::none},
+        };
 
-    std::unordered_map<int, int> umapCreatureStatusEffectsDamages =
-    {
-        {tibia::CreatureStatusEffects::burning,       10},
-        {tibia::CreatureStatusEffects::cursed,        0},
-        {tibia::CreatureStatusEffects::dazzled,       0},
-        {tibia::CreatureStatusEffects::drowning,      10},
-        {tibia::CreatureStatusEffects::drunk,         0},
-        {tibia::CreatureStatusEffects::electrified,   10},
-        {tibia::CreatureStatusEffects::freezing,      10},
-        {tibia::CreatureStatusEffects::hasted,        0},
-        {tibia::CreatureStatusEffects::magicShielded, 0},
-        {tibia::CreatureStatusEffects::poisoned,      2},
-        {tibia::CreatureStatusEffects::slowed,        0},
-        {tibia::CreatureStatusEffects::strengthened,  0},
-    };
+        std::unordered_map<int, int> creatureStatusEffectsDamages =
+        {
+            {tibia::CreatureStatusEffects::burning,       10},
+            {tibia::CreatureStatusEffects::cursed,        0},
+            {tibia::CreatureStatusEffects::dazzled,       0},
+            {tibia::CreatureStatusEffects::drowning,      10},
+            {tibia::CreatureStatusEffects::drunk,         0},
+            {tibia::CreatureStatusEffects::electrified,   10},
+            {tibia::CreatureStatusEffects::freezing,      10},
+            {tibia::CreatureStatusEffects::hasted,        0},
+            {tibia::CreatureStatusEffects::magicShielded, 0},
+            {tibia::CreatureStatusEffects::poisoned,      2},
+            {tibia::CreatureStatusEffects::slowed,        0},
+            {tibia::CreatureStatusEffects::strengthened,  0},
+        };
 
-    std::unordered_map<int, int> umapCreatureStatusEffectsTicks =
-    {
-        {tibia::CreatureStatusEffects::burning,       10},
-        {tibia::CreatureStatusEffects::cursed,        10},
-        {tibia::CreatureStatusEffects::dazzled,       10},
-        {tibia::CreatureStatusEffects::drowning,      10},
-        {tibia::CreatureStatusEffects::drunk,         10},
-        {tibia::CreatureStatusEffects::electrified,   10},
-        {tibia::CreatureStatusEffects::freezing,      10},
-        {tibia::CreatureStatusEffects::hasted,        10},
-        {tibia::CreatureStatusEffects::magicShielded, 10},
-        {tibia::CreatureStatusEffects::poisoned,      10},
-        {tibia::CreatureStatusEffects::slowed,        10},
-        {tibia::CreatureStatusEffects::strengthened,  10},
-    };
+        std::unordered_map<int, int> creatureStatusEffectsTicks =
+        {
+            {tibia::CreatureStatusEffects::burning,       10},
+            {tibia::CreatureStatusEffects::cursed,        10},
+            {tibia::CreatureStatusEffects::dazzled,       10},
+            {tibia::CreatureStatusEffects::drowning,      10},
+            {tibia::CreatureStatusEffects::drunk,         10},
+            {tibia::CreatureStatusEffects::electrified,   10},
+            {tibia::CreatureStatusEffects::freezing,      10},
+            {tibia::CreatureStatusEffects::hasted,        10},
+            {tibia::CreatureStatusEffects::magicShielded, 10},
+            {tibia::CreatureStatusEffects::poisoned,      10},
+            {tibia::CreatureStatusEffects::slowed,        10},
+            {tibia::CreatureStatusEffects::strengthened,  10},
+        };
 
-    std::unordered_map<int, sf::Time> umapCreatureStatusEffectsTimesPerTick =
-    {
-        {tibia::CreatureStatusEffects::burning,       sf::seconds(1.0f)},
-        {tibia::CreatureStatusEffects::cursed,        sf::seconds(1.0f)},
-        {tibia::CreatureStatusEffects::dazzled,       sf::seconds(1.0f)},
-        {tibia::CreatureStatusEffects::drowning,      sf::seconds(1.0f)},
-        {tibia::CreatureStatusEffects::drunk,         sf::seconds(1.0f)},
-        {tibia::CreatureStatusEffects::electrified,   sf::seconds(1.0f)},
-        {tibia::CreatureStatusEffects::freezing,      sf::seconds(1.0f)},
-        {tibia::CreatureStatusEffects::hasted,        sf::seconds(1.0f)},
-        {tibia::CreatureStatusEffects::magicShielded, sf::seconds(1.0f)},
-        {tibia::CreatureStatusEffects::poisoned,      sf::seconds(5.0f)},
-        {tibia::CreatureStatusEffects::slowed,        sf::seconds(1.0f)},
-        {tibia::CreatureStatusEffects::strengthened,  sf::seconds(1.0f)},
-    };
+        std::unordered_map<int, sf::Time> creatureStatusEffectsTimesPerTick =
+        {
+            {tibia::CreatureStatusEffects::burning,       sf::seconds(1.0f)},
+            {tibia::CreatureStatusEffects::cursed,        sf::seconds(1.0f)},
+            {tibia::CreatureStatusEffects::dazzled,       sf::seconds(1.0f)},
+            {tibia::CreatureStatusEffects::drowning,      sf::seconds(1.0f)},
+            {tibia::CreatureStatusEffects::drunk,         sf::seconds(1.0f)},
+            {tibia::CreatureStatusEffects::electrified,   sf::seconds(1.0f)},
+            {tibia::CreatureStatusEffects::freezing,      sf::seconds(1.0f)},
+            {tibia::CreatureStatusEffects::hasted,        sf::seconds(1.0f)},
+            {tibia::CreatureStatusEffects::magicShielded, sf::seconds(1.0f)},
+            {tibia::CreatureStatusEffects::poisoned,      sf::seconds(5.0f)},
+            {tibia::CreatureStatusEffects::slowed,        sf::seconds(1.0f)},
+            {tibia::CreatureStatusEffects::strengthened,  sf::seconds(1.0f)},
+        };
+    }
 
     namespace CreatureTypes
     {
@@ -1663,6 +1733,7 @@ namespace tibia
             lion,
             monk,
             necromancer,
+            oldbie,
             orc,
             poisonSpider,
             polarBear,
@@ -1674,69 +1745,74 @@ namespace tibia
         };
     }
 
-    std::unordered_map<std::string, int> umapCreatureTypes =
+    namespace UMaps
     {
-        {"human", tibia::CreatureTypes::human},
+        std::unordered_map<std::string, int> creatureTypes =
+        {
+            {"human", tibia::CreatureTypes::human},
 
-        {"bear", tibia::CreatureTypes::bear},
-        {"behemoth", tibia::CreatureTypes::behemoth},
-        {"beholder", tibia::CreatureTypes::beholder},
-        {"cacodemon", tibia::CreatureTypes::cacodemon},
-        {"cyclops", tibia::CreatureTypes::cyclops},
-        {"citizen_male", tibia::CreatureTypes::citizenMale},
-        {"citizen_female", tibia::CreatureTypes::citizenFemale},
-        {"demon", tibia::CreatureTypes::demon},
-        {"demon_skeleton", tibia::CreatureTypes::demonSkeleton},
-        {"gamemaster", tibia::CreatureTypes::gameMaster},
-        {"giant_spider", tibia::CreatureTypes::giantSpider},
-        {"ghoul", tibia::CreatureTypes::ghoul},
-        {"dragon", tibia::CreatureTypes::dragon},
-        {"dragon_lord", tibia::CreatureTypes::dragonLord},
-        {"hero", tibia::CreatureTypes::hero},
-        {"lion", tibia::CreatureTypes::lion},
-        {"monk", tibia::CreatureTypes::monk},
-        {"necromancer", tibia::CreatureTypes::necromancer},
-        {"orc", tibia::CreatureTypes::orc},
-        {"poison_spider", tibia::CreatureTypes::poisonSpider},
-        {"polar_bear", tibia::CreatureTypes::polarBear},
-        {"santa_claus", tibia::CreatureTypes::santaClaus},
-        {"skeleton", tibia::CreatureTypes::skeleton},
-        {"spider", tibia::CreatureTypes::spider},
-        {"stone_golem", tibia::CreatureTypes::stoneGolem},
-        {"witch", tibia::CreatureTypes::witch},
-    };
+            {"bear", tibia::CreatureTypes::bear},
+            {"behemoth", tibia::CreatureTypes::behemoth},
+            {"beholder", tibia::CreatureTypes::beholder},
+            {"cacodemon", tibia::CreatureTypes::cacodemon},
+            {"cyclops", tibia::CreatureTypes::cyclops},
+            {"citizen_male", tibia::CreatureTypes::citizenMale},
+            {"citizen_female", tibia::CreatureTypes::citizenFemale},
+            {"demon", tibia::CreatureTypes::demon},
+            {"demon_skeleton", tibia::CreatureTypes::demonSkeleton},
+            {"gamemaster", tibia::CreatureTypes::gameMaster},
+            {"giant_spider", tibia::CreatureTypes::giantSpider},
+            {"ghoul", tibia::CreatureTypes::ghoul},
+            {"dragon", tibia::CreatureTypes::dragon},
+            {"dragon_lord", tibia::CreatureTypes::dragonLord},
+            {"hero", tibia::CreatureTypes::hero},
+            {"lion", tibia::CreatureTypes::lion},
+            {"monk", tibia::CreatureTypes::monk},
+            {"necromancer", tibia::CreatureTypes::necromancer},
+            {"oldbie", tibia::CreatureTypes::oldbie},
+            {"orc", tibia::CreatureTypes::orc},
+            {"poison_spider", tibia::CreatureTypes::poisonSpider},
+            {"polar_bear", tibia::CreatureTypes::polarBear},
+            {"santa_claus", tibia::CreatureTypes::santaClaus},
+            {"skeleton", tibia::CreatureTypes::skeleton},
+            {"spider", tibia::CreatureTypes::spider},
+            {"stone_golem", tibia::CreatureTypes::stoneGolem},
+            {"witch", tibia::CreatureTypes::witch},
+        };
 
-    std::unordered_map<int, std::string> umapCreatureNames =
-    {
-        {tibia::CreatureTypes::human, "human"},
+        std::unordered_map<int, std::string> creatureNames =
+        {
+            {tibia::CreatureTypes::human, "human"},
 
-        {tibia::CreatureTypes::bear, "bear"},
-        {tibia::CreatureTypes::behemoth, "behemoth"},
-        {tibia::CreatureTypes::beholder, "beholder"},
-        {tibia::CreatureTypes::cacodemon, "cacodemon"},
-        {tibia::CreatureTypes::cyclops, "cyclops"},
-        {tibia::CreatureTypes::citizenMale, "citizen"},
-        {tibia::CreatureTypes::citizenFemale, "citizen"},
-        {tibia::CreatureTypes::demon, "demon"},
-        {tibia::CreatureTypes::demonSkeleton, "demon skeleton"},
-        {tibia::CreatureTypes::gameMaster, "gamemaster"},
-        {tibia::CreatureTypes::giantSpider, "giant spider"},
-        {tibia::CreatureTypes::ghoul, "ghoul"},
-        {tibia::CreatureTypes::dragon, "dragon"},
-        {tibia::CreatureTypes::dragonLord, "dragon lord"},
-        {tibia::CreatureTypes::hero, "hero"},
-        {tibia::CreatureTypes::lion, "lion"},
-        {tibia::CreatureTypes::monk, "monk"},
-        {tibia::CreatureTypes::necromancer, "necromancer"},
-        {tibia::CreatureTypes::orc, "orc"},
-        {tibia::CreatureTypes::poisonSpider, "poison spider"},
-        {tibia::CreatureTypes::polarBear, "polar bear"},
-        {tibia::CreatureTypes::santaClaus, "Santa Claus"},
-        {tibia::CreatureTypes::skeleton, "skeleton"},
-        {tibia::CreatureTypes::spider, "spider"},
-        {tibia::CreatureTypes::stoneGolem, "stone golem"},
-        {tibia::CreatureTypes::witch, "witch"},
-    };
+            {tibia::CreatureTypes::bear, "bear"},
+            {tibia::CreatureTypes::behemoth, "behemoth"},
+            {tibia::CreatureTypes::beholder, "beholder"},
+            {tibia::CreatureTypes::cacodemon, "cacodemon"},
+            {tibia::CreatureTypes::cyclops, "cyclops"},
+            {tibia::CreatureTypes::citizenMale, "citizen"},
+            {tibia::CreatureTypes::citizenFemale, "citizen"},
+            {tibia::CreatureTypes::demon, "demon"},
+            {tibia::CreatureTypes::demonSkeleton, "demon skeleton"},
+            {tibia::CreatureTypes::gameMaster, "gamemaster"},
+            {tibia::CreatureTypes::giantSpider, "giant spider"},
+            {tibia::CreatureTypes::ghoul, "ghoul"},
+            {tibia::CreatureTypes::dragon, "dragon"},
+            {tibia::CreatureTypes::dragonLord, "dragon lord"},
+            {tibia::CreatureTypes::hero, "hero"},
+            {tibia::CreatureTypes::lion, "lion"},
+            {tibia::CreatureTypes::monk, "monk"},
+            {tibia::CreatureTypes::necromancer, "necromancer"},
+            {tibia::CreatureTypes::oldbie, "oldbie"},
+            {tibia::CreatureTypes::orc, "orc"},
+            {tibia::CreatureTypes::poisonSpider, "poison spider"},
+            {tibia::CreatureTypes::polarBear, "polar bear"},
+            {tibia::CreatureTypes::santaClaus, "Santa Claus"},
+            {tibia::CreatureTypes::skeleton, "skeleton"},
+            {tibia::CreatureTypes::spider, "spider"},
+            {tibia::CreatureTypes::stoneGolem, "stone golem"},
+            {tibia::CreatureTypes::witch, "witch"},
+        };
+    }
 
     namespace CreatureSizes
     {
@@ -1745,20 +1821,26 @@ namespace tibia
             small,
             medium,
             large,
+
+            default = small,
         };
     }
 
-    std::unordered_map<int, int> umapCreatureSizes =
+    namespace UMaps
     {
-        {tibia::CreatureTypes::human, tibia::CreatureSizes::small},
-        {tibia::CreatureTypes::bear, tibia::CreatureSizes::medium},
-        {tibia::CreatureTypes::cacodemon, tibia::CreatureSizes::large},
-        {tibia::CreatureTypes::citizenMale, tibia::CreatureSizes::small},
-        {tibia::CreatureTypes::citizenFemale, tibia::CreatureSizes::small},
-        {tibia::CreatureTypes::demon, tibia::CreatureSizes::large},
-        {tibia::CreatureTypes::poisonSpider, tibia::CreatureSizes::small},
-        {tibia::CreatureTypes::santaClaus, tibia::CreatureSizes::medium},
-    };
+        std::unordered_map<int, int> creatureSizes =
+        {
+            {tibia::CreatureTypes::human, tibia::CreatureSizes::small},
+            {tibia::CreatureTypes::bear, tibia::CreatureSizes::medium},
+            {tibia::CreatureTypes::cacodemon, tibia::CreatureSizes::large},
+            {tibia::CreatureTypes::citizenMale, tibia::CreatureSizes::small},
+            {tibia::CreatureTypes::citizenFemale, tibia::CreatureSizes::small},
+            {tibia::CreatureTypes::demon, tibia::CreatureSizes::large},
+            {tibia::CreatureTypes::oldbie, tibia::CreatureSizes::small},
+            {tibia::CreatureTypes::poisonSpider, tibia::CreatureSizes::small},
+            {tibia::CreatureTypes::santaClaus, tibia::CreatureSizes::medium},
+        };
+    }
 
     namespace CreatureSprites
     {
@@ -1827,6 +1909,8 @@ namespace tibia
 
         std::vector<int> ghoul = {1838, 1841, 1839, 1840};
 
+        std::vector<int> oldbie = {3560, 3561, 3562, 3563};
+
         std::vector<int> orc = {2863, 2862, 2864, 2861};
 
         std::vector<int> poisonSpider =
@@ -1859,31 +1943,36 @@ namespace tibia
         };
     }
 
-    std::unordered_map<int, std::vector<int>> umapCreatureSprites =
+    namespace UMaps
     {
-        {tibia::CreatureTypes::human, tibia::CreatureSprites::human},
+        std::unordered_map<int, std::vector<int>> creatureSprites =
+        {
+            {tibia::CreatureTypes::human, tibia::CreatureSprites::human},
 
-        {tibia::CreatureTypes::bear, tibia::CreatureSprites::bear},
-        {tibia::CreatureTypes::cacodemon, tibia::CreatureSprites::cacodemon},
-        {tibia::CreatureTypes::citizenMale, tibia::CreatureSprites::citizenMale},
-        {tibia::CreatureTypes::citizenFemale, tibia::CreatureSprites::citizenFemale},
-        {tibia::CreatureTypes::demon, tibia::CreatureSprites::demon},
-        {tibia::CreatureTypes::poisonSpider, tibia::CreatureSprites::poisonSpider},
-        {tibia::CreatureTypes::santaClaus, tibia::CreatureSprites::santaClaus},
-    };
+            {tibia::CreatureTypes::bear, tibia::CreatureSprites::bear},
+            {tibia::CreatureTypes::cacodemon, tibia::CreatureSprites::cacodemon},
+            {tibia::CreatureTypes::citizenMale, tibia::CreatureSprites::citizenMale},
+            {tibia::CreatureTypes::citizenFemale, tibia::CreatureSprites::citizenFemale},
+            {tibia::CreatureTypes::demon, tibia::CreatureSprites::demon},
+            {tibia::CreatureTypes::oldbie, tibia::CreatureSprites::oldbie},
+            {tibia::CreatureTypes::poisonSpider, tibia::CreatureSprites::poisonSpider},
+            {tibia::CreatureTypes::santaClaus, tibia::CreatureSprites::santaClaus},
+        };
 
-    std::unordered_map<int, int> umapCreatureNumAnimations =
-    {
-        {tibia::CreatureTypes::human, 1},
+        std::unordered_map<int, int> creatureNumAnimations =
+        {
+            {tibia::CreatureTypes::human, 1},
 
-        {tibia::CreatureTypes::bear, 2},
-        {tibia::CreatureTypes::cacodemon, 5},
-        {tibia::CreatureTypes::citizenMale, 1},
-        {tibia::CreatureTypes::citizenFemale, 1},
-        {tibia::CreatureTypes::demon, 1},
-        {tibia::CreatureTypes::poisonSpider, 4},
-        {tibia::CreatureTypes::santaClaus, 1},
-    };
+            {tibia::CreatureTypes::bear, 2},
+            {tibia::CreatureTypes::cacodemon, 5},
+            {tibia::CreatureTypes::citizenMale, 1},
+            {tibia::CreatureTypes::citizenFemale, 1},
+            {tibia::CreatureTypes::demon, 1},
+            {tibia::CreatureTypes::oldbie, 1},
+            {tibia::CreatureTypes::poisonSpider, 4},
+            {tibia::CreatureTypes::santaClaus, 1},
+        };
+    }
 
     namespace CreatureCorpseSizes
     {
@@ -1895,18 +1984,22 @@ namespace tibia
         };
     }
 
-    std::unordered_map<int, int> umapCreatureCorpseSizes =
+    namespace UMaps
     {
-        {tibia::CreatureTypes::human, tibia::CreatureCorpseSizes::small},
+        std::unordered_map<int, int> creatureCorpseSizes =
+        {
+            {tibia::CreatureTypes::human, tibia::CreatureCorpseSizes::small},
 
-        {tibia::CreatureTypes::bear, tibia::CreatureCorpseSizes::medium},
-        {tibia::CreatureTypes::cacodemon, tibia::CreatureCorpseSizes::large},
-        {tibia::CreatureTypes::citizenMale, tibia::CreatureCorpseSizes::small},
-        {tibia::CreatureTypes::citizenFemale, tibia::CreatureCorpseSizes::small},
-        {tibia::CreatureTypes::demon, tibia::CreatureCorpseSizes::large},
-        {tibia::CreatureTypes::poisonSpider, tibia::CreatureCorpseSizes::small},
-        {tibia::CreatureTypes::santaClaus, tibia::CreatureCorpseSizes::small},
-    };
+            {tibia::CreatureTypes::bear, tibia::CreatureCorpseSizes::medium},
+            {tibia::CreatureTypes::cacodemon, tibia::CreatureCorpseSizes::large},
+            {tibia::CreatureTypes::citizenMale, tibia::CreatureCorpseSizes::small},
+            {tibia::CreatureTypes::citizenFemale, tibia::CreatureCorpseSizes::small},
+            {tibia::CreatureTypes::demon, tibia::CreatureCorpseSizes::large},
+            {tibia::CreatureTypes::oldbie, tibia::CreatureCorpseSizes::small},
+            {tibia::CreatureTypes::poisonSpider, tibia::CreatureCorpseSizes::small},
+            {tibia::CreatureTypes::santaClaus, tibia::CreatureCorpseSizes::small},
+        };
+    }
 
     namespace CreatureCorpseSprites
     {
@@ -1941,21 +2034,27 @@ namespace tibia
             331, 330, 329, 328,
         };
 
+        std::vector<int> oldbie = {3564, 3565, 3566, 3567, 3568, 3569, 3570};
+
         std::vector<int> poisonSpider = {3068, 3069, 3070};
     }
 
-    std::unordered_map<int, std::vector<int>> umapCreatureCorpseSprites =
+    namespace UMaps
     {
-        {tibia::CreatureTypes::human, tibia::CreatureCorpseSprites::human},
+        std::unordered_map<int, std::vector<int>> creatureCorpseSprites =
+        {
+            {tibia::CreatureTypes::human, tibia::CreatureCorpseSprites::human},
         
-        {tibia::CreatureTypes::bear, tibia::CreatureCorpseSprites::bear},
-        {tibia::CreatureTypes::cacodemon, tibia::CreatureCorpseSprites::cacodemon},
-        {tibia::CreatureTypes::citizenMale, tibia::CreatureCorpseSprites::citizenMale},
-        {tibia::CreatureTypes::citizenFemale, tibia::CreatureCorpseSprites::citizenFemale},
-        {tibia::CreatureTypes::demon, tibia::CreatureCorpseSprites::demon},
-        {tibia::CreatureTypes::poisonSpider, tibia::CreatureCorpseSprites::poisonSpider},
-        {tibia::CreatureTypes::santaClaus, tibia::CreatureCorpseSprites::human},
-    };
+            {tibia::CreatureTypes::bear, tibia::CreatureCorpseSprites::bear},
+            {tibia::CreatureTypes::cacodemon, tibia::CreatureCorpseSprites::cacodemon},
+            {tibia::CreatureTypes::citizenMale, tibia::CreatureCorpseSprites::citizenMale},
+            {tibia::CreatureTypes::citizenFemale, tibia::CreatureCorpseSprites::citizenFemale},
+            {tibia::CreatureTypes::demon, tibia::CreatureCorpseSprites::demon},
+            {tibia::CreatureTypes::oldbie, tibia::CreatureCorpseSprites::oldbie},
+            {tibia::CreatureTypes::poisonSpider, tibia::CreatureCorpseSprites::poisonSpider},
+            {tibia::CreatureTypes::santaClaus, tibia::CreatureCorpseSprites::human},
+        };
+    }
 
     namespace CreatureBloodTypes
     {
@@ -1967,18 +2066,22 @@ namespace tibia
         };
     }
 
-    std::unordered_map<int, int> umapCreatureBloodTypes =
+    namespace UMaps
     {
-        {tibia::CreatureTypes::human, tibia::CreatureBloodTypes::red},
+        std::unordered_map<int, int> creatureBloodTypes =
+        {
+            {tibia::CreatureTypes::human, tibia::CreatureBloodTypes::red},
 
-        {tibia::CreatureTypes::bear, tibia::CreatureBloodTypes::red},
-        {tibia::CreatureTypes::cacodemon, tibia::CreatureBloodTypes::red},
-        {tibia::CreatureTypes::citizenMale, tibia::CreatureBloodTypes::red},
-        {tibia::CreatureTypes::citizenFemale, tibia::CreatureBloodTypes::red},
-        {tibia::CreatureTypes::demon, tibia::CreatureBloodTypes::red},
-        {tibia::CreatureTypes::poisonSpider, tibia::CreatureBloodTypes::green},
-        {tibia::CreatureTypes::santaClaus, tibia::CreatureBloodTypes::red},
-    };
+            {tibia::CreatureTypes::bear, tibia::CreatureBloodTypes::red},
+            {tibia::CreatureTypes::cacodemon, tibia::CreatureBloodTypes::red},
+            {tibia::CreatureTypes::citizenMale, tibia::CreatureBloodTypes::red},
+            {tibia::CreatureTypes::citizenFemale, tibia::CreatureBloodTypes::red},
+            {tibia::CreatureTypes::demon, tibia::CreatureBloodTypes::red},
+            {tibia::CreatureTypes::oldbie, tibia::CreatureBloodTypes::red},
+            {tibia::CreatureTypes::poisonSpider, tibia::CreatureBloodTypes::green},
+            {tibia::CreatureTypes::santaClaus, tibia::CreatureBloodTypes::red},
+        };
+    }
 
     namespace AnimationTimes
     {
@@ -2022,43 +2125,46 @@ namespace tibia
         std::vector<int> sparkle = {3376, 4};
     }
 
-    std::unordered_map<int, std::vector<int>> umapModifyHpOnTouchAnimations =
+    namespace UMaps
     {
-        {1489, tibia::Animations::fire},
-        {1490, tibia::Animations::fire},
-        {1491, tibia::Animations::fire},
-        {1492, tibia::Animations::fire},
-        //{1493, tibia::Animations::fire},
-        //{1494, tibia::Animations::fire},
+        std::unordered_map<int, std::vector<int>> modifyHpOnTouchAnimations =
+        {
+            {1489, tibia::Animations::fire},
+            {1490, tibia::Animations::fire},
+            {1491, tibia::Animations::fire},
+            {1492, tibia::Animations::fire},
+            //{1493, tibia::Animations::fire},
+            //{1494, tibia::Animations::fire},
 
-        {1497, tibia::Animations::electricity},
-        {1498, tibia::Animations::electricity},
+            {1497, tibia::Animations::electricity},
+            {1498, tibia::Animations::electricity},
 
-        {3158, tibia::Animations::poison},
-        {3159, tibia::Animations::poison},
-        {3160, tibia::Animations::poison},
-        {3161, tibia::Animations::poison},
-    };
+            {3158, tibia::Animations::poison},
+            {3159, tibia::Animations::poison},
+            {3160, tibia::Animations::poison},
+            {3161, tibia::Animations::poison},
+        };
 
-    std::unordered_map<int, std::vector<int>> umapModifyHpAnimations =
-    {
-        {tibia::ModifyHpTypes::black,       tibia::Animations::hitBlack},
-        {tibia::ModifyHpTypes::blood,       tibia::Animations::hitBlood},
-        {tibia::ModifyHpTypes::fire,        tibia::Animations::fire},
-        {tibia::ModifyHpTypes::electricity, tibia::Animations::electricity},
-        {tibia::ModifyHpTypes::poison,      tibia::Animations::hitPoison},
-        {tibia::ModifyHpTypes::poisoned,    tibia::Animations::poison},
-        {tibia::ModifyHpTypes::spellBlue,   tibia::Animations::spellBlue},
-        {tibia::ModifyHpTypes::spellBlack,  tibia::Animations::spellBlack},
-        {tibia::ModifyHpTypes::heal,        tibia::Animations::particlesRed},
-    };
+        std::unordered_map<int, std::vector<int>> modifyHpAnimations =
+        {
+            {tibia::ModifyHpTypes::black,       tibia::Animations::hitBlack},
+            {tibia::ModifyHpTypes::blood,       tibia::Animations::hitBlood},
+            {tibia::ModifyHpTypes::fire,        tibia::Animations::fire},
+            {tibia::ModifyHpTypes::electricity, tibia::Animations::electricity},
+            {tibia::ModifyHpTypes::poison,      tibia::Animations::hitPoison},
+            {tibia::ModifyHpTypes::poisoned,    tibia::Animations::poison},
+            {tibia::ModifyHpTypes::spellBlue,   tibia::Animations::spellBlue},
+            {tibia::ModifyHpTypes::spellBlack,  tibia::Animations::spellBlack},
+            {tibia::ModifyHpTypes::heal,        tibia::Animations::particlesRed},
+        };
 
-    std::unordered_map<int, std::vector<int>> umapCreatureBloodTypeAnimations =
-    {
-        {tibia::CreatureBloodTypes::none,  tibia::Animations::hitBlack},
-        {tibia::CreatureBloodTypes::red,   tibia::Animations::hitBlood},
-        {tibia::CreatureBloodTypes::green, tibia::Animations::hitPoison},
-    };
+        std::unordered_map<int, std::vector<int>> creatureBloodTypeAnimations =
+        {
+            {tibia::CreatureBloodTypes::none,  tibia::Animations::hitBlack},
+            {tibia::CreatureBloodTypes::red,   tibia::Animations::hitBlood},
+            {tibia::CreatureBloodTypes::green, tibia::Animations::hitPoison},
+        };
+    }
 
     namespace Projectiles
     {
@@ -2133,14 +2239,18 @@ namespace tibia
             modifyHpOnTouch  = 1 << 17,
             stackable        = 1 << 18,
             pickupable       = 1 << 19,
-            food             = 1 << 20,
-            instrument       = 1 << 21,
-            currency         = 1 << 22,
+            equippable       = 1 << 20,
+            food             = 1 << 21,
+            instrument       = 1 << 22,
+            currency         = 1 << 23,
         };
     }
 
-    // <id, flags>
-    std::unordered_map<unsigned int, unsigned int> umapSpriteFlags;
+    namespace UMaps
+    {
+        // <id, flags>
+        std::unordered_map<unsigned int, unsigned int> spriteFlags;
+    }
 
     namespace SpriteData
     {
@@ -2164,6 +2274,9 @@ namespace tibia
 
         std::vector<int> doorLockedVertical   = {3303, 3307};
         std::vector<int> doorLockedHorizontal = {3295, 3299};
+
+        std::vector<int> doorFenceSmall = {2708, 2706};
+        std::vector<int> doorFenceLarge = {2710, 2704};
 
         std::vector<int> lever = {49, 50};
 
@@ -2440,7 +2553,7 @@ namespace tibia
             2686, 2687, 2688, 2689, 2690, 2691,
             2692, 2693, 2694,
             2695, 2696, 2697, 2698,
-            2703, 2704, 2705, 2706, 2707, 2708, 2709, 2710, 2711, 2712, 2713, 2714, 2715, 2716, 2717, 2718,
+            2708, 2710, 2711, 2714, 2717, 2718,
             2849, 2850, 2851, 2852, 2853, 2854, 2855, 2856, 2857, 2858, 2859, 2860,
             3030, 3032, 3034,
             3035,
@@ -2570,7 +2683,7 @@ namespace tibia
             2098, 2102,
             2664, 2665, 2666, 2667, 2668, 2669, 2670, 2671, 2672, 2673, 2674, 2675, 2676, 2677, 2678, 2679, 2680, 2681, 2682, 2683, 2684, 2685,
             2692, 2693, 2694,
-            2704, 2706, 2708, 2710, 2711, 2714, 2717, 2718,
+            2708, 2710, 2711, 2714, 2717, 2718,
             2849, 2850, 2851, 2852, 2853, 2854, 2855, 2856, 2857, 2858, 2859, 2860,
             3030, 3032, 3034,
             3035,
@@ -2944,6 +3057,7 @@ namespace tibia
             1824, 1826, 1828,
             2497,
             2548,
+            2708, 2710,
             2969,
             3026,
             3030, 3032, 3034,
@@ -2961,6 +3075,7 @@ namespace tibia
             1154, 1156,
             1349,
             2499,
+            2704, 2706,
             2965,
             2967,
             3028,
@@ -2980,6 +3095,7 @@ namespace tibia
             16, // brick arch
             553, 558, // opened doors
             1659, 1665, // wood arch
+            2704, 2706, // opened fences
             3299, 3307, // opened locked doors
         };
 
@@ -3184,24 +3300,27 @@ namespace tibia
         {3391},
     };
 
-    std::unordered_map<int, std::vector<int>> umapCreatureBloodTypesSplats =
+    namespace UMaps
     {
-        {tibia::CreatureBloodTypes::red,   tibia::SpriteData::splatRed},
-        {tibia::CreatureBloodTypes::green, tibia::SpriteData::splatGreen},
-    };
+        std::unordered_map<int, std::vector<int>> creatureBloodTypesSplats =
+        {
+            {tibia::CreatureBloodTypes::red,   tibia::SpriteData::splatRed},
+            {tibia::CreatureBloodTypes::green, tibia::SpriteData::splatGreen},
+        };
 
-    std::unordered_map<int, std::vector<int>> umapCreatureBloodTypesPools =
-    {
-        {tibia::CreatureBloodTypes::red,   tibia::SpriteData::poolRed},
-        {tibia::CreatureBloodTypes::green, tibia::SpriteData::poolGreen},
-    };
+        std::unordered_map<int, std::vector<int>> creatureBloodTypesPools =
+        {
+            {tibia::CreatureBloodTypes::red,   tibia::SpriteData::poolRed},
+            {tibia::CreatureBloodTypes::green, tibia::SpriteData::poolGreen},
+        };
 
-    std::unordered_map<int, int> umapCreatureStatusEffectsIcons =
-    {
-        {tibia::CreatureStatusEffects::burning,     tibia::SpriteData::Gui::statusEffectBurning},
-        {tibia::CreatureStatusEffects::electrified, tibia::SpriteData::Gui::statusEffectElectrified},
-        {tibia::CreatureStatusEffects::poisoned,    tibia::SpriteData::Gui::statusEffectPoisoned},
-    };
+        std::unordered_map<int, int> creatureStatusEffectsIcons =
+        {
+            {tibia::CreatureStatusEffects::burning,     tibia::SpriteData::Gui::statusEffectBurning},
+            {tibia::CreatureStatusEffects::electrified, tibia::SpriteData::Gui::statusEffectElectrified},
+            {tibia::CreatureStatusEffects::poisoned,    tibia::SpriteData::Gui::statusEffectPoisoned},
+        };
+    }
 
     namespace Sounds
     {
@@ -3226,29 +3345,32 @@ namespace tibia
         }
     }
 
-    std::unordered_map<std::string, sf::SoundBuffer&> umapSoundFiles =
+    namespace UMaps
     {
-        {"sounds/teleport.wav", tibia::Sounds::teleport},
+        std::unordered_map<std::string, sf::SoundBuffer&> soundFiles =
+        {
+            {"sounds/teleport.wav", tibia::Sounds::teleport},
 
-        {"sounds/creatures/human/death.wav", tibia::Sounds::Creatures::Human::death},
+            {"sounds/creatures/human/death.wav", tibia::Sounds::Creatures::Human::death},
 
-        {"sounds/creatures/cacodemon/death.wav", tibia::Sounds::Creatures::Cacodemon::death},
+            {"sounds/creatures/cacodemon/death.wav", tibia::Sounds::Creatures::Cacodemon::death},
 
-        {"sounds/instruments/harp.wav", tibia::Sounds::Instruments::harp},
-    };
+            {"sounds/instruments/harp.wav", tibia::Sounds::Instruments::harp},
+        };
 
-    std::unordered_map<int, sf::SoundBuffer&> umapCreatureDeathSounds =
-    {
-        {tibia::CreatureTypes::human, tibia::Sounds::Creatures::Human::death},
+        std::unordered_map<int, sf::SoundBuffer&> creatureDeathSounds =
+        {
+            {tibia::CreatureTypes::human, tibia::Sounds::Creatures::Human::death},
 
-        {tibia::CreatureTypes::bear, tibia::Sounds::Creatures::Human::death},
-        {tibia::CreatureTypes::cacodemon, tibia::Sounds::Creatures::Cacodemon::death},
-        {tibia::CreatureTypes::citizenMale, tibia::Sounds::Creatures::Human::death},
-        {tibia::CreatureTypes::citizenFemale, tibia::Sounds::Creatures::Human::death},
-        {tibia::CreatureTypes::demon, tibia::Sounds::Creatures::Human::death},
-        {tibia::CreatureTypes::poisonSpider, tibia::Sounds::Creatures::Human::death},
-        {tibia::CreatureTypes::santaClaus, tibia::Sounds::Creatures::Human::death},
-    };
+            {tibia::CreatureTypes::bear, tibia::Sounds::Creatures::Human::death},
+            {tibia::CreatureTypes::cacodemon, tibia::Sounds::Creatures::Cacodemon::death},
+            {tibia::CreatureTypes::citizenMale, tibia::Sounds::Creatures::Human::death},
+            {tibia::CreatureTypes::citizenFemale, tibia::Sounds::Creatures::Human::death},
+            {tibia::CreatureTypes::demon, tibia::Sounds::Creatures::Human::death},
+            {tibia::CreatureTypes::poisonSpider, tibia::Sounds::Creatures::Human::death},
+            {tibia::CreatureTypes::santaClaus, tibia::Sounds::Creatures::Human::death},
+        };
+    }
 
     namespace CreatureAddInventoryItemResult
     {

@@ -62,6 +62,17 @@ public:
 
         tinyxml2::XMLElement* docMap = doc.FirstChildElement();
 
+        m_width  = docMap->UnsignedAttribute("width");
+        m_height = docMap->UnsignedAttribute("height");
+
+        m_tileWidth  = m_width * tibia::TILE_SIZE;
+        m_tileHeight = m_width * tibia::TILE_SIZE;
+
+        m_size = m_width * m_height;
+
+        tibia::mapWidth  = m_width;
+        tibia::mapHeight = m_height;
+
         tinyxml2::XMLElement* docMapProperties = docMap->FirstChildElement("properties");
 
         if (docMapProperties != NULL)
@@ -98,7 +109,7 @@ public:
 
                 else if (docMapPropertyName == "time_of_day")
                 {
-                    properties.timeOfDay = tibia::umapTimeOfDay[docMapProperty->Attribute("value")];
+                    properties.timeOfDay = tibia::UMaps::timeOfDay[docMapProperty->Attribute("value")];
                 }
             }
         }
@@ -161,11 +172,11 @@ public:
 
             if (tileMapType == tibia::TileMapTypes::tiles)
             {
-                tileMapTiles[tileMapZ].load(docMapLayerDataTiles, docMapLayerName, tileMapType, tileMapZ);
+                tileMapTiles[tileMapZ].load(m_width, m_height, docMapLayerDataTiles, docMapLayerName, tileMapType, tileMapZ);
             }
             else if (tileMapType == tibia::TileMapTypes::tileEdges)
             {
-                tileMapTileEdges[tileMapZ].load(docMapLayerDataTiles, docMapLayerName, tileMapType, tileMapZ);
+                tileMapTileEdges[tileMapZ].load(m_width, m_height, docMapLayerDataTiles, docMapLayerName, tileMapType, tileMapZ);
             }
         }
 
@@ -215,7 +226,7 @@ public:
 
                 tibia::Tile::List* tileList = tileMap->getTileList();
 
-                int tileNumber = tibia::Utility::getTileNumberByTileCoords(sf::Vector2u(docMapObjectTileX, docMapObjectTileY));
+                int tileNumber = getTileNumberByTileCoords(sf::Vector2u(docMapObjectTileX, docMapObjectTileY));
 
                 tibia::Tile::Ptr tile = tileList->at(tileNumber);
 
@@ -226,7 +237,7 @@ public:
                     docMapObjectType = docMapObject->Attribute("type");
                 }
 
-                int objectType = tibia::umapObjectTypes[docMapObjectType];
+                int objectType = tibia::UMaps::objectTypes[docMapObjectType];
 
                 int objectCount = 0;
 
@@ -339,7 +350,7 @@ public:
                             {
                                 std::string creatureTypeString = docMapObjectProperty->Attribute("value");
 
-                                int creatureType = tibia::umapCreatureTypes[creatureTypeString];
+                                int creatureType = tibia::UMaps::creatureTypes[creatureTypeString];
 
                                 creature->setType(creatureType);
                             }
@@ -347,7 +358,7 @@ public:
                             {
                                 std::string creatureTeamString = docMapObjectProperty->Attribute("value");
 
-                                int creatureTeam = tibia::umapTeams[creatureTeamString];
+                                int creatureTeam = tibia::UMaps::teams[creatureTeamString];
 
                                 creature->setTeam(creatureTeam);
                             }
@@ -362,14 +373,82 @@ public:
         return true;
     }
 
+    template <class T>
+    int getTileNumberByTileCoords(T tileCoords)
+    {
+        int x = tileCoords.x / tibia::TILE_SIZE;
+        int y = tileCoords.y / tibia::TILE_SIZE;
+
+        return x + (y * m_width);
+    }
+
+    bool isTileNumberOutOfBounds(int tileNumber)
+    {
+        if (tileNumber < 0 || tileNumber > m_size - 1)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    bool isTilePositionOutOfBounds(const sf::Vector2u& tilePosition)
+    {
+        if
+        (
+            tilePosition.x < 0 ||
+            tilePosition.y < 0 ||
+            tilePosition.x > m_tileWidth  - tibia::TILE_SIZE ||
+            tilePosition.y > m_tileHeight - tibia::TILE_SIZE
+        )
+        {
+            return true;
+        }
+
+        return false;
+    }
+
     std::string getFilename()
     {
         return m_filename;
     }
 
+    unsigned int getWidth()
+    {
+        return m_width;
+    }
+
+    unsigned int getHeight()
+    {
+        return m_height;
+    }
+
+    unsigned int getTileWidth()
+    {
+        return m_tileWidth;
+    }
+
+    unsigned int getTileHeight()
+    {
+        return m_tileHeight;
+    }
+
+    unsigned int getSize()
+    {
+        return m_size;
+    }
+
 private:
 
     std::string m_filename;
+
+    unsigned int m_width;
+    unsigned int m_height;
+
+    unsigned int m_tileWidth;
+    unsigned int m_tileHeight;
+
+    unsigned int m_size;
 
 }; // class Map
 

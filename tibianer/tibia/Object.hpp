@@ -1037,7 +1037,7 @@ public:
 
         m_sprite[0].setId(m_id);
 
-        m_flags = tibia::umapSpriteFlags[m_id];
+        m_flags = tibia::UMaps::spriteFlags[m_id];
 
         if (m_flags & tibia::SpriteFlags::drawLast)
         {

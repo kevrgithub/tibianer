@@ -127,7 +127,7 @@ public:
     {
         if (m_hasCustomName == false)
         {
-            m_name = tibia::umapCreatureNames[m_type];
+            m_name = tibia::UMaps::creatureNames[m_type];
         }
 
         if (m_type != tibia::CreatureTypes::human)
@@ -135,7 +135,7 @@ public:
             m_hasOutfit = false;
         }
 
-        m_size = umapCreatureSizes[m_type];
+        m_size = tibia::UMaps::creatureSizes[m_type];
 
         if (m_size == tibia::CreatureSizes::large)
         {
@@ -146,13 +146,13 @@ public:
             m_tileOffset = tibia::THING_DRAW_OFFSET;
         }
 
-        m_numAnimations = umapCreatureNumAnimations[m_type];
+        m_numAnimations = tibia::UMaps::creatureNumAnimations[m_type];
 
-        m_corpseSize = umapCreatureCorpseSizes[m_type];
+        m_corpseSize = tibia::UMaps::creatureCorpseSizes[m_type];
 
-        m_spritesList = umapCreatureSprites[m_type];
+        m_spritesList = tibia::UMaps::creatureSprites[m_type];
 
-        m_spritesCorpseList = umapCreatureCorpseSprites[m_type];
+        m_spritesCorpseList = tibia::UMaps::creatureCorpseSprites[m_type];
 
         m_spriteCorpse[0].setId(m_spritesCorpseList[0]);
 
@@ -223,7 +223,7 @@ public:
             );
         }
 
-        m_bloodType = umapCreatureBloodTypes[m_type];
+        m_bloodType = tibia::UMaps::creatureBloodTypes[m_type];
     }
 
     void updateSprite()
@@ -532,7 +532,7 @@ public:
         statusEffect.ticks       = ticks;
         statusEffect.timePerTick = timePerTick;
 
-        statusEffect.name = tibia::umapCreatureStatusEffectsNames[type];
+        statusEffect.name = tibia::UMaps::creatureStatusEffectsNames[type];
 
         statusEffect.clock.restart();
 

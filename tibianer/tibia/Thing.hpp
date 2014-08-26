@@ -31,7 +31,7 @@ public:
 
     void updateTileNumber()
     {
-        m_tileNumber = tibia::Utility::getTileNumberByTileCoords(sf::Vector2u(m_tileX, m_tileY));
+        m_tileNumber = m_tileX + (m_tileY * tibia::mapWidth);
     }
 
     void setCoords(int x, int y)
