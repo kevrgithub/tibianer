@@ -22,7 +22,7 @@ public:
 
     Thing::Thing()
     {
-        m_drawIndex = 0;
+        m_drawIndex = tibia::DRAW_INDEX_DEFAULT;
 
         m_drawOffset = 0;
 

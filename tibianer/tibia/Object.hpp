@@ -1039,6 +1039,11 @@ public:
 
         m_flags = tibia::UMaps::spriteFlags[m_id];
 
+        if (m_flags & tibia::SpriteFlags::decal)
+        {
+            setDrawIndex(tibia::DRAW_INDEX_DECAL);
+        }
+
         if (m_flags & tibia::SpriteFlags::drawLast)
         {
             setDrawIndex(tibia::DRAW_INDEX_LAST);

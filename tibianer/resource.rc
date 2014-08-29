@@ -1,3 +1,5 @@
 #include "resource.h"
 
 IDI_TIBIA_ICON ICON "tibia.ico"
+
+2 24 "iup.manifest"

@@ -32,12 +32,12 @@ public:
     struct Properties_t
     {
         std::string name        = "Unknown Map";
-        std::string description = "";
+        std::string description = "No description";
         std::string author      = "Unknown Author";
 
         unsigned int playerStartX = 0;
         unsigned int playerStartY = 0;
-        unsigned int playerStartZ = tibia::ZAxis::ground;
+        unsigned int playerStartZ = tibia::ZAxis::default;
 
         unsigned int timeOfDay = tibia::TimeOfDay::day;
     };
@@ -57,6 +57,8 @@ public:
             std::cout << "Map Document LoadFile Error: " << filename << std::endl;
             return false;
         }
+
+        m_isCompressed = false;
 
         m_filename = filename;
 
@@ -120,22 +122,30 @@ public:
 
             //std::cout << "Layer Name: " << docMapLayerName << std::endl;
 
-            std::string docMapLayerData = docMapLayer->FirstChildElement("data")->GetText();
+            tinyxml2::XMLElement* docMapLayerData = docMapLayer->FirstChildElement("data");
 
-            docMapLayerData.erase(boost::remove_if(docMapLayerData, boost::is_any_of(" \r\n")), docMapLayerData.end());
+            std::string docMapLayerDataString = docMapLayerData->GetText();
 
-            docMapLayerData = base64_decode(docMapLayerData);
-            docMapLayerData = boost_zlib_decompress_string_fast(docMapLayerData);
+            docMapLayerDataString.erase(boost::remove_if(docMapLayerDataString, boost::is_any_of(" \r\n")), docMapLayerDataString.end());
 
-            //std::cout << docMapLayerData << std::endl;
+            docMapLayerDataString = base64_decode(docMapLayerDataString);
 
-            std::istringstream docMapLayerDataStream(docMapLayerData);
+            if (docMapLayerData->Attribute("compression") != NULL)
+            {
+                m_isCompressed = true;
+
+                docMapLayerDataString = boost_zlib_decompress_string_fast(docMapLayerDataString);
+            }
+
+            //std::cout << docMapLayerDataString << std::endl;
+
+            std::istringstream docMapLayerDataStream(docMapLayerDataString);
             //docMapLayerDataStream.seekg(0, std::ios::beg);
 
             std::vector<int> docMapLayerDataTiles;
-            docMapLayerDataTiles.reserve(docMapLayerData.size() / 4);
+            docMapLayerDataTiles.reserve(docMapLayerDataString.size() / 4);
 
-            for (unsigned int i = 0; i < docMapLayerData.size(); i += 4)
+            for (unsigned int i = 0; i < docMapLayerDataString.size(); i += 4)
             {
                 int tileId;
                 docMapLayerDataStream.read(reinterpret_cast<char*>(&tileId), 4);
@@ -143,7 +153,7 @@ public:
                 docMapLayerDataTiles.push_back(tileId);
             }
 
-            int tileMapZ = tibia::ZAxis::ground;
+            int tileMapZ = tibia::ZAxis::default;
 
             int tileMapType = tibia::TileMapTypes::tiles;
 
@@ -186,7 +196,7 @@ public:
 
             //std::cout << docMapObjectGroupName << std::endl;
 
-            int docMapObjectZ = tibia::ZAxis::ground;
+            int docMapObjectZ = tibia::ZAxis::default;
 
             int docMapObjectLayerType = tibia::ObjectLayerTypes::objects;
 
@@ -408,6 +418,11 @@ public:
         return false;
     }
 
+    bool isCompressed()
+    {
+        return m_isCompressed;
+    }
+
     std::string getFilename()
     {
         return m_filename;
@@ -439,6 +454,8 @@ public:
     }
 
 private:
+
+    bool m_isCompressed;
 
     std::string m_filename;
 

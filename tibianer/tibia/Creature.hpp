@@ -731,6 +731,11 @@ public:
         m_size = size;
     }
 
+    int getCorpseSize()
+    {
+        return m_corpseSize;
+    }
+
     int getDirection()
     {
         return m_direction;

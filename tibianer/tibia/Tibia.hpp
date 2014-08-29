@@ -21,7 +21,7 @@ namespace tibia
 
     const int SPRITES_TOTAL = 4096;
 
-    const int NUM_Z_LEVELS = 5;
+    const int NUM_Z_LEVELS = 16;
 
     const int TILE_SIZE = 32;
 
@@ -53,7 +53,7 @@ namespace tibia
     const int NUM_OBJECT_SPRITES   = 8;
 
     const int DRAW_INDEX_FIRST   = 0;
-    const int DRAW_INDEX_DECALS  = 32;
+    const int DRAW_INDEX_DECAL   = 32;
     const int DRAW_INDEX_DEFAULT = 128;
     const int DRAW_INDEX_LAST    = 256;
 
@@ -269,12 +269,12 @@ namespace tibia
         };
     }
 
-    namespace LightBrightnesses
+    namespace LightBrightness
     {
         const int min = 32;
         const int max = 255;
 
-        const int underground = min;
+        const int underGround = min;
         const int day         = max;
         const int night       = min * 2;
 
@@ -1238,11 +1238,15 @@ namespace tibia
     {
         enum
         {
-            floor,
-            underGround,
-            ground,
-            aboveGround,
-            ceiling,
+            min     = 0,
+            default = 7,
+            max     = 15,
+
+            floor       = min,
+            underGround = default - 1,
+            ground      = default,
+            aboveGround = default + 1,
+            ceiling     = max,
         };
     }
 
@@ -2243,6 +2247,7 @@ namespace tibia
             food             = 1 << 21,
             instrument       = 1 << 22,
             currency         = 1 << 23,
+            decal            = 1 << 24,
         };
     }
 
@@ -2778,7 +2783,9 @@ namespace tibia
             518, 519, 520, 528, 668, 669, 678, 679, 680, 681, 682, 683, 684, 708, 709, 710,
             711, 712, 744, 787, 927, 928, 929, 971, 988, 989, 990, 991, 992, 993, 994, 995,
             1010, 1011, 1016, 1034, 1049, 1050, 1051, 1052, 1053, 1056, 1057, 1058, 1059, 1061, 1062, 1063,
-            1064, 1065, 1088, 1089, 1090, 1091, 1123, 1124, 1125, 1126, 1127, 1128, 1129, 1130, 1131, 1132,
+            1064, 1065,
+            1087,
+            1088, 1089, 1090, 1091, 1123, 1124, 1125, 1126, 1127, 1128, 1129, 1130, 1131, 1132,
             1133, 1134, 1135, 1136, 1200, 1201, 1202, 1219,
             //1220, // book
             1225, 1226, 1227, 1228, 1229, 1230, 1231,
@@ -2867,6 +2874,16 @@ namespace tibia
             3385,
             3391,
             3497,
+        };
+
+        std::vector<int> decals =
+        {
+            745, 746, 747, 748, 749, 750,
+            751, 752, 753, 754, 755, 756,
+            757, 758, 759, 760, 761, 762,
+            763, 764, 765, 766, 767, 768,
+            769, 770, 771, 772, 773, 774,
+            775, 776, 777, 778, 779, 780,
         };
 
         std::vector<int> interactive =
@@ -3015,7 +3032,6 @@ namespace tibia
         std::vector<int> transparent =
         {
             1,    // pink square
-            1087, // pink square
             3388, // invisible tile
         };
 

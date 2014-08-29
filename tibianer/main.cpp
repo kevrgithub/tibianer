@@ -10,9 +10,11 @@
 #include <algorithm>
 #include <memory>
 #include <thread>
+#include <chrono>
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
+//#include <boost/filesystem.hpp>
 
 #include <SFML/System.hpp>
 #include <SFML/Graphics.hpp>
@@ -29,7 +31,7 @@
 
 tibia::Game g_game;
 
-std::string g_gameTitle = "Tibianer";
+std::string g_gameTitle = "Tibianer (WORK IN PROGRESS) BUILD DATE 290814)";
 
 std::string g_configFile = "cfg/config.cfg";
 
@@ -44,6 +46,8 @@ bool g_windowIsFocused = true;
 
 unsigned int g_windowFrameRateLimit = 60;
 
+bool g_showMapSelect = true;
+
 std::string g_mapFile = "test.tmx";
 
 bool loadConfig()
@@ -57,6 +61,8 @@ bool loadConfig()
     boost::property_tree::ini_parser::read_ini(g_configFile, pt);
 
     g_windowFrameRateLimit = pt.get<unsigned int>("Window.FrameRateLimit", g_windowFrameRateLimit);
+
+    g_showMapSelect = pt.get<bool>("Map.ShowMapSelect", g_showMapSelect);
 
     g_mapFile = pt.get<std::string>("Map.File", g_mapFile);
 
@@ -141,6 +147,31 @@ bool doSaveScreenshot()
     }
 
     return false;
+}
+
+void mapSelectCallback(Ihandle *ih, const char* filename, const char* status)
+{
+    if (strcmp(status, "OK") == 0)
+    {
+        g_mapFile = filename;
+
+        IupExitLoop();
+    }
+}
+
+void showMapSelect()
+{
+    Ihandle *dialogMapSelect;
+
+    dialogMapSelect = IupFileDlg();
+    IupSetAttribute(dialogMapSelect, "DIALOGTYPE", "OPEN");
+    IupSetAttribute(dialogMapSelect, "TITLE", "Select Map");
+    IupSetAttributes(dialogMapSelect, "FILTER = \"*.tmx\", FILTERINFO = \"Tiled Map Files (*.tmx)\"");
+    IupSetCallback(dialogMapSelect, "FILE_CB", (Icallback)mapSelectCallback);
+
+    IupPopup(dialogMapSelect, IUP_CENTER, IUP_CENTER);
+
+    IupMainLoop();
 }
 
 int main(int argc, char* argv[])
@@ -235,13 +266,37 @@ int main(int argc, char* argv[])
     std::cout << "Loading map" << std::endl;
 
     std::stringstream mapFilePath;
-    mapFilePath << "maps/" << g_mapFile;
+
+    if (g_showMapSelect == true)
+    {
+        showMapSelect();
+
+        mapFilePath << g_mapFile; // full path
+    }
+    else
+    {
+        mapFilePath << "maps/" << g_mapFile;
+    }
+
+    std::cout << "Map file: " << g_mapFile;
+
+    auto timeLoadMapBegin = std::chrono::high_resolution_clock::now();
 
     if (g_game.loadMap(mapFilePath.str()) == false)
     {
         std::cout << "Error: Failed to load map" << " (" << g_mapFile << ")" << std::endl;
         return EXIT_FAILURE;
     }
+
+    if (g_game.getMap()->isCompressed() == true)
+    {
+        std::cout << "Map is compressed" << std::endl;
+    }
+
+    auto timeLoadMapEnd = std::chrono::high_resolution_clock::now();
+    auto timeLoadMapElapsed = timeLoadMapEnd - timeLoadMapBegin;
+
+    std::cout << "Time elapsed loading map: " << std::chrono::duration_cast<std::chrono::seconds>(timeLoadMapElapsed).count() << "s" << std::endl;
 
     std::cout << "Loading windows" << std::endl;
     g_game.loadWindows();

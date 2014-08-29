@@ -229,6 +229,15 @@ namespace tibia
                 }
             }
 
+            for (auto spriteId : tibia::SpriteData::decals)
+            {
+                if (id == spriteId)
+                {
+                    flags |= tibia::SpriteFlags::decal;
+                    break;
+                }
+            }
+
             for (auto spriteId : tibia::SpriteData::modifyHpOnTouchObjects)
             {
                 if (id == spriteId)

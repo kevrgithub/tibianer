@@ -101,7 +101,7 @@ public:
 
         m_lightLayer.create(tibia::LIGHT_WIDTH, tibia::LIGHT_HEIGHT);
 
-        m_lightBrightness = tibia::LightBrightnesses::day;
+        m_lightBrightness = tibia::LightBrightness::day;
 
         m_timeOfDay = tibia::TimeOfDay::day;
 
@@ -412,7 +412,7 @@ public:
             }
 
             case sf::Keyboard::Z:
-                m_player->setZ(utility::getRandomNumber(tibia::ZAxis::floor, tibia::ZAxis::ceiling));
+                m_player->setZ(utility::getRandomNumber(tibia::ZAxis::min, tibia::ZAxis::max));
 
                 std::cout << "Player Z: " << m_player->getZ() << std::endl;
                 break;
@@ -1655,7 +1655,7 @@ public:
         if
         (
             fromTile->getZ() != tibia::ZAxis::ground &&
-            fromTile->getZ() != tibia::ZAxis::floor  &&
+            fromTile->getZ() != tibia::ZAxis::min    &&
 
             toTile->getId() == tibia::TILE_NULL
         )
@@ -1699,7 +1699,7 @@ public:
             isTileClimbDown == false &&
 
             fromTile->getZ() != tibia::ZAxis::underGround &&
-            fromTile->getZ() != tibia::ZAxis::ceiling     &&
+            fromTile->getZ() != tibia::ZAxis::max         &&
 
             fromTile->getHeight() >= tibia::TILE_CLIMB_HEIGHT &&
 
@@ -3453,7 +3453,7 @@ public:
 
         for (auto& object : *objectList)
         {
-            if (object->getFlags() & tibia::SpriteFlags::ignoreHeight)
+            if (object->getFlags() & tibia::SpriteFlags::ignoreHeight || object->getFlags() & tibia::SpriteFlags::decal)
             {
                 object->setDrawOffset(0);
             }
@@ -3609,7 +3609,7 @@ public:
 
             tibia::Tile::Ptr projectileTile = getTile(projectileSpriteTilePosition, projectile->getZ());
 
-            // do not let projectile hit it's owner
+            // do not let projectile hit its owner
             if (projectileTile->getPosition() == projectile->getCreatureOwner()->getTilePosition())
             {
                 continue;
@@ -4192,7 +4192,7 @@ public:
                             continue;
                         }
 
-                        // fix drawing order of objects on walls
+                        // fix drawing order of special objects
                         if (object->getFlags() & tibia::SpriteFlags::fixDrawOrder)
                         {
                             object->setTileX(object->getTileX() + tibia::TILE_SIZE);
@@ -4252,7 +4252,7 @@ public:
 
         if (z < tibia::ZAxis::ground)
         {
-            m_lightLayer.clear(sf::Color(tibia::LightBrightnesses::underground, tibia::LightBrightnesses::underground, tibia::LightBrightnesses::underground));
+            m_lightLayer.clear(sf::Color(tibia::LightBrightness::underGround, tibia::LightBrightness::underGround, tibia::LightBrightness::underGround));
         }
         else
         {
@@ -4362,7 +4362,7 @@ public:
 
         drawThingList(&m_tileMapThings[z]);
 
-        if (z < tibia::ZAxis::ground || m_lightBrightness != tibia::LightBrightnesses::max)
+        if (z < tibia::ZAxis::ground || m_lightBrightness != tibia::LightBrightness::max)
         {
             drawTileMapLights(z);
         }
@@ -4386,10 +4386,24 @@ public:
             m_player->getTileY() + (tibia::TILE_SIZE / 2)
         );
 
-        m_gameWindow.setView(m_gameWindowView); // setView to m_gameWindowLayer instead
+        m_gameWindow.setView(m_gameWindowView);
         m_gameWindow.clear(tibia::Colors::black);
 
-        for (unsigned int i = tibia::ZAxis::floor; i < tibia::ZAxis::ceiling + 1; i++)
+        int zBegin = tibia::ZAxis::min;
+        int zEnd   = tibia::ZAxis::max;
+
+        if (m_player->getZ() < tibia::ZAxis::ground)
+        {
+            zBegin = tibia::ZAxis::min;
+            zEnd   = tibia::ZAxis::underGround;
+        }
+        else
+        {
+            zBegin = tibia::ZAxis::ground;
+            zEnd   = tibia::ZAxis::max;
+        }
+
+        for (unsigned int i = zBegin; i < zEnd + 1; i++)
         {
             m_tileMapObjects[i].clear();
             m_tileMapCreatures[i].clear();
@@ -4397,39 +4411,28 @@ public:
             m_tileMapProjectiles[i].clear();
             m_tileMapThings[i].clear();
 
-            //updateTileThings(&m_map.tileMapTiles[i]);
+            //updateTileThings(&m_map.tileMapTiles[i]); // lags too much
         }
 
-        if (m_player->getZ() < tibia::ZAxis::ground)
+        for (unsigned int i = zBegin; i < zEnd + 1; i++)
         {
-            drawGameLayer(tibia::ZAxis::floor);
+            drawGameLayer(i);
 
-            if (findTilesAboveThing(m_player, tibia::ZAxis::underGround) == false)
+            if (i == tibia::ZAxis::max)
             {
-                if (isTileMapVisible(&m_map.tileMapTiles[tibia::ZAxis::underGround]) == true)
+                break;
+            }
+
+            if (findTilesAboveThing(m_player, i + 1) == false)
+            {
+                if (isTileMapVisible(&m_map.tileMapTiles[i + 1]) == true)
                 {
-                    drawGameLayer(tibia::ZAxis::underGround);
+                    drawGameLayer(i + 1);
                 }
             }
-        }
-        else
-        {
-            drawGameLayer(tibia::ZAxis::ground);
-
-            if (findTilesAboveThing(m_player, tibia::ZAxis::aboveGround) == false)
+            else
             {
-                if (isTileMapVisible(&m_map.tileMapTiles[tibia::ZAxis::aboveGround]) == true)
-                {
-                    drawGameLayer(tibia::ZAxis::aboveGround);
-                }
-
-                if (findTilesAboveThing(m_player, tibia::ZAxis::ceiling) == false)
-                {
-                    if (isTileMapVisible(&m_map.tileMapTiles[tibia::ZAxis::ceiling]) == true)
-                    {
-                        drawGameLayer(tibia::ZAxis::ceiling);
-                    }
-                }
+                break;
             }
         }
 
@@ -4481,7 +4484,7 @@ public:
 
                 int tileId = tile->getId();
 
-                if (tileId == tibia::TILE_NULL || tileId == 1)
+                if (tileId == tibia::TILE_NULL)
                 {
                     continue;
                 }
@@ -4655,7 +4658,7 @@ public:
     {
         sf::Time elapsedTime = clockLightBrightness.getElapsedTime();
 
-        if (elapsedTime.asMilliseconds() > tibia::LightBrightnesses::updateTime * m_timeDelta.asMilliseconds())
+        if (elapsedTime.asMilliseconds() > tibia::LightBrightness::updateTime * m_timeDelta.asMilliseconds())
         {
             clockLightBrightness.restart();
         }
@@ -4666,14 +4669,14 @@ public:
 
         if (m_timeOfDay == tibia::TimeOfDay::day)
         {
-            if (m_lightBrightness < tibia::LightBrightnesses::day)
+            if (m_lightBrightness < tibia::LightBrightness::day)
             {
                 m_lightBrightness++;
             }
         }
         else if (m_timeOfDay == tibia::TimeOfDay::night)
         {
-            if (m_lightBrightness > tibia::LightBrightnesses::night)
+            if (m_lightBrightness > tibia::LightBrightness::night)
             {
                 m_lightBrightness--;
             }
@@ -5927,16 +5930,23 @@ public:
 
     void doAnimatedObjects()
     {
+        int zBegin = tibia::ZAxis::min;
+        int zEnd   = tibia::ZAxis::max;
+
         if (m_player->getZ() < tibia::ZAxis::ground)
         {
-            doAnimateObjectList(&m_tileMapObjects[tibia::ZAxis::floor]);
-            doAnimateObjectList(&m_tileMapObjects[tibia::ZAxis::underGround]);
+            zBegin = tibia::ZAxis::min;
+            zEnd   = tibia::ZAxis::underGround;
         }
         else
         {
-            doAnimateObjectList(&m_tileMapObjects[tibia::ZAxis::ground]);
-            doAnimateObjectList(&m_tileMapObjects[tibia::ZAxis::aboveGround]);
-            doAnimateObjectList(&m_tileMapObjects[tibia::ZAxis::ceiling]);
+            zBegin = tibia::ZAxis::ground;
+            zEnd   = tibia::ZAxis::max;
+        }
+
+        for (unsigned int i = zBegin; i < zEnd + 1; i++)
+        {
+            doAnimateObjectList(&m_tileMapObjects[i]);
         }
     }
 
