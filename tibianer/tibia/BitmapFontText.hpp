@@ -31,7 +31,7 @@ public:
 
         int textWidth = 0;
 
-        for (unsigned int i = 0; i < text.size(); i++)
+        for (std::size_t i = 0; i < text.size(); i++)
         {
             int asciiValue = static_cast<int>(text[i]);
 
@@ -73,7 +73,7 @@ public:
 
         if (isCentered == true)
         {
-            for (unsigned int i = 0; i < m_vertexArray.getVertexCount(); i++)
+            for (std::size_t i = 0; i < m_vertexArray.getVertexCount(); i++)
             {
                 m_vertexArray[i].position.x = m_vertexArray[i].position.x - (textWidth / 2);
             }

@@ -49,7 +49,7 @@ public:
 
                 unsigned int tileFlags = tibia::UMaps::spriteFlags[tileId];
 
-                if (tileFlags & tibia::SpriteFlags::water && m_type == tibia::TileMapTypes::tiles && m_z == tibia::ZAxis::ground)
+                if ((tileFlags & tibia::SpriteFlags::water) && m_type == tibia::TileMapTypes::tiles && m_z == tibia::ZAxis::ground)
                 {
                     m_waterTileNumbers.push_back(tileNumber);
                 }

@@ -64,9 +64,9 @@ namespace tibia
             return volume;
         }
 
-        unsigned int getSpriteFlags(int id)
+        unsigned long getSpriteFlags(int id)
         {
-            unsigned int flags = 0;
+            unsigned long flags = 0;
 
             for (auto spriteId : tibia::SpriteData::solid)
             {

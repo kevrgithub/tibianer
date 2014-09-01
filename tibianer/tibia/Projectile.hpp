@@ -196,12 +196,12 @@ public:
         return m_modifyHpType;
     }
 
-    unsigned int getFlags()
+    unsigned long getFlags()
     {
         return m_flags;
     }
 
-    void setFlags(unsigned int flags)
+    void setFlags(unsigned long flags)
     {
         m_flags = flags;
     }
@@ -370,7 +370,7 @@ private:
     int m_type;
     int m_modifyHpType;
 
-    unsigned int m_flags;
+    unsigned long m_flags;
 
     float m_spriteTileX;
     float m_spriteTileY;

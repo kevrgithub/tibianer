@@ -145,7 +145,7 @@ public:
             std::vector<int> docMapLayerDataTiles;
             docMapLayerDataTiles.reserve(docMapLayerDataString.size() / 4);
 
-            for (unsigned int i = 0; i < docMapLayerDataString.size(); i += 4)
+            for (std::size_t i = 0; i < docMapLayerDataString.size(); i += 4)
             {
                 int tileId;
                 docMapLayerDataStream.read(reinterpret_cast<char*>(&tileId), 4);
@@ -335,7 +335,7 @@ public:
 
                     if (objectCount > 0)
                     {
-                        for (int i = 1; i < objectCount; i++)
+                        for (unsigned int i = 1; i < objectCount; i++)
                         {
                             tibia::Object::Ptr copyObject = std::make_shared<tibia::Object>(*object);
 

@@ -218,11 +218,44 @@ public:
         player->setHp(1000);
         player->setMovementSpeed(tibia::MovementSpeeds::player);
 
-        m_player = std::move(player);
+        m_player = player;
 
         tibia::Tile::Ptr tile = getThingTile(m_player);
 
         tile->addCreature(m_player);
+    }
+
+    void respawnPlayer(tibia::Creature::Ptr creature)
+    {
+        creature->setIsPlayer(false);
+
+        tibia::Creature::Ptr player = std::make_shared<tibia::Creature>(*creature);
+
+        player->getInventoryItemList()->clear();
+        player->setIsDead(false);
+        player->setIsPlayer(true);
+        player->setHp(player->getHpMax());
+        player->setMp(player->getMpMax());
+
+        m_player = player;
+
+        tibia::Tile::Ptr toTile = getTile
+        (
+            sf::Vector2u
+            (
+                m_map.properties.playerStartX * tibia::TILE_SIZE,
+                m_map.properties.playerStartY * tibia::TILE_SIZE
+            ),
+            m_map.properties.playerStartZ
+        );
+
+        m_player->setTileCoords(toTile->getPosition().x, toTile->getPosition().y);
+        m_player->setZ(toTile->getZ());
+        m_player->setDirection(tibia::Directions::down);
+
+        toTile->addCreature(m_player);
+
+        spawnAnimation(m_player->getTilePosition(), m_player->getZ(), tibia::Animations::spellBlue);
     }
 
     void showMapNameAndAuthor()
@@ -382,9 +415,40 @@ public:
                 break;
             }
 
+            case sf::Keyboard::R:
+            {
+                tibia::Tile::Ptr toTile = getTile
+                (
+                    sf::Vector2u
+                    (
+                        m_map.properties.playerStartX * tibia::TILE_SIZE,
+                        m_map.properties.playerStartY * tibia::TILE_SIZE
+                    ),
+                    m_map.properties.playerStartZ
+                );
+
+                doMoveThingToTile(m_player, toTile, tibia::Directions::down, true);
+
+                std::cout << "To Tile X: " << toTile->getPosition().x << std::endl;
+                std::cout << "To Tile Y: " << toTile->getPosition().y << std::endl;
+                std::cout << "To Tile Z: " << toTile->getZ()          << std::endl;
+
+                std::cout << "Player Start X: " << m_map.properties.playerStartX << std::endl;
+                std::cout << "Player Start Y: " << m_map.properties.playerStartY << std::endl;
+                std::cout << "Player Start Z: " << m_map.properties.playerStartZ << std::endl;
+
+                break;
+            }
+
             case sf::Keyboard::T:
                 spawnDecayObject(m_player->getTilePosition(), m_player->getZ(), tibia::SpriteData::torchBig);
                 break;
+
+            case sf::Keyboard::U:
+            {
+                spawnDecayObject(m_player->getTilePosition(), m_player->getZ(), tibia::SpriteData::fieldFire);
+                break;
+            }
 
             case sf::Keyboard::N:
                 toggleTimeOfDay();
@@ -931,25 +995,7 @@ public:
                     {
                         auto inventoryItemIt = inventoryItemList->begin() + inventoryWindowSlotIndex;
 
-                        tibia::Object::Ptr droppedObject = spawnObject(m_player->getTilePosition(), m_player->getZ(), inventoryItemIt->id);
-
-                        if (inventoryItemIt->count > 1)
-                        {
-                            if (inventoryItemIt->flags & tibia::SpriteFlags::groupable)
-                            {
-                                droppedObject->setCount(inventoryItemIt->count);
-
-                                m_player->removeInventoryItem(inventoryWindowSlotIndex);
-                            }
-                            else
-                            {
-                                inventoryItemIt->count--;
-                            }
-                        }
-                        else
-                        {
-                            m_player->removeInventoryItem(inventoryWindowSlotIndex);
-                        }
+                        doCreatureDropInventoryItem(m_player, inventoryItemIt);
                     }
                 }
             }
@@ -1653,7 +1699,7 @@ public:
         return nullptr;
     }
 
-    tibia::Object::Ptr getTileObjectByFlag(sf::Vector2u tileCoords, int z, int flag)
+    tibia::Object::Ptr getTileObjectByFlag(sf::Vector2u tileCoords, int z, unsigned long flag)
     {
         tibia::Tile::Ptr tile = getTile(tileCoords, z);
 
@@ -1696,13 +1742,13 @@ public:
         }
 
         tibia::Creature::Ptr thingCreature = std::dynamic_pointer_cast<tibia::Creature>(thing);
-        tibia::Object::Ptr thingObject     = std::dynamic_pointer_cast<tibia::Object>(thing);
+        tibia::Object::Ptr   thingObject   = std::dynamic_pointer_cast<tibia::Object>(thing);
 
         tibia::Creature::List::iterator thingCreatureIt;
         tibia::Object::List::iterator   thingObjectIt;
 
         tibia::Creature::List* thingCreatureList = fromTile->getCreatureList();
-        tibia::Object::List* thingObjectList     = fromTile->getObjectList();
+        tibia::Object::List*   thingObjectList   = fromTile->getObjectList();
 
         if (thingCreature != nullptr)
         {
@@ -2089,10 +2135,10 @@ public:
 
                     std::transform(statusEffectName.begin(), statusEffectName.end(), statusEffectName.begin(), std::tolower);
 
-                    std::stringstream ss;
-                    ss << "You are " << statusEffectName << ".";
+                    std::stringstream ssStatusEffectMessage;
+                    ssStatusEffectMessage << "You are " << statusEffectName << ".";
 
-                    showStatusBarText(ss.str());
+                    showStatusBarText(ssStatusEffectMessage.str());
                 }
             }
         }
@@ -2808,9 +2854,18 @@ public:
             return true;
         }
 
-        // blueberry bush // TODO: make blueberries restore health or hunger
+        // blueberry bush
         if (object->getId() == tibia::SpriteData::bushBlueberry)
         {
+            tibia::Object::Ptr blueBerriesObject = std::make_shared<tibia::Object>
+            (
+                m_player->getTilePosition(),
+                m_player->getZ(),
+                tibia::SpriteData::blueBerries.at(4)
+            );
+
+            creature->addInventoryItem(blueBerriesObject->getId(), blueBerriesObject->getCount(), blueBerriesObject->getFlags());
+
             object->setId(tibia::SpriteData::bush);
 
             return true;
@@ -3105,6 +3160,48 @@ public:
         }
 
         return false;
+    }
+
+    void doCreatureDropInventoryItem(tibia::Creature::Ptr creature, tibia::Creature::InventoryItemList::iterator& inventoryItemIt)
+    {
+        tibia::Object::Ptr droppedObject = spawnObject(creature->getTilePosition(), creature->getZ(), inventoryItemIt->id);
+
+        if (inventoryItemIt->count > 1)
+        {
+            if (inventoryItemIt->flags & tibia::SpriteFlags::groupable)
+            {
+                droppedObject->setCount(inventoryItemIt->count);
+
+                creature->removeInventoryItem(inventoryItemIt);
+            }
+            else
+            {
+                inventoryItemIt->count--;
+            }
+        }
+        else
+        {
+            creature->removeInventoryItem(inventoryItemIt);
+        }
+    }
+
+    void doCreatureDropAllInventoryItems(tibia::Creature::Ptr creature)
+    {
+        tibia::Creature::InventoryItemList* inventoryItemList = creature->getInventoryItemList();
+
+        if (inventoryItemList->size() == 0)
+        {
+            return;
+        }
+
+        for (auto inventoryItemIt = inventoryItemList->begin(); inventoryItemIt != inventoryItemList->end(); ++inventoryItemIt)
+        {
+            //std::cout << inventoryItemIt->id << std::endl;
+
+            doCreatureDropInventoryItem(creature, inventoryItemIt);
+
+            inventoryItemIt--;
+        }
     }
 
     void doCreatureSpeech(tibia::Creature::Ptr creature, const std::string& text, int speechType = tibia::SpeechTypes::say)
@@ -3481,7 +3578,8 @@ public:
                         (
                             defender->getTilePosition(),
                             defender->getZ(),
-                            tibia::UMaps::creatureBloodTypesSplats[defender->getBloodType()]
+                            tibia::UMaps::creatureBloodTypesSplats[defender->getBloodType()],
+                            true
                         );
                     }
                 }
@@ -3494,9 +3592,12 @@ public:
                     (
                         defender->getTilePosition(),
                         defender->getZ(),
-                        tibia::UMaps::creatureBloodTypesPools[defender->getBloodType()]
+                        tibia::UMaps::creatureBloodTypesPools[defender->getBloodType()],
+                        true
                     );
                 }
+
+                doCreatureDropAllInventoryItems(defender);
 
                 if (defender->isPlayer() == true)
                 {
@@ -4215,7 +4316,7 @@ public:
                 quad[2].texCoords = sf::Vector2f((tu + 1) * tibia::TILE_SIZE, (tv + 1) * tibia::TILE_SIZE);
                 quad[3].texCoords = sf::Vector2f(tu       * tibia::TILE_SIZE, (tv + 1) * tibia::TILE_SIZE);
 
-                unsigned int tileFlags = tile->getFlags();
+                unsigned long tileFlags = tile->getFlags();
 
                 if (tileFlags & tibia::SpriteFlags::transparent)
                 {
@@ -4339,11 +4440,7 @@ public:
 
                             if (timeElapsed.asSeconds() >= 5.0f)
                             {
-                                creature->setIsPlayer(false);
-
-                                createPlayer();
-
-                                spawnAnimation(m_player->getTilePosition(), m_player->getZ(), tibia::Animations::spellBlue);
+                                respawnPlayer(creature);
                             }
                         }
 
@@ -4631,8 +4728,8 @@ public:
         m_gameWindow.setView(m_gameWindowView);
         m_gameWindow.clear(tibia::Colors::black);
 
-        int zBegin = tibia::ZAxis::min;
-        int zEnd   = tibia::ZAxis::max;
+        unsigned int zBegin = tibia::ZAxis::min;
+        unsigned int zEnd   = tibia::ZAxis::max;
 
         if (m_player->getZ() < tibia::ZAxis::ground)
         {
@@ -4653,30 +4750,32 @@ public:
             m_tileMapProjectiles[i].clear();
             m_tileMapThings[i].clear();
 
-            //updateTileThings(&m_map.tileMapTiles[i]); // lags too much
+            //updateTileThings(&m_map.tileMapTiles[i]); // lags too much here, updated elsewhere
         }
+
+        //std::cout << "drawGameLayer START ------------------" << std::endl;
 
         for (unsigned int i = zBegin; i < zEnd + 1; i++)
         {
-            drawGameLayer(i);
+            if (isTileMapVisible(&m_map.tileMapTiles[i]) == true)
+            {
+                drawGameLayer(i);
+
+                //std::cout << "drawGameLayer: " << i << std::endl;
+            }
 
             if (i == tibia::ZAxis::max)
             {
                 break;
             }
 
-            if (findTilesAboveThing(m_player, i + 1) == false)
-            {
-                if (isTileMapVisible(&m_map.tileMapTiles[i + 1]) == true)
-                {
-                    drawGameLayer(i + 1);
-                }
-            }
-            else
+            if (findTilesAboveThing(m_player, i + 1) == true)
             {
                 break;
             }
         }
+
+        //std::cout << "drawGameLayer STOP -------------------" << std::endl;
 
         drawFloatingTextList();
         drawGameTextList();
@@ -4731,7 +4830,7 @@ public:
                     continue;
                 }
 
-                unsigned int tileFlags = tile->getFlags();
+                unsigned long tileFlags = tile->getFlags();
 
                 sf::Vertex quad[4];
 
@@ -4785,7 +4884,7 @@ public:
                 {
                     for (auto& object : *tileObjects)
                     {
-                        unsigned int objectFlags = object->getFlags();
+                        unsigned long objectFlags = object->getFlags();
 
                         sf::Vertex quad[4];
 
@@ -6172,8 +6271,8 @@ public:
 
     void doAnimatedObjects()
     {
-        int zBegin = tibia::ZAxis::min;
-        int zEnd   = tibia::ZAxis::max;
+        unsigned int zBegin = tibia::ZAxis::min;
+        unsigned int zEnd   = tibia::ZAxis::max;
 
         if (m_player->getZ() < tibia::ZAxis::ground)
         {
@@ -6188,6 +6287,8 @@ public:
 
         for (unsigned int i = zBegin; i < zEnd + 1; i++)
         {
+            //std::cout << "doAnimateObjectList Z: " << i << std::endl;
+
             doAnimateObjectList(&m_tileMapObjects[i]);
         }
     }
@@ -6199,13 +6300,22 @@ public:
             return;
         }
 
-        for (auto& object : *objectList)
+        int numAnimatedObjects = 0;
+
+        for (auto object : *objectList)
         {
-            if (object->isAnimated() == true)
+            if (object->getFlags() & tibia::SpriteFlags::animated)
             {
                 object->doAnimation();
+
+                //std::cout << "animated object id: "    << object->getId()    << std::endl;
+                //std::cout << "animated object flags: " << object->getFlags() << std::endl;
+
+                numAnimatedObjects++;
             }
         }
+
+        //std::cout << "numAnimatedObjects: " << numAnimatedObjects << std::endl;
     }
 
     void toggleTimeOfDay()

@@ -134,7 +134,7 @@ bool doSaveScreenshot()
 
     std::stringstream screenshotName;
 
-    for (unsigned int i = 0; i < sizeof(unsigned int); i++)
+    for (unsigned long long i = 0; i < sizeof(unsigned long long); i++)
     {
         screenshotName.str("");
 

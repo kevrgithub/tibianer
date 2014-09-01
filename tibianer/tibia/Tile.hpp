@@ -87,12 +87,12 @@ public:
         m_height = height;
     }
 
-    unsigned int getFlags()
+    unsigned long getFlags()
     {
         return m_flags;
     }
 
-    void setFlags(unsigned int flags)
+    void setFlags(unsigned long flags)
     {
         m_flags = flags;
     }
@@ -145,7 +145,7 @@ private:
 
     int m_z;
 
-    unsigned int m_flags;
+    unsigned long m_flags;
 
     tibia::Object::List m_objectList;
     tibia::Creature::List m_creatureList;

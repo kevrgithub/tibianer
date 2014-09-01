@@ -56,7 +56,7 @@ public:
     {
         int id;
         int count;
-        unsigned int flags;
+        unsigned long flags;
     };
 
     typedef std::vector<tibia::Creature::InventoryItem_t> InventoryItemList;
@@ -376,7 +376,7 @@ public:
         {
             int corpseId = m_spriteCorpse[0].getId();
 
-            for (unsigned int i = 0; i < m_spritesCorpseList.size(); i++)
+            for (std::size_t i = 0; i < m_spritesCorpseList.size(); i++)
             {
                 int spriteId = m_spritesCorpseList.at(i);
 
@@ -575,7 +575,7 @@ public:
         return findInventoryItemIt != m_inventoryItemList.end();
     }
 
-    int addInventoryItem(int id, int count, unsigned int flags)
+    int addInventoryItem(int id, int count, unsigned long flags)
     {
         bool foundGroupableObject = false;
 
@@ -714,6 +714,11 @@ public:
         m_inventoryItemList.erase(m_inventoryItemList.begin() + index);
     }
 
+    void removeInventoryItem(tibia::Creature::InventoryItemList::iterator it)
+    {
+        m_inventoryItemList.erase(it);
+    }
+
     void sortInventoryItemsReverse()
     {
         std::reverse(m_inventoryItemList.begin(), m_inventoryItemList.end());
@@ -726,7 +731,8 @@ public:
 
     void sortInventoryItemsByCount()
     {
-        std::sort(m_inventoryItemList.begin(), m_inventoryItemList.end(), InventoryItemSortByCount_t());
+        sortInventoryItemsById();
+        std::stable_sort(m_inventoryItemList.begin(), m_inventoryItemList.end(), InventoryItemSortByCount_t());
     }
 
     int getHealthState()

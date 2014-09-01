@@ -50,32 +50,15 @@ public:
         setId(id);
     }
 
-    void setIsOffset()
+    void setOffset()
     {
-        m_isOffset = false;
-
         if (m_flags & tibia::SpriteFlags::offset)
-        {
-            m_isOffset = true;
-        }
-
-        if (m_isOffset == true)
         {
             m_sprite[0].setPosition
             (
                 -tibia::THING_DRAW_OFFSET,
                 -tibia::THING_DRAW_OFFSET
             );
-        }
-    }
-
-    void setIsAnimated()
-    {
-        m_isAnimated = false;
-
-        if (m_flags & tibia::SpriteFlags::animated)
-        {
-            m_isAnimated = true;
         }
     }
 
@@ -958,79 +941,47 @@ public:
 
     void doAnimation()
     {
-        bool animationIsDone = false;
-
-        for (unsigned int i = 0; i < tibia::animatedObjectsList.size(); i++)
+        for (auto& animatedObjects : tibia::animatedObjectsList)
         {
-            if (animationIsDone == true)
+            auto animatedObjectIt = std::find(animatedObjects.begin(), animatedObjects.end(), m_id);
+
+            if (animatedObjectIt != animatedObjects.end())
             {
-                break;
-            }
+                animatedObjectIt++;
 
-            std::vector<int> sprites = tibia::animatedObjectsList.at(i);
-
-            for (unsigned int j = 0; j < sprites.size(); j++)
-            {
-                int spriteId = sprites.at(j);
-
-                if (m_id == spriteId)
+                if (animatedObjectIt == animatedObjects.end())
                 {
-                    j++;
-
-                    if (j > sprites.size() - 1)
-                    {
-                        j = 0;
-                    }
-
-                    spriteId = sprites.at(j);
-
-                    setId(spriteId);
-
-                    animationIsDone = true;
-
-                    break;
+                    animatedObjectIt = animatedObjects.begin();
                 }
+
+                setId(*animatedObjectIt);
+
+                return;
             }
         }
     }
 
     void doDecay()
     {
-        bool decayIsDone = false;
-
-        for (unsigned int i = 0; i < tibia::decayObjectsList.size(); i++)
+        for (auto& decayObjects : tibia::decayObjectsList)
         {
-            if (decayIsDone == true)
+            auto decayObjectIt = std::find(decayObjects.begin(), decayObjects.end(), m_id);
+
+            if (decayObjectIt != decayObjects.end())
             {
-                break;
-            }
+                decayObjectIt++;
 
-            std::vector<int> sprites = tibia::decayObjectsList.at(i);
-
-            for (unsigned int j = 0; j < sprites.size(); j++)
-            {
-                int spriteId = sprites.at(j);
-
-                if (m_id == spriteId)
+                if (decayObjectIt == decayObjects.end())
                 {
-                    j++;
-
-                    if (j > sprites.size() - 1)
-                    {
-                        setIsReadyForErase(true);
-                        return;
-                    }
-
-                    spriteId = sprites.at(j);
-
-                    setId(spriteId);
-
-                    m_clockDecay.restart();
-
-                    decayIsDone = true;
-
-                    break;
+                    setIsReadyForErase(true);
+                    return;
                 }
+
+                setId(*decayObjectIt);
+
+                m_clockDecay.restart();
+
+                return;
             }
         }
     }
@@ -1065,10 +1016,7 @@ public:
             setCountById();
         }
 
-        setIsAnimated();
-
-        setIsOffset();
-
+        setOffset();
         setExtraSprites();
     }
 
@@ -1079,20 +1027,14 @@ public:
 
     void setCountById()
     {
-        for (auto groupableObjects : tibia::groupedObjectsList)
+        for (auto& groupableObjects : tibia::groupedObjectsList)
         {
-            int groupableObjectIndex = 0;
+            auto groupableObjectIt = std::find(groupableObjects.begin(), groupableObjects.end(), m_id);
 
-            for (auto groupableObject : groupableObjects)
+            if (groupableObjectIt != groupableObjects.end())
             {
-                if (groupableObject == m_id)
-                {
-                    m_count = tibia::Utility::getCountByGroupableObjectIndex(groupableObjectIndex);
-
-                    return;
-                }
-
-                groupableObjectIndex++;
+                m_count = tibia::Utility::getCountByGroupableObjectIndex(groupableObjectIt - groupableObjects.begin());
+                return;
             }
         }
     }
@@ -1122,24 +1064,14 @@ public:
         return m_sprite;
     }
 
-    unsigned int getFlags()
+    unsigned long getFlags()
     {
         return m_flags;
     }
 
-    void setFlags(unsigned int flags)
+    void setFlags(unsigned long flags)
     {
         m_flags = flags;
-    }
-
-    bool isOffset()
-    {
-        return m_isOffset;
-    }
-
-    bool isAnimated()
-    {
-        return m_isAnimated;
     }
 
     void setIsDecay(bool b)
@@ -1180,11 +1112,7 @@ private:
 
     bool m_shouldDrawExtraSprite[tibia::NUM_OBJECT_SPRITES];
 
-    unsigned int m_flags;
-
-    bool m_isOffset;
-
-    bool m_isAnimated;
+    unsigned long m_flags;
 
     bool m_isDecay;
 

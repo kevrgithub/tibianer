@@ -934,6 +934,10 @@ namespace tibia
 
                 int numSlotsVisible  = 21; // last 3 are half visible
                 int numSlotsVisible2 = 9;  // for split-inventory window
+
+                int numSlotsHalfVisible = 3;
+
+                int numSlotPixelsHalfVisible = 18;
             }
 
             namespace Buttons
@@ -2276,7 +2280,7 @@ namespace tibia
 
     namespace SpriteFlags
     {
-        enum : unsigned int
+        enum : unsigned long
         {
             null             = 1 << 0,
             solid            = 1 << 1,
@@ -2310,7 +2314,7 @@ namespace tibia
     namespace UMaps
     {
         // <id, flags>
-        std::unordered_map<unsigned int, unsigned int> spriteFlags;
+        std::unordered_map<unsigned int, unsigned long> spriteFlags;
     }
 
     namespace SpriteData
@@ -2404,6 +2408,8 @@ namespace tibia
         const int bush          = 1060;
         const int bushBlueberry = 3375;
 
+        std::vector<int> blueBerries = {3367, 3368, 3369, 3370, 3371, 3372, 3373, 3374};
+
         const int runeBlank = 1277;
 
         const int spellBook = 511;
@@ -2455,6 +2461,10 @@ namespace tibia
         const int poisonArrow    = 1848;
         const int explodingArrow = 1856;
         const int throwingKnife  = 2874;
+
+        std::vector<int> fieldFire        = {1489, 1490, 1491, 1492, 1493, 1494};
+        std::vector<int> fieldElectricity = {1497, 1498};
+        std::vector<int> fieldPoison      = {3158, 3159, 3160, 3161};
 
         namespace Gui
         {
@@ -2836,6 +2846,7 @@ namespace tibia
         {
             410, 411, 412, 413, 414, 415, 416, 417,
             2889, 2890, 2891, 2892, 2893, 2894, 2895, 2896,
+            3367, 3368, 3369, 3370, 3371, 3372, 3373, 3374,
         };
 
         std::vector<int> stackable =
@@ -2846,6 +2857,7 @@ namespace tibia
             1848, 1856,
             2874,
             2889, 2890, 2891, 2892, 2893, 2894, 2895, 2896,
+            3367, 3368, 3369, 3370, 3371, 3372, 3373, 3374,
         };
 
         std::vector<int> pickupable =
@@ -3406,6 +3418,9 @@ namespace tibia
 
         // platinum
         {2889, 2890, 2891, 2892, 2893, 2894, 2895, 2896},
+
+        // blueberries
+        {3367, 3368, 3369, 3370, 3371, 3372, 3373, 3374},
     };
 
     namespace UMaps
