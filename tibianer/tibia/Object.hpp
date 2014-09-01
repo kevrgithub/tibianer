@@ -986,6 +986,36 @@ public:
         }
     }
 
+    void doRegenerate()
+    {
+        if (m_id == tibia::SpriteData::bushBlueberryEmpty)
+        {
+            setId(tibia::SpriteData::bushBlueberry);
+        }
+        else if (m_id == tibia::SpriteData::grassJungleCut)
+        {
+            setId(tibia::SpriteData::grassJungle);
+        }
+        else if (m_id == tibia::SpriteData::wheatCut)
+        {
+            setId(tibia::SpriteData::wheatGreen);
+        }
+        else if (m_id == tibia::SpriteData::wheatGreen)
+        {
+            setId(tibia::SpriteData::wheatYellow);
+        }
+        else if (m_id == tibia::SpriteData::digHole[1])
+        {
+            setId(tibia::SpriteData::digHole[0]);
+        }
+        else if (m_id == tibia::SpriteData::digHoleIce[1])
+        {
+            setId(tibia::SpriteData::digHoleIce[0]);
+        }
+
+        m_clockRegenerate.restart();
+    }
+
     void setId(int id)
     {
         m_id = id;
@@ -1091,6 +1121,11 @@ public:
         return &m_clockDecay;
     }
 
+    sf::Clock* getClockRegenerate()
+    {
+        return &m_clockRegenerate;
+    }
+
     void update()
     {
         updateTileCoords();
@@ -1117,6 +1152,8 @@ private:
     bool m_isDecay;
 
     sf::Clock m_clockDecay;
+
+    sf::Clock m_clockRegenerate;
 
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const
     {

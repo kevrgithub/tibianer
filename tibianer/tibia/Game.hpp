@@ -2369,8 +2369,10 @@ public:
         // doors
         if (object->getType() == tibia::ObjectTypes::door)
         {
-            // do not let creature close the door on itself
-            if (creature->getTilePosition() == object->getTilePosition())
+            // do not let door close on creatures
+            tibia::Tile::Ptr doorTile = getTile(object->getTilePosition(), object->getZ());
+
+            if (doorTile->getCreatureList()->size() != 0)
             {
                 return false;
             }
@@ -2485,10 +2487,12 @@ public:
 
             if (object->getId() == tibia::SpriteData::digHole[0])
             {
+                object->getClockRegenerate()->restart();
                 object->setId(tibia::SpriteData::digHole[1]);
             }
             else if (object->getId() == tibia::SpriteData::digHoleIce[0])
             {
+                object->getClockRegenerate()->restart();
                 object->setId(tibia::SpriteData::digHoleIce[1]);
             }
 
@@ -2854,7 +2858,7 @@ public:
             return true;
         }
 
-        // blueberry bush
+        // blueberry bushes
         if (object->getId() == tibia::SpriteData::bushBlueberry)
         {
             tibia::Object::Ptr blueBerriesObject = std::make_shared<tibia::Object>
@@ -2866,7 +2870,8 @@ public:
 
             creature->addInventoryItem(blueBerriesObject->getId(), blueBerriesObject->getCount(), blueBerriesObject->getFlags());
 
-            object->setId(tibia::SpriteData::bush);
+            object->getClockRegenerate()->restart();
+            object->setId(tibia::SpriteData::bushBlueberryEmpty);
 
             return true;
         }
@@ -2893,12 +2898,12 @@ public:
 
             return true;
         }
-        else if (object->getId() == tibia::SpriteData::torchBig[2])
-        {
-            // TODO: pick up the torch
+        //else if (object->getId() == tibia::SpriteData::torchBig[2])
+        //{
+            // this torch gets picked up only
 
-            return true;
-        }
+            //return true;
+        //}
         else if (object->getId() == tibia::SpriteData::torchMedium[0] || object->getId() == tibia::SpriteData::torchMedium[1])
         {
             object->setId(tibia::SpriteData::torchMedium[2]);
@@ -3145,16 +3150,73 @@ public:
 
         if (chairIt != tibia::SpriteData::chair.end())
         {
-            size_t chairIndex = std::distance(tibia::SpriteData::chair.begin(), chairIt);
+            chairIt++;
 
-            chairIndex++;
-
-            if (chairIndex == tibia::SpriteData::chair.size())
+            if (chairIt == tibia::SpriteData::chair.end())
             {
-                chairIndex = 0;
+                chairIt = tibia::SpriteData::chair.begin();
             }
 
-            object->setId(tibia::SpriteData::chair[chairIndex]);
+            object->setId(tibia::SpriteData::chair[chairIt - tibia::SpriteData::chair.begin()]);
+
+            return true;
+        }
+
+        // chair throne (rotates)
+        if (object->getId() == tibia::SpriteData::chairThrone[0])
+        {
+            object->setId(tibia::SpriteData::chairThrone[1]);
+
+            return true;
+        }
+        else if (object->getId() == tibia::SpriteData::chairThrone[1])
+        {
+            object->setId(tibia::SpriteData::chairThrone[0]);
+
+            return true;
+        }
+
+        // jungle grass
+        if (object->getId() == tibia::SpriteData::grassJungle)
+        {
+            if (creature->hasInventoryItem(tibia::SpriteData::machete) == false)
+            {
+                showStatusBarText("You need a machete to cut the grass.");
+                return false;
+            }
+
+            object->getClockRegenerate()->restart();
+            object->setId(tibia::SpriteData::grassJungleCut);
+
+            return true;
+        }
+
+        // wheat
+        if (object->getId() == tibia::SpriteData::wheatGreen || object->getId() == tibia::SpriteData::wheatYellow)
+        {
+            if (creature->hasInventoryItem(tibia::SpriteData::scythe) == false)
+            {
+                showStatusBarText("You need a scythe to cut the wheat.");
+                return false;
+            }
+
+            if (object->getId() == tibia::SpriteData::wheatGreen)
+            {
+                object->getClockRegenerate()->restart();
+                object->setId(tibia::SpriteData::wheatCut);
+            }
+            else if (object->getId() == tibia::SpriteData::wheatYellow)
+            {
+                object->getClockRegenerate()->restart();
+                object->setId(tibia::SpriteData::wheatCut);
+
+                spawnObject
+                (
+                    object->getTilePosition(),
+                    object->getZ(),
+                    tibia::SpriteData::wheat
+                );
+            }
 
             return true;
         }
@@ -4432,15 +4494,27 @@ public:
                     {
                         tibia::Creature::Ptr creature = *creatureIt;
 
-                        if (creature->isPlayer() == true && creature->isDead() == true)
+                        if (creature->isDead() == true)
                         {
+                            sf::Clock* clockCorpse = creature->getClockCorpse();
+
+                            sf::Time timeElapsedCorpse = clockCorpse->getElapsedTime();
+
+                            if (timeElapsedCorpse.asSeconds() >= tibia::CreatureData::corpseDecayTime)
+                            {
+                                creature->updateCorpse();
+                            }
+
                             sf::Clock* clockDead = creature->getClockDead();
 
-                            sf::Time timeElapsed = clockDead->getElapsedTime();
+                            sf::Time timeElapsedDead = clockDead->getElapsedTime();
 
-                            if (timeElapsed.asSeconds() >= 5.0f)
+                            if (timeElapsedDead.asSeconds() >= tibia::CreatureData::respawnTime)
                             {
-                                respawnPlayer(creature);
+                                if (creature->isPlayer() == true)
+                                {
+                                    respawnPlayer(creature);
+                                }
                             }
                         }
 
@@ -4514,11 +4588,32 @@ public:
 
                         if (object->isDecay() == true)
                         {
-                            sf::Time timeDecayObject = object->getClockDecay()->getElapsedTime();
+                            sf::Time timeElapsedDecay = object->getClockDecay()->getElapsedTime();
 
-                            if (timeDecayObject.asSeconds() >= tibia::DecayObjects::time)
+                            if (timeElapsedDecay.asSeconds() >= tibia::DecayObjects::time)
                             {
                                 object->doDecay();
+                            }
+                        }
+
+                        sf::Time timeElapsedRegenerate = object->getClockRegenerate()->getElapsedTime();
+
+                        if (timeElapsedRegenerate.asSeconds() >= tibia::RegenerateObjects::time)
+                        {
+                            tibia::Tile::Ptr tile = getTile(object->getTilePosition(), object->getZ());
+
+                            tibia::Object::List* objectList = tile->getObjectList();
+
+                            tibia::Creature::List* creatureList = tile->getCreatureList();
+
+                            // does not regenerate if there are creatures or objects on top of it
+                            if (creatureList->size() == 0 && objectList->size() != 0 && (objectList->back() == object))
+                            {
+                                object->doRegenerate();
+                            }
+                            else
+                            {
+                                object->getClockRegenerate()->restart();
                             }
                         }
 

@@ -219,6 +219,15 @@ namespace tibia
         int height = 16;
     }
 
+    namespace CreatureData
+    {
+        const float animationFrameTime = 1.0f;
+
+        const float respawnTime = 5.0f;
+
+        const float corpseDecayTime = 30.0f;
+    }
+
     namespace GameTextData
     {
         const float time = 5.0f;
@@ -246,6 +255,11 @@ namespace tibia
     }
 
     namespace DecayObjects
+    {
+        const float time = 30.0f;
+    }
+
+    namespace RegenerateObjects
     {
         const float time = 30.0f;
     }
@@ -2148,9 +2162,7 @@ namespace tibia
 
     namespace AnimationTimes
     {
-        const float default           = 0.1f;
-        const float corpseDecay       = 60.0f;
-        const float creatureAnimation = 1.0f;
+        const float default = 0.1f;
     }
 
     namespace Animations
@@ -2323,6 +2335,8 @@ namespace tibia
 
         std::vector<int> chair = {522, 1054, 521, 1055}; // up, right, down, left
 
+        std::vector<int> chairThrone = {3239, 3240}; // down, right
+
         std::vector<int> counterVertical   = {1043, 1046}; // closed, open
         std::vector<int> counterHorizontal = {1044, 1048};
 
@@ -2405,8 +2419,9 @@ namespace tibia
         const int depot   = 1273;
         const int mailBox = 1274;
 
-        const int bush          = 1060;
-        const int bushBlueberry = 3375;
+        const int bush               = 1060;
+        const int bushBlueberry      = 3375;
+        const int bushBlueberryEmpty = 3387;
 
         std::vector<int> blueBerries = {3367, 3368, 3369, 3370, 3371, 3372, 3373, 3374};
 
@@ -2441,13 +2456,10 @@ namespace tibia
 
         const int presentBox = 2160;
 
-        const int ladder = 455;
-
-        const int stairs = 460;
-
+        const int ladder     = 455;
+        const int stairs     = 460;
         const int sewerGrate = 607;
-
-        const int ropeUp = 3253;
+        const int ropeUp     = 3253;
 
         const int treeWall = 3344;
 
@@ -2461,6 +2473,14 @@ namespace tibia
         const int poisonArrow    = 1848;
         const int explodingArrow = 1856;
         const int throwingKnife  = 2874;
+
+        const int grassJungleCut = 3386;
+        const int grassJungle    = 1651;
+
+        const int wheatCut    = 155;
+        const int wheatGreen  = 159;
+        const int wheatYellow = 163;
+        const int wheat       = 164;
 
         std::vector<int> fieldFire        = {1489, 1490, 1491, 1492, 1493, 1494};
         std::vector<int> fieldElectricity = {1497, 1498};
@@ -2657,6 +2677,7 @@ namespace tibia
             3348,
             3375,
             3385,
+            3387,
         };
 
         std::vector<int> blockProjectiles =

@@ -350,7 +350,7 @@ public:
     {
         m_timeAnimation = m_clockAnimation.getElapsedTime();
 
-        if (m_timeAnimation.asSeconds() >= tibia::AnimationTimes::creatureAnimation)
+        if (m_timeAnimation.asSeconds() >= tibia::CreatureData::animationFrameTime)
         {
             m_currentAnimation++;
 
@@ -365,61 +365,51 @@ public:
 
     void updateCorpse()
     {
-        if (isDead() == false)
+        int corpseId = m_spriteCorpse[0].getId();
+
+        for (std::size_t i = 0; i < m_spritesCorpseList.size(); i++)
         {
-            return;
-        }
+            int spriteId = m_spritesCorpseList.at(i);
 
-        m_timeCorpse = m_clockCorpse.getElapsedTime();
-
-        if (m_timeCorpse.asSeconds() >= tibia::AnimationTimes::corpseDecay)
-        {
-            int corpseId = m_spriteCorpse[0].getId();
-
-            for (std::size_t i = 0; i < m_spritesCorpseList.size(); i++)
+            if (corpseId == spriteId)
             {
-                int spriteId = m_spritesCorpseList.at(i);
-
-                if (corpseId == spriteId)
+                if (m_corpseSize == tibia::CreatureCorpseSizes::medium)
                 {
-                    if (m_corpseSize == tibia::CreatureCorpseSizes::medium)
-                    {
-                        i = i + 2;
-                    }
-                    else if (m_corpseSize == tibia::CreatureCorpseSizes::large)
-                    {
-                        i = i + 4;
-                    }
-                    else
-                    {
-                        i++;
-                    }
-
-                    if (i > m_spritesCorpseList.size() - 1)
-                    {
-                        setIsReadyForErase(true);
-                        return;
-                    }
-
-                    m_spriteCorpse[0].setId(m_spritesCorpseList.at(i));
-
-                    if (m_corpseSize == tibia::CreatureCorpseSizes::medium)
-                    {
-                        m_spriteCorpse[1].setId(m_spritesCorpseList.at(i + 1));
-                    }
-                    else if (m_corpseSize == tibia::CreatureCorpseSizes::large)
-                    {
-                        m_spriteCorpse[1].setId(m_spritesCorpseList.at(i + 1));
-                        m_spriteCorpse[2].setId(m_spritesCorpseList.at(i + 2));
-                        m_spriteCorpse[3].setId(m_spritesCorpseList.at(i + 3));
-                    }
-
-                    break;
+                    i = i + 2;
                 }
-            }
+                else if (m_corpseSize == tibia::CreatureCorpseSizes::large)
+                {
+                    i = i + 4;
+                }
+                else
+                {
+                    i++;
+                }
 
-           m_clockCorpse.restart();
+                if (i > m_spritesCorpseList.size() - 1)
+                {
+                    setIsReadyForErase(true);
+                    return;
+                }
+
+                m_spriteCorpse[0].setId(m_spritesCorpseList.at(i));
+
+                if (m_corpseSize == tibia::CreatureCorpseSizes::medium)
+                {
+                    m_spriteCorpse[1].setId(m_spritesCorpseList.at(i + 1));
+                }
+                else if (m_corpseSize == tibia::CreatureCorpseSizes::large)
+                {
+                    m_spriteCorpse[1].setId(m_spritesCorpseList.at(i + 1));
+                    m_spriteCorpse[2].setId(m_spritesCorpseList.at(i + 2));
+                    m_spriteCorpse[3].setId(m_spritesCorpseList.at(i + 3));
+                }
+
+                break;
+            }
         }
+
+        m_clockCorpse.restart();
     }
 
     void update()
@@ -438,7 +428,6 @@ public:
         updateSprite();
         updateOutfit();
         updateAnimation();
-        updateCorpse();
     }
 
     void doTurn(int direction)
@@ -1187,7 +1176,6 @@ private:
     sf::Time m_timeAnimation;
 
     sf::Clock m_clockCorpse;
-    sf::Time m_timeCorpse;
 
     sf::Clock m_clockDead;
 

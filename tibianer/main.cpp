@@ -31,7 +31,7 @@
 
 tibia::Game g_game;
 
-std::string g_gameTitle = "Tibianer (WORK IN PROGRESS) BUILD DATE 290814)";
+std::string g_gameTitle = "Tibianer (WORK IN PROGRESS) BUILD DATE 010914";
 
 std::string g_configFile = "cfg/config.cfg";
 
