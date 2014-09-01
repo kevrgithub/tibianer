@@ -2,10 +2,12 @@
 #define TIBIA_OBJECT_HPP
 
 #include <string>
+#include <vector>
 
 #include <SFML/Graphics.hpp>
 
 #include "tibia/Tibia.hpp"
+#include "tibia/Utility.hpp"
 #include "tibia/Thing.hpp"
 #include "tibia/Sprite.hpp"
 
@@ -27,6 +29,8 @@ public:
 
         std::string bookName = "a book";
         std::string bookText;
+
+        int doorKey = tibia::KeyTypes::none;
 
         unsigned int teleporterX;
         unsigned int teleporterY;
@@ -1035,6 +1039,8 @@ public:
     {
         m_id = id;
 
+        m_count = 1;
+
         m_sprite[0].setId(m_id);
 
         m_flags = tibia::UMaps::spriteFlags[m_id];
@@ -1054,6 +1060,11 @@ public:
             m_sprite[0].setColor(tibia::Colors::transparent);
         }
 
+        if (m_flags & tibia::SpriteFlags::groupable)
+        {
+            setCountById();
+        }
+
         setIsAnimated();
 
         setIsOffset();
@@ -1064,6 +1075,36 @@ public:
     int getId()
     {
         return m_id;
+    }
+
+    void setCountById()
+    {
+        for (auto groupableObjects : tibia::groupedObjectsList)
+        {
+            int groupableObjectIndex = 0;
+
+            for (auto groupableObject : groupableObjects)
+            {
+                if (groupableObject == m_id)
+                {
+                    m_count = tibia::Utility::getCountByGroupableObjectIndex(groupableObjectIndex);
+
+                    return;
+                }
+
+                groupableObjectIndex++;
+            }
+        }
+    }
+
+    void setCount(int count)
+    {
+        m_count = count;
+    }
+
+    int getCount()
+    {
+        return m_count;
     }
 
     int getType()
@@ -1132,6 +1173,8 @@ private:
     int m_id;
 
     int m_type;
+
+    int m_count;
 
     tibia::Sprite m_sprite[tibia::NUM_OBJECT_SPRITES];
 

@@ -378,7 +378,7 @@ public:
 
             case sf::Keyboard::P:
             {
-                spawnDecayObject(m_player->getTilePosition(), m_player->getZ(), tibia::SpriteData::poolRed);
+                spawnDecayObject(m_player->getTilePosition(), m_player->getZ(), tibia::SpriteData::poolRed, true);
                 break;
             }
 
@@ -424,6 +424,7 @@ public:
             }
 
             case sf::Keyboard::X:
+            {
                 spawnProjectile
                 (
                     m_player,
@@ -438,6 +439,25 @@ public:
                     m_player->getZ()
                 );
                 break;
+            }
+
+            case sf::Keyboard::C:
+            {
+                spawnProjectile
+                (
+                    m_player,
+                    tibia::ProjectileTypes::spear,
+                    m_player->getDirection(),
+                    sf::Vector2f(m_player->getTileX(), m_player->getTileY()),
+                    sf::Vector2f
+                    (
+                        m_player->getTileX() + (tibia::Utility::getVectorByDirection(m_player->getDirection()).x * tibia::TILE_SIZE),
+                        m_player->getTileY() + (tibia::Utility::getVectorByDirection(m_player->getDirection()).y * tibia::TILE_SIZE)
+                    ),
+                    m_player->getZ()
+                );
+                break;
+            }
         }
     }
 
@@ -559,6 +579,10 @@ public:
                         doInventoryWindowSlotsViewScrollUp();
                     }
                 }
+                else if (tibia::GuiData::InventoryWindow::Icons::Container::rect.contains(getMouseWindowPosition()) == true)
+                {
+                    m_player->sortInventoryItemsById();
+                }
                 else if (tibia::GuiData::InventoryWindow::Slots::Window::rect.contains(getMouseWindowPosition()) == true)
                 {
                     // move inventory item to front of inventory list
@@ -675,6 +699,55 @@ public:
             {
                 if (m_mouseTile != nullptr)
                 {
+                    // rope up things
+                    if (m_player->getZ() > tibia::ZAxis::min && m_player->hasInventoryItem(tibia::SpriteData::rope))
+                    {
+                        if (m_mouseTile->getFlags() & tibia::SpriteFlags::moveBelow)
+                        {
+                            //std::cout << "right clicked moveBelow" << std::endl;
+
+                            tibia::Tile::Ptr belowTile = getTile
+                            (
+                                sf::Vector2u
+                                (
+                                    m_mouseTile->getPosition().x + tibia::TILE_SIZE,
+                                    m_mouseTile->getPosition().y + tibia::TILE_SIZE
+                                ),
+                                m_mouseTile->getZ() - 1
+                            );
+
+                            tibia::Tile::Ptr toTile = getTileForMoveAbove(belowTile->getPosition(), belowTile->getZ() + 1);
+
+                            tibia::Creature::List* creatureList = belowTile->getCreatureList();
+
+                            tibia::Object::List* objectList = belowTile->getObjectList();
+
+                            tibia::Thing::Ptr ropeUpThing = nullptr;
+
+                            if (creatureList->size())
+                            {
+                                ropeUpThing = creatureList->back();
+                            }
+                            else
+                            {
+                                if (objectList->size())
+                                {
+                                    tibia::Object::Ptr ropeUpObject = objectList->back();
+
+                                    if (ropeUpObject->getFlags() & tibia::SpriteFlags::moveable)
+                                    {
+                                        ropeUpThing = ropeUpObject;
+                                    }
+                                }
+                            }
+
+                            if (ropeUpThing != nullptr)
+                            {
+                                doMoveThingToTile(ropeUpThing, toTile, tibia::Directions::up, true);
+                            }
+                        }
+                    }
+
                     if (m_mouseTile->getCreatureList()->size())
                     {
                         // melee attack creature
@@ -720,7 +793,7 @@ public:
                             }
                             else
                             {
-                                int creatureAddInventoryItemResult = m_player->addInventoryItem(object->getId(), 1, object->getFlags());
+                                int creatureAddInventoryItemResult = m_player->addInventoryItem(object->getId(), object->getCount(), object->getFlags());
 
                                 if (creatureAddInventoryItemResult == tibia::CreatureAddInventoryItemResult::success)
                                 {
@@ -773,6 +846,10 @@ public:
                     {
                         doInventoryWindowSlotsViewScrollToTop();
                     }
+                }
+                else if (tibia::GuiData::InventoryWindow::Icons::Container::rect.contains(getMouseWindowPosition()) == true)
+                {
+                    m_player->sortInventoryItemsByCount();
                 }
                 else if (tibia::GuiData::InventoryWindow::Slots::Window::rect.contains(getMouseWindowPosition()) == true)
                 {
@@ -836,7 +913,11 @@ public:
 
             if (this->gui.bottomInventory == true)
             {
-                if (tibia::GuiData::InventoryWindow::Slots::Window::rect.contains(getMouseWindowPosition()) == true)
+                if (tibia::GuiData::InventoryWindow::Icons::Container::rect.contains(getMouseWindowPosition()) == true)
+                {
+                    m_player->sortInventoryItemsReverse();
+                }
+                else if (tibia::GuiData::InventoryWindow::Slots::Window::rect.contains(getMouseWindowPosition()) == true)
                 {
                     // drop inventory item on ground
 
@@ -850,11 +931,20 @@ public:
                     {
                         auto inventoryItemIt = inventoryItemList->begin() + inventoryWindowSlotIndex;
 
-                        spawnObject(m_player->getTilePosition(), m_player->getZ(), inventoryItemIt->id);
+                        tibia::Object::Ptr droppedObject = spawnObject(m_player->getTilePosition(), m_player->getZ(), inventoryItemIt->id);
 
                         if (inventoryItemIt->count > 1)
                         {
-                            inventoryItemIt->count--;
+                            if (inventoryItemIt->flags & tibia::SpriteFlags::groupable)
+                            {
+                                droppedObject->setCount(inventoryItemIt->count);
+
+                                m_player->removeInventoryItem(inventoryWindowSlotIndex);
+                            }
+                            else
+                            {
+                                inventoryItemIt->count--;
+                            }
                         }
                         else
                         {
@@ -2129,6 +2219,39 @@ public:
         return true;
     }
 
+    bool doesCreatureHaveDoorKey(tibia::Creature::Ptr creature, int keyId)
+    {
+        if (keyId == tibia::KeyTypes::none) // unlocked
+        {
+            return true;
+        }
+
+        if (creature->hasInventoryItem(tibia::SpriteData::keyRing) == true) // key ring opens all doors
+        {
+            return true;
+        }
+
+        if (creature->hasInventoryItem(tibia::UMaps::keyIds[keyId]) == false)
+        {
+            std::stringstream ssKeyText;
+
+            ssKeyText << "You need a " << tibia::UMaps::keyTypesStrings[keyId];
+
+            if (keyId != tibia::KeyTypes::crowbar)
+            {
+                ssKeyText << " key";
+            }
+
+            ssKeyText << " to open this door.";
+
+            showStatusBarText(ssKeyText.str());
+
+            return false;
+        }
+
+        return true;
+    }
+
     bool doCreatureInteractWithObject(tibia::Creature::Ptr creature, tibia::Object::Ptr object)
     {
         if (creature == nullptr || object == nullptr)
@@ -2227,9 +2350,13 @@ public:
             }
 
             // door locked vertical
-            // TODO: make locked doors require keys
             if (object->getId() == tibia::SpriteData::doorLockedVertical[0])
             {
+                if (doesCreatureHaveDoorKey(creature, object->properties.doorKey) == false)
+                {
+                    return false;
+                }
+
                 object->setId(tibia::SpriteData::doorLockedVertical[1]);
             }
             else if (object->getId() == tibia::SpriteData::doorLockedVertical[1])
@@ -2238,9 +2365,13 @@ public:
             }
 
             // door locked horizontal
-            // TODO: make locked doors require keys
             if (object->getId() == tibia::SpriteData::doorLockedHorizontal[0])
             {
+                if (doesCreatureHaveDoorKey(creature, object->properties.doorKey) == false)
+                {
+                    return false;
+                }
+
                 object->setId(tibia::SpriteData::doorLockedHorizontal[1]);
             }
             else if (object->getId() == tibia::SpriteData::doorLockedHorizontal[1])
@@ -3443,6 +3574,87 @@ public:
         }
     }
 
+    void updateTileGroupedObjects(tibia::Tile::Ptr tile)
+    {
+        tibia::Object::List* objectList = tile->getObjectList();
+
+        if (objectList->size() < 2)
+        {
+            return;
+        }
+
+        tibia::Object::Ptr first = objectList->back();
+
+        tibia::Object::Ptr second = objectList->end()[-2];
+
+        if ((first->getFlags() & tibia::SpriteFlags::groupable) && (second->getFlags() & tibia::SpriteFlags::groupable))
+        {
+            if (first->getCount() == tibia::INVENTORY_ITEM_COUNT_MAX || second->getCount() == INVENTORY_ITEM_COUNT_MAX)
+            {
+                return;
+            }
+
+            int groupableObjectsIndex = 0;
+
+            for (auto& groupableObjects : tibia::groupedObjectsList)
+            {
+                for (auto groupableObject : groupableObjects)
+                {
+                    if (groupableObject == first->getId())
+                    {
+                        for (auto groupableObject : groupableObjects)
+                        {
+                            if (groupableObject == second->getId())
+                            {
+                                int groupedCount = first->getCount() + second->getCount();
+
+                                if (groupedCount > INVENTORY_ITEM_COUNT_MAX)
+                                {
+                                    int remainderCount = groupedCount - INVENTORY_ITEM_COUNT_MAX;
+
+                                    first->setId
+                                    (
+                                        tibia::groupedObjectsList
+                                            .at(groupableObjectsIndex)
+                                            .at(tibia::Utility::getGroupableObjectIndexByCount(remainderCount))
+                                    );
+
+                                    first->setCount(remainderCount);
+
+                                    second->setId
+                                    (
+                                        tibia::groupedObjectsList
+                                            .at(groupableObjectsIndex)
+                                            .at(tibia::Utility::getGroupableObjectIndexByCount(INVENTORY_ITEM_COUNT_MAX))
+                                    );
+
+                                    second->setCount(INVENTORY_ITEM_COUNT_MAX);
+
+                                    return;
+                                }
+
+                                first->setId
+                                (
+                                    tibia::groupedObjectsList
+                                        .at(groupableObjectsIndex)
+                                        .at(tibia::Utility::getGroupableObjectIndexByCount(groupedCount))
+                                );
+
+                                first->setCount(groupedCount);
+
+                                second->setIsReadyForErase(true);
+
+                                return;
+                            }
+                        }
+                    }
+                }
+
+                groupableObjectsIndex++;
+            }
+        }
+    }
+
     void updateTileHeight(tibia::Tile::Ptr tile)
     {
         int height = 0;
@@ -3644,6 +3856,16 @@ public:
 
                 if (result == true)
                 {
+                    if (projectile->getType() == tibia::ProjectileTypes::spear)
+                    {
+                        spawnObject
+                        (
+                            projectileSpriteTilePosition,
+                            projectile->getZ(),
+                            tibia::SpriteData::spear
+                        );
+                    }
+
                     projectile->setIsReadyForErase(true);
                     continue;
                 }
@@ -3693,6 +3915,16 @@ public:
                         projectile->getZ(),
                         tibia::Animations::hitMiss
                     );
+
+                    if (projectile->getType() == tibia::ProjectileTypes::spear)
+                    {
+                        spawnObject
+                        (
+                            projectileSpriteTilePosition,
+                            projectile->getZ(),
+                            tibia::SpriteData::spear
+                        );
+                    }
                 }
 
                 projectile->setIsReadyForErase(true);
@@ -3852,7 +4084,7 @@ public:
         return object;
     }
 
-    tibia::Object::Ptr spawnDecayObject(sf::Vector2u tileCoords, int z, std::vector<int> id)
+    tibia::Object::Ptr spawnDecayObject(sf::Vector2u tileCoords, int z, std::vector<int> id, bool isDecal = false)
     {
         tibia::Object::Ptr object = std::make_shared<tibia::Object>(tileCoords, z, id[0]);
 
@@ -3869,6 +4101,17 @@ public:
 
         if (objectList->size())
         {
+            if (isDecal == true)
+            {
+                for (auto& object : *objectList)
+                {
+                    if (object->getFlags() & tibia::SpriteFlags::decal)
+                    {
+                        object->setIsReadyForErase(true);
+                    }
+                }
+            }
+
             tibia::Object::Ptr topObject = objectList->back();
 
             if (topObject->isDecay() == true)
@@ -4006,8 +4249,6 @@ public:
 
                     if (tileCreatures->size())
                     {
-                        //std::stable_sort(tileCreatures->begin(), tileCreatures->end(), tibia::CreatureSort::sortByIsDead());
-
                         tibia::Creature::List* tileMapCreatures = &m_tileMapCreatures[tileMap->getZ()];
 
                         tileMapCreatures->reserve(tileCreatures->size());
@@ -4080,6 +4321,7 @@ public:
 
                 updateStepTile(tile);
                 updateTileHeight(tile);
+                updateTileGroupedObjects(tile);
 
                 tibia::Creature::List* tileCreatures = tile->getCreatureList();
 
@@ -4124,10 +4366,10 @@ public:
 
                                         std::transform(statusEffectName.begin(), statusEffectName.end(), statusEffectName.begin(), std::tolower);
 
-                                        std::stringstream ss;
-                                        ss << "You are no longer " << statusEffectName << ".";
+                                        std::stringstream ssStatusEffectMessage;
+                                        ssStatusEffectMessage << "You are no longer " << statusEffectName << ".";
 
-                                        showStatusBarText(ss.str());
+                                        showStatusBarText(ssStatusEffectMessage.str());
 
                                         statusEffectIt = statusEffectList->erase(statusEffectIt);
                                         statusEffectIt--;

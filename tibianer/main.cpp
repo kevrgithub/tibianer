@@ -157,6 +157,10 @@ void mapSelectCallback(Ihandle *ih, const char* filename, const char* status)
 
         IupExitLoop();
     }
+    else if (strcmp(status, "FINISH") == 0)
+    {
+        IupExitLoop();
+    }
 }
 
 void showMapSelect()
@@ -166,6 +170,7 @@ void showMapSelect()
     dialogMapSelect = IupFileDlg();
     IupSetAttribute(dialogMapSelect, "DIALOGTYPE", "OPEN");
     IupSetAttribute(dialogMapSelect, "TITLE", "Select Map");
+    IupSetAttribute(dialogMapSelect, "DIRECTORY", ".\\maps");
     IupSetAttributes(dialogMapSelect, "FILTER = \"*.tmx\", FILTERINFO = \"Tiled Map Files (*.tmx)\"");
     IupSetCallback(dialogMapSelect, "FILE_CB", (Icallback)mapSelectCallback);
 
@@ -278,7 +283,7 @@ int main(int argc, char* argv[])
         mapFilePath << "maps/" << g_mapFile;
     }
 
-    std::cout << "Map file: " << g_mapFile;
+    std::cout << "Map file: " << g_mapFile << std::endl;
 
     auto timeLoadMapBegin = std::chrono::high_resolution_clock::now();
 
@@ -467,10 +472,10 @@ int main(int argc, char* argv[])
 
         // 1.0f / 60.0f = 0.0166666666666667
 
-        if (timeDelta.asSeconds() < 0.01)
-        {
-            timeDelta = sf::seconds(0.005);
-        }
+        //if (timeDelta.asSeconds() < 0.01)
+        //{
+            //timeDelta = sf::seconds(0.005);
+        //}
 
         //std::cout << "timeDelta: " << timeDelta.asSeconds() << std::endl;
 

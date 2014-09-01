@@ -304,6 +304,15 @@ public:
                                     object->properties.bookText = objectBookText;
                                 }
                             }
+                            else if (objectType == tibia::ObjectTypes::door)
+                            {
+                                if (docMapObjectPropertyName == "key")
+                                {
+                                    std::string objectDoorKey = docMapObjectProperty->Attribute("value");
+
+                                    object->properties.doorKey = tibia::UMaps::keyTypes[objectDoorKey];
+                                }
+                            }
                             else if (objectType == tibia::ObjectTypes::teleporter)
                             {
                                 if (docMapObjectPropertyName == "x")

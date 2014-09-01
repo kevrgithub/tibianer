@@ -211,6 +211,15 @@ namespace tibia
                 }
             }
 
+            for (auto spriteId : tibia::SpriteData::groupable)
+            {
+                if (id == spriteId)
+                {
+                    flags |= tibia::SpriteFlags::groupable;
+                    break;
+                }
+            }
+
             for (auto spriteId : tibia::SpriteData::stackable)
             {
                 if (id == spriteId)
@@ -369,6 +378,76 @@ namespace tibia
         normal = normal / thor::length(normal);
 
         return normal;
+    }
+
+    int getCountByGroupableObjectIndex(int index)
+    {
+        switch (index)
+        {
+            case 0:
+                return 1;
+
+            case 1:
+                return 2;
+
+            case 2:
+                return 3;
+
+            case 3:
+                return 4;
+
+            case 4:
+                return 5;
+
+            case 5:
+                return 10;
+
+            case 6:
+                return 50;
+
+            case 7:
+                return 100;
+        }
+
+        return 1;
+    }
+
+    int getGroupableObjectIndexByCount(int count)
+    {
+        if (count == 1)
+        {
+            return 0;
+        }
+        else if (count == 2)
+        {
+            return 1;
+        }
+        else if (count == 3)
+        {
+            return 2;
+        }
+        else if (count == 4)
+        {
+            return 3;
+        }
+        else if (count >= 5 && count < 10)
+        {
+            return 4;
+        }
+        else if (count >= 10 && count < 50)
+        {
+            return 5;
+        }
+        else if (count >= 50 && count < 100)
+        {
+            return 6;
+        }
+        else if (count == 100)
+        {
+            return 7;
+        }
+
+        return 7;
     }
 
     } // namespace utility

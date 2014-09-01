@@ -114,7 +114,14 @@ public:
 
     void addObject(tibia::Object::Ptr object)
     {
-        m_objectList.push_back(object);
+        if (object->getFlags() & tibia::SpriteFlags::decal)
+        {
+            m_objectList.insert(m_objectList.begin(), object);
+        }
+        else
+        {
+            m_objectList.push_back(object);
+        }
     }
 
     void addCreature(tibia::Creature::Ptr creature)

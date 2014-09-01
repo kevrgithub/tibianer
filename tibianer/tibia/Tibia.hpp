@@ -309,6 +309,51 @@ namespace tibia
         };
     }
 
+    namespace KeyTypes
+    {
+        enum
+        {
+            none,
+            silver,
+            blue,
+            green,
+            red,
+            white,
+            gold,
+            ring,
+            crowbar,
+        };
+    }
+
+    namespace UMaps
+    {
+        std::unordered_map<std::string, int> keyTypes
+        {
+            {"none",    tibia::KeyTypes::none},
+            {"silver",  tibia::KeyTypes::silver},
+            {"blue",    tibia::KeyTypes::blue},
+            {"green",   tibia::KeyTypes::green},
+            {"red",     tibia::KeyTypes::red},
+            {"white",   tibia::KeyTypes::white},
+            {"gold",    tibia::KeyTypes::gold},
+            {"ring",    tibia::KeyTypes::ring},
+            {"crowbar", tibia::KeyTypes::crowbar},
+        };
+
+        std::unordered_map<int, std::string> keyTypesStrings
+        {
+            {tibia::KeyTypes::none,    "none"},
+            {tibia::KeyTypes::silver,  "silver"},
+            {tibia::KeyTypes::blue,    "blue"},
+            {tibia::KeyTypes::green,   "green"},
+            {tibia::KeyTypes::red,     "red"},
+            {tibia::KeyTypes::white,   "white"},
+            {tibia::KeyTypes::gold,    "gold"},
+            {tibia::KeyTypes::ring,    "key ring"},
+            {tibia::KeyTypes::crowbar, "crowbar"},
+        };
+    }
+
     namespace Colors
     {
         sf::Color transparent(0, 0, 0, 0);
@@ -953,7 +998,12 @@ namespace tibia
                     int x = 558;
                     int y = 171;
 
+                    int width  = 32;
+                    int height = 32;
+
                     sf::Vector2f position(x, y);
+
+                    sf::IntRect rect(x, y, width, height);
                 }
 
                 namespace Container2
@@ -961,7 +1011,12 @@ namespace tibia
                     int x = 558;
                     int y = 329;
 
+                    int width  = 32;
+                    int height = 32;
+
                     sf::Vector2f position(x, y);
+
+                    sf::IntRect rect(x, y, width, height);
                 }
             }
         }
@@ -2241,13 +2296,14 @@ namespace tibia
             fixDrawOrder     = 1 << 15,
             moveable         = 1 << 16,
             modifyHpOnTouch  = 1 << 17,
-            stackable        = 1 << 18,
-            pickupable       = 1 << 19,
-            equippable       = 1 << 20,
-            food             = 1 << 21,
-            instrument       = 1 << 22,
-            currency         = 1 << 23,
-            decal            = 1 << 24,
+            groupable        = 1 << 18,
+            stackable        = 1 << 19,
+            pickupable       = 1 << 20,
+            equippable       = 1 << 21,
+            food             = 1 << 22,
+            instrument       = 1 << 23,
+            currency         = 1 << 24,
+            decal            = 1 << 25,
         };
     }
 
@@ -2373,6 +2429,8 @@ namespace tibia
 
         const int keyRing = 1876;
 
+        const int crowbar = 1010;
+
         const int dustBin = 1472;
 
         const int presentBox = 2160;
@@ -2389,6 +2447,14 @@ namespace tibia
 
         const int mountainRampLeft  = 2103;
         const int mountainRampRight = 2097;
+
+        const int spear          = 964;
+        const int bolt           = 973;
+        const int arrow          = 981;
+        const int powerArrow     = 1016;
+        const int poisonArrow    = 1848;
+        const int explodingArrow = 1856;
+        const int throwingKnife  = 2874;
 
         namespace Gui
         {
@@ -2728,7 +2794,7 @@ namespace tibia
             787, 792, 793,
             //
             927, 928, 929,
-            971, 988, 989, 990, 991, 992, 993, 994, 995, 1010, 1011, 1016, 1017,
+            964, 971, 973, 981, 988, 989, 990, 991, 992, 993, 994, 995, 1010, 1011, 1016, 1017,
             1034, 1049, 1050, 1051, 1052, 1053, 1054, 1055, 1056, 1057, 1058, 1059, 1061, 1062, 1063, 1064, 1065, 1088,
             1089, 1090, 1091, 1108, 1109, 1118, 1119, 1120, 1121, 1122, 1123, 1124, 1125, 1126, 1127, 1128, 1129, 1130, 1131, 1132, 1133, 1134, 1135, 1136,
             1181, 1182, 1183, 1184, 1187, 1188, 1189, 1190, 1200, 1201, 1202, 1214, 1215, 1216,
@@ -2741,7 +2807,7 @@ namespace tibia
             1605, 1647, 1652,
             1670, 1671,
             //
-            1810, 1812, 1814, 1816, 1842, 1843, 1844, 1845,
+            1810, 1812, 1814, 1816, 1842, 1843, 1844, 1845, 1848, 1856,
             1862, 1863, 1864, 1865, 1866, 1867, 1868, 1869, 1870, 1871, 1872, 1873, 1874, 1875, 1876, 1877, 1878, 1879, 1880, 1881, 1882, 1883, 1884, 1885, 1886, 1887, 1888, 1889, 1890, 1891, 1892, 1893, 1894, 1895, 1896, 1897, 1898, 1899, 1900, 1901, 1902, 1903, 1904, 1917, 1918, 1919, 1920,
             1921, 1922, 1923, 1928, 1929, 1930, 1931, 1932, 1933, 1934, 1935, 1936, 1937, 1938,
             2086, 2090, 2094,
@@ -2756,7 +2822,7 @@ namespace tibia
             //
             2719, 2720, 2721, 2722, 2723, 2724,
             2760, 2764, 2768, 2773, 2806, 2807, 2808, 2809,
-            2818, 2819, 2828, 2829, 2830, 2835, 2836, 2845, 2846, 2847, 2848, 2865, 2866,
+            2818, 2819, 2828, 2829, 2830, 2835, 2836, 2845, 2846, 2847, 2848, 2865, 2866, 2874,
             2889, 2890, 2891, 2892, 2893, 2894, 2895, 2896, 2932, 2936, 2940, 2944,
             2951, 2952, 2953, 2954, 2955, 2960, 2961, 2962, 2963, 2976, 2977, 2978, 2979, 2980, 2981, 2982, 2983, 2984, 2985, 2994, 2995, 3004, 3005, 3006, 3007, 3008,
             3009, 3010, 3011, 3012, 3013, 3014, 3015, 3016, 3017, 3018, 3019, 3020, 3021, 3022, 3023, 3024, 3035, 3048, 3049, 3050, 3051, 3068, 3069, 3070, 3071, 3072,
@@ -2766,9 +2832,20 @@ namespace tibia
             3331, 3332, 3333, 3334, 3335, 3336, 3357, 3358, 3359, 3360, 3361, 3367, 3368, 3369, 3370, 3371, 3372, 3373, 3374, 3380, 3381,
         };
 
+        std::vector<int> groupable =
+        {
+            410, 411, 412, 413, 414, 415, 416, 417,
+            2889, 2890, 2891, 2892, 2893, 2894, 2895, 2896,
+        };
+
         std::vector<int> stackable =
         {
             410, 411, 412, 413, 414, 415, 416, 417,
+            964, 973, 981,
+            1016,
+            1848, 1856,
+            2874,
+            2889, 2890, 2891, 2892, 2893, 2894, 2895, 2896,
         };
 
         std::vector<int> pickupable =
@@ -2781,7 +2858,9 @@ namespace tibia
             //514, // book
             515, 516, 517,
             518, 519, 520, 528, 668, 669, 678, 679, 680, 681, 682, 683, 684, 708, 709, 710,
-            711, 712, 744, 787, 927, 928, 929, 971, 988, 989, 990, 991, 992, 993, 994, 995,
+            711, 712, 744, 787, 927, 928, 929,
+            964,
+            971, 973, 981, 988, 989, 990, 991, 992, 993, 994, 995,
             1010, 1011, 1016, 1034, 1049, 1050, 1051, 1052, 1053, 1056, 1057, 1058, 1059, 1061, 1062, 1063,
             1064, 1065,
             1087,
@@ -2796,7 +2875,9 @@ namespace tibia
             1316, 1317, 1318, 1319, 1320, 1321, 1322, 1323, 1324, 1325, 1326, 1327, 1328, 1329, 1330, 1331,
             1332, 1333, 1334, 1335, 1336, 1337, 1338, 1339, 1340, 1341, 1342, 1343, 1344, 1345, 1346, 1347,
             1354, 1469, 1470, 1471, 1556, 1557, 1558, 1559, 1560, 1561, 1562, 1563, 1568, 1569, 1575, 1576,
-            1577, 1578, 1579, 1580, 1581, 1587, 1588, 1589, 1590, 1605, 1647, 1652, 1862, 1863, 1864, 1865,
+            1577, 1578, 1579, 1580, 1581, 1587, 1588, 1589, 1590, 1605, 1647, 1652,
+            1848, 1856,
+            1862, 1863, 1864, 1865,
             1866, 1867, 1868, 1869, 1870, 1871, 1872, 1873, 1874, 1875, 1876, 1877, 1878, 1881, 1882, 1883,
             1884, 1885, 1886, 1887, 1888, 1889, 1890, 1891, 1892, 1893, 1894, 1895, 1896, 1897, 1898, 1899,
             1900, 1901, 1902, 1903, 1904, 1917, 1918, 1919, 1920, 1921, 1922, 1923, 1928, 1929, 1930, 1931,
@@ -2809,7 +2890,9 @@ namespace tibia
             2500, 2501, 2502, 2503, 2504, 2505, 2506, 2507, 2508, 2509,
             2510, 2511, 2512, 2513, 2514, 2515, 2516, 2517, 2518, 2519, 2520, 2521, 2522, 2523, 2524, 2525, 2535, 2536,
             2537, 2538, 2539, 2540, 2541, 2542, 2543, 2544, 2545, 2546, 2609, 2610, 2611, 2612, 2613, 2614, 2615, 2616,
-            2617, 2618, 2619, 2620, 2621, 2622, 2719, 2720, 2721, 2722, 2723, 2724, 2889, 2890, 2891, 2892, 2893, 2894,
+            2617, 2618, 2619, 2620, 2621, 2622, 2719, 2720, 2721, 2722, 2723, 2724,
+            2874,
+            2889, 2890, 2891, 2892, 2893, 2894,
             2895, 2896, 2945, 2946, 2947, 2948, 2949, 2950, 2951, 2952, 2953, 2954, 2955, 2960, 2961, 2962, 2963, 2976,
             2977, 2978, 2979, 2980, 2981, 2982, 2983, 2984, 2985, 3007, 3015, 3017, 3018, 3019, 3020, 3021, 3022, 3023,
             3024, 3071, 3072, 3073, 3074, 3075, 3076, 3077, 3078, 3085, 3090, 3187, 3188, 3189, 3190, 3191, 3192, 3193,
@@ -3316,6 +3399,15 @@ namespace tibia
         {3391},
     };
 
+    std::vector<std::vector<int>> groupedObjectsList =
+    {
+        // gold
+        {410, 411, 412, 413, 414, 415, 416, 417},
+
+        // platinum
+        {2889, 2890, 2891, 2892, 2893, 2894, 2895, 2896},
+    };
+
     namespace UMaps
     {
         std::unordered_map<int, std::vector<int>> creatureBloodTypesSplats =
@@ -3385,6 +3477,18 @@ namespace tibia
             {tibia::CreatureTypes::demon, tibia::Sounds::Creatures::Human::death},
             {tibia::CreatureTypes::poisonSpider, tibia::Sounds::Creatures::Human::death},
             {tibia::CreatureTypes::santaClaus, tibia::Sounds::Creatures::Human::death},
+        };
+
+        std::unordered_map<int, int> keyIds
+        {
+            {tibia::KeyTypes::silver,  tibia::SpriteData::keySilver},
+            {tibia::KeyTypes::blue,    tibia::SpriteData::keyBlue},
+            {tibia::KeyTypes::green,   tibia::SpriteData::keyGreen},
+            {tibia::KeyTypes::red,     tibia::SpriteData::keyRed},
+            {tibia::KeyTypes::white,   tibia::SpriteData::keyWhite},
+            {tibia::KeyTypes::gold,    tibia::SpriteData::keyGold},
+            {tibia::KeyTypes::ring,    tibia::SpriteData::keyRing},
+            {tibia::KeyTypes::crowbar, tibia::SpriteData::crowbar},
         };
     }
 
