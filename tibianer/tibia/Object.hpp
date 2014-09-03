@@ -24,10 +24,10 @@ public:
 
     struct Properties_t
     {
-        std::string signName = "a sign";
+        std::string signName;
         std::string signText;
 
-        std::string bookName = "a book";
+        std::string bookName;
         std::string bookText;
 
         int doorKey = tibia::KeyTypes::none;

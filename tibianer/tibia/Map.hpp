@@ -31,9 +31,9 @@ public:
 
     struct Properties_t
     {
-        std::string name        = "Unknown Map";
-        std::string description = "No description";
-        std::string author      = "Unknown Author";
+        std::string name   = "Unknown Map";
+        std::string author = "Unknown Author";
+        std::string description;
 
         unsigned int playerStartX = 0;
         unsigned int playerStartY = 0;
@@ -74,6 +74,10 @@ public:
 
         tibia::mapWidth  = m_width;
         tibia::mapHeight = m_height;
+
+        tibia::mapSize = m_size;
+
+        std::cout << "Map size: " << m_width << "x" << m_height << " (" << m_size << " tiles)" << std::endl;
 
         tinyxml2::XMLElement* docMapProperties = docMap->FirstChildElement("properties");
 
@@ -128,11 +132,21 @@ public:
 
             docMapLayerDataString.erase(boost::remove_if(docMapLayerDataString, boost::is_any_of(" \r\n")), docMapLayerDataString.end());
 
+            // skip empty layers, huge performance boost
+            if (docMapLayerDataString == "eJztwTEBAAAAwqD1T20IX6AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD4DAPAAAQ==")
+            {
+                continue;
+            }
+
+            //std::cout << "Decoding base64 map layer: " << docMapLayerName << std::endl;
+
             docMapLayerDataString = base64_decode(docMapLayerDataString);
 
             if (docMapLayerData->Attribute("compression") != NULL)
             {
                 m_isCompressed = true;
+
+                //std::cout << "Decompressing zlib map layer: " << docMapLayerName << std::endl;
 
                 docMapLayerDataString = boost_zlib_decompress_string_fast(docMapLayerDataString);
             }

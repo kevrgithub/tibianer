@@ -17,6 +17,8 @@ namespace tibia
     unsigned int mapWidth  = 128;
     unsigned int mapHeight = 128;
 
+    unsigned int mapSize = 16384;
+
     const unsigned int TEXTURE_SIZE_MAX = 2048; // video card maximum supported texture size
 
     const int SPRITES_TOTAL = 4096;
@@ -64,6 +66,9 @@ namespace tibia
 
     const std::string CREATURE_NAME_DEFAULT = "Creature";
     const std::string CREATURE_NAME_PLAYER  = "Player";
+
+    const std::string OBJECT_SIGN_NAME_DEFAULT = "a sign";
+    const std::string OBJECT_BOOK_NAME_DEFAULT = "a book";
 
     const int CREATURE_NUM_ANIMATIONS_DEFAULT = 1;
 
@@ -617,6 +622,7 @@ namespace tibia
             {3337, tibia::Colors::MiniMap::snow},
             {3344, tibia::Colors::MiniMap::wood},
             {3375, tibia::Colors::MiniMap::tree},
+            {3387, tibia::Colors::MiniMap::tree},
         };
     }
 

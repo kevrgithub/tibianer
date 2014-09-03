@@ -271,7 +271,10 @@ public:
 
         doChatLogWindowAddText(ss.str(), sf::Color::Red);
 
-        doChatLogWindowAddText(m_map.properties.description, sf::Color::Red);
+        if (m_map.properties.description.size() != 0)
+        {
+            doChatLogWindowAddText(m_map.properties.description, sf::Color::Red);
+        }
     }
 
     void doEnterGame()
@@ -2329,8 +2332,29 @@ public:
         // signs
         if (object->getType() == tibia::ObjectTypes::sign)
         {
+            std::string signName;
+
+            if (object->properties.signName.size() == 0)
+            {
+                signName = tibia::OBJECT_SIGN_NAME_DEFAULT;
+            }
+            else
+            {
+                signName = object->properties.signName;
+            }
+
             std::stringstream signText;
-            signText << "You see " << object->properties.signName << ". It reads:\n" << object->properties.signText;
+
+            signText << "You see " << signName << ".";
+
+            if (object->properties.signText.size() == 0)
+            {
+                signText << " It is blank." << std::endl;
+            }
+            else
+            {
+                signText << " It reads:\n" << object->properties.signText;
+            }
 
             std::cout << signText.str() << std::endl;
 
@@ -2342,8 +2366,29 @@ public:
         // books
         if (object->getType() == tibia::ObjectTypes::book)
         {
+            std::string bookName;
+
+            if (object->properties.bookName.size() == 0)
+            {
+                bookName = tibia::OBJECT_BOOK_NAME_DEFAULT;
+            }
+            else
+            {
+                bookName = object->properties.bookName;
+            }
+
             std::stringstream bookText;
-            bookText << "You see " << object->properties.bookName << ". It reads:\n" << object->properties.bookText;
+
+            bookText << "You see " << bookName << ".";
+
+            if (object->properties.bookText.size() == 0)
+            {
+                bookText << " It is blank." << std::endl;
+            }
+            else
+            {
+                bookText << " It reads:\n" << object->properties.bookText;
+            }
 
             std::cout << bookText.str() << std::endl;
 
@@ -5092,9 +5137,9 @@ public:
 
     void updateLightBrightness()
     {
-        sf::Time elapsedTime = clockLightBrightness.getElapsedTime();
+        sf::Time timeElapsed = clockLightBrightness.getElapsedTime();
 
-        if (elapsedTime.asMilliseconds() > tibia::LightBrightness::updateTime * m_timeDelta.asMilliseconds())
+        if (timeElapsed.asMilliseconds() > tibia::LightBrightness::updateTime * m_timeDelta.asMilliseconds())
         {
             clockLightBrightness.restart();
         }
@@ -5141,10 +5186,6 @@ public:
                 continue;
             }
 
-            sf::Clock* clock = gameTextIt->getClock();
-
-            sf::Time elapsedTime = clock->getElapsedTime();
-
             float displayTime = tibia::GameTextData::time;
 
             if (gameTextIt->getNumTextLines() > 3)
@@ -5167,7 +5208,11 @@ public:
                 textIsOffScreen = true;
             }
 
-            if (elapsedTime.asSeconds() > displayTime || textIsOffScreen == true)
+            sf::Clock* clock = gameTextIt->getClock();
+
+            sf::Time timeElapsed = clock->getElapsedTime();
+
+            if (timeElapsed.asSeconds() > displayTime || textIsOffScreen == true)
             {
                 gameTextIt = m_gameTextList.erase(gameTextIt);
                 gameTextIt--;
@@ -5201,8 +5246,6 @@ public:
 
     void drawGameWindowText()
     {
-        sf::Time elapsedTime = m_gameWindowText.getClock()->getElapsedTime();
-
         float displayTime = tibia::GameWindowTextData::time;
 
         int numTextLines = m_gameWindowText.getNumTextLines();
@@ -5212,7 +5255,9 @@ public:
             displayTime += (float)numTextLines;
         }
 
-        if (elapsedTime.asSeconds() < displayTime)
+        sf::Time timeElapsed = m_gameWindowText.getClock()->getElapsedTime();
+
+        if (timeElapsed.asSeconds() < displayTime)
         {
             std::string text = m_gameWindowText.getText();
 
@@ -5267,9 +5312,9 @@ public:
 
             sf::Clock* clock = floatingTextIt->getClock();
 
-            sf::Time elapsedTime = clock->getElapsedTime();
+            sf::Time timeElapsed = clock->getElapsedTime();
 
-            if (elapsedTime.asSeconds() > tibia::FloatingTextData::time)
+            if (timeElapsed.asSeconds() > tibia::FloatingTextData::time)
             {
                 floatingTextIt = m_floatingTextList.erase(floatingTextIt);
                 floatingTextIt--;
@@ -5291,9 +5336,9 @@ public:
 
     void drawStatusBarText(sf::RenderWindow* mainWindow)
     {
-        sf::Time elapsedTime = m_clockStatusBar.getElapsedTime();
+        sf::Time timeElapsed = m_clockStatusBar.getElapsedTime();
 
-        if (elapsedTime.asSeconds() < tibia::StatusBarTextData::time)
+        if (timeElapsed.asSeconds() < tibia::StatusBarTextData::time)
         {
             mainWindow->draw(m_statusBarText);
         }
