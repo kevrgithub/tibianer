@@ -87,12 +87,12 @@ public:
         m_height = height;
     }
 
-    unsigned long getFlags()
+    tibia::SpriteFlags_t getFlags()
     {
         return m_flags;
     }
 
-    void setFlags(unsigned long flags)
+    void setFlags(tibia::SpriteFlags_t flags)
     {
         m_flags = flags;
     }
@@ -114,7 +114,7 @@ public:
 
     void addObject(tibia::Object::Ptr object)
     {
-        if (object->getFlags() & tibia::SpriteFlags::decal)
+        if (object->getFlags().test(tibia::SpriteFlags::decal))
         {
             m_objectList.insert(m_objectList.begin(), object);
         }
@@ -145,7 +145,7 @@ private:
 
     int m_z;
 
-    unsigned long m_flags;
+    tibia::SpriteFlags_t m_flags;
 
     tibia::Object::List m_objectList;
     tibia::Creature::List m_creatureList;

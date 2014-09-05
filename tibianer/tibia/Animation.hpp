@@ -61,12 +61,12 @@ public:
         return m_id;
     }
 
-    unsigned long getFlags()
+     tibia::SpriteFlags_t getFlags()
     {
         return m_flags;
     }
 
-    void setFlags(unsigned long flags)
+    void setFlags( tibia::SpriteFlags_t flags)
     {
         m_flags = flags;
     }
@@ -152,7 +152,7 @@ private:
 
     int m_id;
 
-    unsigned long m_flags;
+    tibia::SpriteFlags_t m_flags;
 
     tibia::Sprite m_sprite;
 

@@ -56,7 +56,7 @@ public:
     {
         int id;
         int count;
-        unsigned long flags;
+        tibia::SpriteFlags_t flags;
     };
 
     typedef std::vector<tibia::Creature::InventoryItem_t> InventoryItemList;
@@ -564,7 +564,7 @@ public:
         return findInventoryItemIt != m_inventoryItemList.end();
     }
 
-    int addInventoryItem(int id, int count, unsigned long flags)
+    int addInventoryItem(int id, int count,  tibia::SpriteFlags_t flags)
     {
         bool foundGroupableObject = false;
 
@@ -572,7 +572,7 @@ public:
 
         tibia::Creature::InventoryItemList::iterator groupableInventoryItemIt;
 
-        if (flags & tibia::SpriteFlags::groupable)
+        if (flags.test(tibia::SpriteFlags::groupable))
         {
             for (auto inventoryItemIt = m_inventoryItemList.begin(); inventoryItemIt != m_inventoryItemList.end(); inventoryItemIt++)
             {
@@ -581,7 +581,7 @@ public:
                     break;
                 }
 
-                if (inventoryItemIt->flags & tibia::SpriteFlags::groupable)
+                if (inventoryItemIt->flags.test(tibia::SpriteFlags::groupable))
                 {
                     groupableObjectsIndex = 0;
 
@@ -625,7 +625,7 @@ public:
             }
         }
 
-        if (flags & tibia::SpriteFlags::stackable)
+        if (flags.test(tibia::SpriteFlags::stackable))
         {
             if (foundGroupableObject == true)
             {

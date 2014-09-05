@@ -47,16 +47,16 @@ public:
                     j * tibia::TILE_SIZE
                 );
 
-                unsigned int tileFlags = tibia::UMaps::spriteFlags[tileId];
+                tibia::SpriteFlags_t tileFlags = tibia::UMaps::spriteFlags[tileId];
 
-                if ((tileFlags & tibia::SpriteFlags::water) && m_type == tibia::TileMapTypes::tiles && m_z == tibia::ZAxis::ground)
+                if (tileFlags.test(tibia::SpriteFlags::water) && m_type == tibia::TileMapTypes::tiles && m_z == tibia::ZAxis::ground)
                 {
                     m_waterTileNumbers.push_back(tileNumber);
                 }
 
                 if (tileId == tibia::TILE_NULL && m_type == tibia::TileMapTypes::tiles)
                 {
-                    tileFlags |= tibia::SpriteFlags::null;
+                    tileFlags.set(tibia::SpriteFlags::null);
                 }
 
                 tibia::Tile::Ptr tile = std::make_shared<tibia::Tile>();
@@ -81,7 +81,7 @@ public:
 
     void updateTileFlags(int tileNumber, int tileId)
     {
-        unsigned long tileFlags = tibia::UMaps::spriteFlags[tileId];
+        tibia::SpriteFlags_t tileFlags = tibia::UMaps::spriteFlags[tileId];
 
         m_tileList.at(tileNumber)->setFlags(tileFlags);
     }
@@ -107,7 +107,7 @@ public:
 
         for (auto& tile : m_tileList)
         {
-            if (tile->getFlags() & tibia::SpriteFlags::water)
+            if (tile->getFlags().test(tibia::SpriteFlags::water))
             {
                 m_waterTileNumbers.push_back(tile->getNumber());
             }

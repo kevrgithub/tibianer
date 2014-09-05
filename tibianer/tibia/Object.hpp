@@ -52,7 +52,7 @@ public:
 
     void setOffset()
     {
-        if (m_flags & tibia::SpriteFlags::offset)
+        if (m_flags.test(tibia::SpriteFlags::offset))
         {
             m_sprite[0].setPosition
             (
@@ -988,9 +988,13 @@ public:
 
     void doRegenerate()
     {
-        if (m_id == tibia::SpriteData::bushBlueberryEmpty)
+        if (m_id == tibia::SpriteData::bushBlueBerryEmpty)
         {
-            setId(tibia::SpriteData::bushBlueberry);
+            setId(tibia::SpriteData::bushBlueBerry);
+        }
+        if (m_id == tibia::SpriteData::snowBallMoundEmpty)
+        {
+            setId(tibia::SpriteData::snowBallMound);
         }
         else if (m_id == tibia::SpriteData::grassJungleCut)
         {
@@ -1026,22 +1030,22 @@ public:
 
         m_flags = tibia::UMaps::spriteFlags[m_id];
 
-        if (m_flags & tibia::SpriteFlags::decal)
+        if (m_flags.test(tibia::SpriteFlags::decal))
         {
             setDrawIndex(tibia::DRAW_INDEX_DECAL);
         }
 
-        if (m_flags & tibia::SpriteFlags::drawLast)
+        if (m_flags.test(tibia::SpriteFlags::drawLast))
         {
             setDrawIndex(tibia::DRAW_INDEX_LAST);
         }
 
-        if (m_flags & tibia::SpriteFlags::transparent)
+        if (m_flags.test(tibia::SpriteFlags::transparent))
         {
             m_sprite[0].setColor(tibia::Colors::transparent);
         }
 
-        if (m_flags & tibia::SpriteFlags::groupable)
+        if (m_flags.test(tibia::SpriteFlags::groupable))
         {
             setCountById();
         }
@@ -1094,12 +1098,12 @@ public:
         return m_sprite;
     }
 
-    unsigned long getFlags()
+    tibia::SpriteFlags_t getFlags()
     {
         return m_flags;
     }
 
-    void setFlags(unsigned long flags)
+    void setFlags(tibia::SpriteFlags_t flags)
     {
         m_flags = flags;
     }
@@ -1147,7 +1151,7 @@ private:
 
     bool m_shouldDrawExtraSprite[tibia::NUM_OBJECT_SPRITES];
 
-    unsigned long m_flags;
+    tibia::SpriteFlags_t m_flags;
 
     bool m_isDecay;
 

@@ -1,9 +1,15 @@
 #ifndef TIBIA_UTILITY_HPP
 #define TIBIA_UTILITY_HPP
 
+#include <cstdlib>
+#include <cstddef>
+#include <cstdint>
 #include <cmath>
 
 #include <vector>
+#include <map>
+#include <unordered_map>
+#include <bitset>
 #include <algorithm>
 
 #include <SFML/Graphics.hpp>
@@ -64,195 +70,41 @@ namespace tibia
             return volume;
         }
 
-        unsigned long getSpriteFlags(int id)
+        tibia::SpriteFlags_t getSpriteFlags(int id)
         {
-            unsigned long flags = 0;
+            tibia::SpriteFlags_t flags;
 
-            for (auto spriteId : tibia::SpriteData::solid)
+            std::map<tibia::SpriteFlags::Flags, std::vector<int>> spriteFlagsMap =
             {
-                if (id == spriteId)
-                {
-                    flags |= tibia::SpriteFlags::solid;
-                    break;
-                }
-            }
+                {tibia::SpriteFlags::solid,            tibia::SpriteData::solid},
+                {tibia::SpriteFlags::blockProjectiles, tibia::SpriteData::blockProjectiles},
+                {tibia::SpriteFlags::offset,           tibia::SpriteData::offsetObjects},
+                {tibia::SpriteFlags::lightSource,      tibia::SpriteData::lightSource},
+                {tibia::SpriteFlags::water,            tibia::SpriteData::water},
+                {tibia::SpriteFlags::lava,             tibia::SpriteData::lava},
+                {tibia::SpriteFlags::hasHeight,        tibia::SpriteData::hasHeight},
+                {tibia::SpriteFlags::moveAbove,        tibia::SpriteData::moveAbove},
+                {tibia::SpriteFlags::moveBelow,        tibia::SpriteData::moveBelow},
+                {tibia::SpriteFlags::drawLast,         tibia::SpriteData::drawLastObjects},
+                {tibia::SpriteFlags::transparent,      tibia::SpriteData::transparent},
+                {tibia::SpriteFlags::animated,         tibia::SpriteData::animatedObjects},
+                {tibia::SpriteFlags::ignoreHeight,     tibia::SpriteData::ignoreHeightObjects},
+                {tibia::SpriteFlags::fixDrawOrder,     tibia::SpriteData::fixDrawOrderObjects},
+                {tibia::SpriteFlags::modifyHpOnTouch,  tibia::SpriteData::modifyHpOnTouchObjects},
+                {tibia::SpriteFlags::moveable,         tibia::SpriteData::moveable},
+                {tibia::SpriteFlags::groupable,        tibia::SpriteData::groupable},
+                {tibia::SpriteFlags::stackable,        tibia::SpriteData::stackable},
+                {tibia::SpriteFlags::pickupable,       tibia::SpriteData::pickupable},
+                {tibia::SpriteFlags::decal,            tibia::SpriteData::decals},
+            };
 
-            for (auto spriteId : tibia::SpriteData::blockProjectiles)
+            for (auto spriteFlagsMapPair : spriteFlagsMap)
             {
-                if (id == spriteId)
+                auto findIdIt = std::find(spriteFlagsMapPair.second.begin(), spriteFlagsMapPair.second.end(), id);
+                
+                if (findIdIt != spriteFlagsMapPair.second.end())
                 {
-                    flags |= tibia::SpriteFlags::blockProjectiles;
-                    break;
-                }
-            }
-
-            for (auto spriteId : tibia::SpriteData::water)
-            {
-                if (id == spriteId)
-                {
-                    flags |= tibia::SpriteFlags::water;
-                    break;
-                }
-            }
-
-            for (auto spriteId : tibia::SpriteData::lava)
-            {
-                if (id == spriteId)
-                {
-                    flags |= tibia::SpriteFlags::lava;
-                    break;
-                }
-            }
-
-            for (auto spriteId : tibia::SpriteData::hasHeight)
-            {
-                if (id == spriteId)
-                {
-                    flags |= tibia::SpriteFlags::hasHeight;
-                    break;
-                }
-            }
-
-            for (auto spriteId : tibia::SpriteData::offsetObjects)
-            {
-                if (id == spriteId)
-                {
-                    flags |= tibia::SpriteFlags::offset;
-                    break;
-                }
-            }
-
-            for (auto spriteId : tibia::SpriteData::moveAbove)
-            {
-                if (id == spriteId)
-                {
-                    flags |= tibia::SpriteFlags::moveAbove;
-                }
-            }
-
-            for (auto spriteId : tibia::SpriteData::moveBelow)
-            {
-                if (id == spriteId)
-                {
-                    flags |= tibia::SpriteFlags::moveBelow;
-                    break;
-                }
-            }
-
-            for (auto spriteId : tibia::SpriteData::lightSource)
-            {
-                if (id == spriteId)
-                {
-                    flags |= tibia::SpriteFlags::lightSource;
-                    break;
-                }
-            }
-
-            for (auto spriteId : tibia::SpriteData::interactive)
-            {
-                if (id == spriteId)
-                {
-                    flags |= tibia::SpriteFlags::interactive;
-                    break;
-                }
-            }
-
-            for (auto spriteId : tibia::SpriteData::drawLastObjects)
-            {
-                if (id == spriteId)
-                {
-                    flags |= tibia::SpriteFlags::drawLast;
-                    break;
-                }
-            }
-
-            for (auto spriteId : tibia::SpriteData::transparent)
-            {
-                if (id == spriteId)
-                {
-                    flags |= tibia::SpriteFlags::transparent;
-                    break;
-                }
-            }
-
-            for (auto spriteId : tibia::SpriteData::animatedObjects)
-            {
-                if (id == spriteId)
-                {
-                    flags |= tibia::SpriteFlags::animated;
-                    break;
-                }
-            }
-
-            for (auto spriteId : tibia::SpriteData::ignoreHeightObjects)
-            {
-                if (id == spriteId)
-                {
-                    flags |= tibia::SpriteFlags::ignoreHeight;
-                    break;
-                }
-            }
-
-            for (auto spriteId : tibia::SpriteData::fixDrawOrderObjects)
-            {
-                if (id == spriteId)
-                {
-                    flags |= tibia::SpriteFlags::fixDrawOrder;
-                    break;
-                }
-            }
-
-            for (auto spriteId : tibia::SpriteData::moveable)
-            {
-                if (id == spriteId)
-                {
-                    flags |= tibia::SpriteFlags::moveable;
-                    break;
-                }
-            }
-
-            for (auto spriteId : tibia::SpriteData::groupable)
-            {
-                if (id == spriteId)
-                {
-                    flags |= tibia::SpriteFlags::groupable;
-                    break;
-                }
-            }
-
-            for (auto spriteId : tibia::SpriteData::stackable)
-            {
-                if (id == spriteId)
-                {
-                    flags |= tibia::SpriteFlags::stackable;
-                    break;
-                }
-            }
-
-            for (auto spriteId : tibia::SpriteData::pickupable)
-            {
-                if (id == spriteId)
-                {
-                    flags |= tibia::SpriteFlags::pickupable;
-                    break;
-                }
-            }
-
-            for (auto spriteId : tibia::SpriteData::decals)
-            {
-                if (id == spriteId)
-                {
-                    flags |= tibia::SpriteFlags::decal;
-                    break;
-                }
-            }
-
-            for (auto spriteId : tibia::SpriteData::modifyHpOnTouchObjects)
-            {
-                if (id == spriteId)
-                {
-                    flags |= tibia::SpriteFlags::modifyHpOnTouch;
-                    break;
+                    flags.set(spriteFlagsMapPair.first);
                 }
             }
 
@@ -261,7 +113,7 @@ namespace tibia
 
         int getDirectionByKey(sf::Keyboard::Key key)
         {
-            int direction = -1;
+            int direction = tibia::Directions::null;
 
             switch (key)
             {

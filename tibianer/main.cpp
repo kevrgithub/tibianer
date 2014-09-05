@@ -1,4 +1,6 @@
 #include <cstdlib>
+#include <cstddef>
+#include <cstdint>
 #include <cmath>
 #include <ctime>
 
@@ -21,6 +23,8 @@
 #include <SFML/Audio.hpp>
 
 #include "iup.h"
+
+#include "pugixml.hpp"
 
 #include "utility.hpp"
 
@@ -134,7 +138,7 @@ bool doSaveScreenshot()
 
     std::stringstream screenshotName;
 
-    for (unsigned long long i = 0; i < sizeof(unsigned long long); i++)
+    for (std::uint64_t i = 0; i < sizeof(std::uint64_t); i++)
     {
         screenshotName.str("");
 

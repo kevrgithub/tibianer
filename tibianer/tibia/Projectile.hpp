@@ -196,12 +196,12 @@ public:
         return m_modifyHpType;
     }
 
-    unsigned long getFlags()
+    tibia::SpriteFlags_t getFlags()
     {
         return m_flags;
     }
 
-    void setFlags(unsigned long flags)
+    void setFlags(tibia::SpriteFlags_t flags)
     {
         m_flags = flags;
     }
@@ -370,7 +370,7 @@ private:
     int m_type;
     int m_modifyHpType;
 
-    unsigned long m_flags;
+    tibia::SpriteFlags_t m_flags;
 
     float m_spriteTileX;
     float m_spriteTileY;

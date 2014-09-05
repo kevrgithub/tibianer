@@ -1,12 +1,17 @@
 #ifndef TIBIA_TIBIA_HPP
 #define TIBIA_TIBIA_HPP
 
+#include <cstdlib>
+#include <cstddef>
+#include <cstdint>
 #include <cmath>
 
 #include <string>
 #include <vector>
+#include <map>
 #include <unordered_map>
 #include <memory>
+#include <bitset>
 
 #include <SFML/Graphics.hpp>
 
@@ -424,7 +429,7 @@ namespace tibia
             sf::Color lava(255, 128, 0);
             sf::Color swamp(0, 255, 0);
             sf::Color ice(128, 255, 255);
-            sf::Color snow(192, 192, 192);
+            sf::Color snow(255, 255, 255);
             sf::Color sand(255, 255, 128);
             sf::Color moveAboveOrBelow(255, 255, 0);
         }
@@ -2298,41 +2303,44 @@ namespace tibia
 
     namespace SpriteFlags
     {
-        enum : unsigned long
+        enum Flags : std::uint8_t
         {
-            null             = 1 << 0,
-            solid            = 1 << 1,
-            blockProjectiles = 1 << 2,
-            offset           = 1 << 3,
-            lightSource      = 1 << 4,
-            water            = 1 << 5,
-            lava             = 1 << 6,
-            hasHeight        = 1 << 7,
-            moveAbove        = 1 << 8,
-            moveBelow        = 1 << 9,
-            interactive      = 1 << 10,
-            drawLast         = 1 << 11,
-            transparent      = 1 << 12,
-            animated         = 1 << 13,
-            ignoreHeight     = 1 << 14,
-            fixDrawOrder     = 1 << 15,
-            moveable         = 1 << 16,
-            modifyHpOnTouch  = 1 << 17,
-            groupable        = 1 << 18,
-            stackable        = 1 << 19,
-            pickupable       = 1 << 20,
-            equippable       = 1 << 21,
-            food             = 1 << 22,
-            instrument       = 1 << 23,
-            currency         = 1 << 24,
-            decal            = 1 << 25,
+            null,
+            solid,
+            blockProjectiles,
+            offset,
+            lightSource,
+            water,
+            lava,
+            hasHeight,
+            moveAbove,
+            moveBelow,
+            drawLast,
+            transparent,
+            animated,
+            ignoreHeight,
+            fixDrawOrder,
+            modifyHpOnTouch,
+            moveable,
+            groupable,
+            stackable,
+            pickupable,
+            equippable,
+            food,
+            instrument,
+            currency,
+            decal,
+
+            numFlags,
         };
     }
+
+    typedef std::bitset<tibia::SpriteFlags::numFlags> SpriteFlags_t;
 
     namespace UMaps
     {
         // <id, flags>
-        std::unordered_map<unsigned int, unsigned long> spriteFlags;
+        std::unordered_map<unsigned int, tibia::SpriteFlags_t> spriteFlags;
     }
 
     namespace SpriteData
@@ -2418,6 +2426,46 @@ namespace tibia
 
         std::vector<int> portal = {197, 198, 199, 3391};
 
+        std::vector<int> millStone = {906, 915}; // mill grinding stone
+
+        std::vector<int> goldCoin = {410, 411, 412, 413, 414, 415, 416, 417};
+        std::vector<int> bread = {418, 419, 420, 421, 389};
+        std::vector<int> breadRoll = {991, 992, 1050, 1051, 1052, 1053};
+        std::vector<int> smallStone = {1201, 3188, 3189, 3190, 3191, 3192};
+        std::vector<int> apple = {1228, 1229, 1230, 1231, 1232, 1263};
+        std::vector<int> brownBread = {1233, 1234, 1235, 1236, 1338};
+        std::vector<int> ham = {1237, 1238, 1239, 1569, 1240};
+        std::vector<int> smallEnchantedRuby = {1900, 1901, 1902, 1903, 1904, 2962, 2963};
+        std::vector<int> carrot = {1917, 1918, 1919, 1920};
+        std::vector<int> salmon = {1921, 1922, 1923};
+        std::vector<int> skull = {2287, 2288, 2334, 2335, 2336};
+        std::vector<int> banana = {2511, 2512, 2513, 2514, 2515, 2516};
+        std::vector<int> cherry = {2517, 2518, 2519, 2520, 2521, 2522, 2523};
+        std::vector<int> meat = {2719, 2720, 2721, 2722, 2723, 2724};
+        std::vector<int> platinumCoin = {2889, 2890, 2891, 2892, 2893, 2894, 2895, 2896};
+        std::vector<int> smallDiamond = {2195, 2196, 2197, 2198, 2199, 2200, 2201};
+        std::vector<int> smallEmerald = {2202, 2203, 2204, 2205, 2206, 2207, 2208};
+        std::vector<int> smallRuby = {2209, 2210, 2211, 2212, 2213, 2214, 2215};
+        std::vector<int> smallSapphire = {2216, 2217, 2218, 2219, 2220, 2221, 2222};
+        std::vector<int> smallAmethyst = {2609, 2610, 2611, 2612, 2613, 2614, 2615};
+        std::vector<int> cookie = {2616, 2617, 2618, 2619, 2620, 2621, 2622};
+        std::vector<int> coconut = {2945, 2946, 2947, 2948, 2949, 2950};
+        std::vector<int> egg = {2979, 2980, 2981, 2982, 2983, 2984};
+        std::vector<int> orange = {3017, 3018, 3019, 3020, 3021, 3022};
+        std::vector<int> blackPearl = {3194, 3195, 3196, 3197, 3198, 3199, 3200, 3201};
+        std::vector<int> whitePearl = {3202, 3203, 3204, 3205, 3206, 3207, 3208, 2309};
+        std::vector<int> snowBall = {3331, 3332, 3334, 3335, 3336};
+        std::vector<int> blueBerry = {3367, 3368, 3369, 3370, 3371, 3372, 3373, 3374};
+        //std::vector<int> crystalCoin = {};
+
+        const int snow               = 1606;
+        const int snowBallMound      = 3337;
+        const int snowBallMoundEmpty = 3392;
+
+        const int weddingRing = 3193;
+
+        const int well = 315;
+
         const int bag      = 45;
         const int backpack = 200;
 
@@ -2426,10 +2474,8 @@ namespace tibia
         const int mailBox = 1274;
 
         const int bush               = 1060;
-        const int bushBlueberry      = 3375;
-        const int bushBlueberryEmpty = 3387;
-
-        std::vector<int> blueBerries = {3367, 3368, 3369, 3370, 3371, 3372, 3373, 3374};
+        const int bushBlueBerry      = 3375;
+        const int bushBlueBerryEmpty = 3387;
 
         const int runeBlank = 1277;
 
@@ -2487,6 +2533,9 @@ namespace tibia
         const int wheatGreen  = 159;
         const int wheatYellow = 163;
         const int wheat       = 164;
+
+        const int dough = 7;
+        const int flour = 8;
 
         std::vector<int> fieldFire        = {1489, 1490, 1491, 1492, 1493, 1494};
         std::vector<int> fieldElectricity = {1497, 1498};
@@ -2748,6 +2797,7 @@ namespace tibia
             201,
             202, 203, 204, 205,
             298, 299,
+            315, // well
             334,
             367, 368, 369, 370,
             376, 378,
@@ -2755,6 +2805,7 @@ namespace tibia
             390, 391, 392, 393,
             521, 522, 523,
             685, 686, 687, 688, 689, 690,
+            906, 915, // millstone
             961, 962,
             997, 999, 1001,
             1003,
@@ -2871,19 +2922,30 @@ namespace tibia
 
         std::vector<int> groupable =
         {
+            // gold
             410, 411, 412, 413, 414, 415, 416, 417,
+
+            // platinum
             2889, 2890, 2891, 2892, 2893, 2894, 2895, 2896,
+
+            // blueberries
             3367, 3368, 3369, 3370, 3371, 3372, 3373, 3374,
         };
 
         std::vector<int> stackable =
         {
+            // gold
             410, 411, 412, 413, 414, 415, 416, 417,
+
             964, 973, 981,
             1016,
             1848, 1856,
             2874,
+
+            // platinum
             2889, 2890, 2891, 2892, 2893, 2894, 2895, 2896,
+
+            // blueberries
             3367, 3368, 3369, 3370, 3371, 3372, 3373, 3374,
         };
 
@@ -3006,149 +3068,6 @@ namespace tibia
             763, 764, 765, 766, 767, 768,
             769, 770, 771, 772, 773, 774,
             775, 776, 777, 778, 779, 780,
-        };
-
-        std::vector<int> interactive =
-        {
-            tibia::SpriteData::chair[0],
-            tibia::SpriteData::chair[1],
-            tibia::SpriteData::chair[2],
-            tibia::SpriteData::chair[3],
-
-            tibia::SpriteData::counterVertical[0],
-            tibia::SpriteData::counterVertical[1],
-
-            tibia::SpriteData::counterHorizontal[0],
-            tibia::SpriteData::counterHorizontal[1],
-
-            tibia::SpriteData::ovenDown[0],
-            tibia::SpriteData::ovenDown[1],
-            tibia::SpriteData::ovenDown[2],
-            tibia::SpriteData::ovenDown[3],
-
-            tibia::SpriteData::ovenLeft[0],
-            tibia::SpriteData::ovenLeft[1],
-            tibia::SpriteData::ovenLeft[2],
-            tibia::SpriteData::ovenLeft[3],
-
-            tibia::SpriteData::ovenUp[0],
-            tibia::SpriteData::ovenUp[1],
-            tibia::SpriteData::ovenUp[2],
-            tibia::SpriteData::ovenUp[3],
-
-            tibia::SpriteData::ovenRight[0],
-            tibia::SpriteData::ovenRight[1],
-            tibia::SpriteData::ovenRight[2],
-            tibia::SpriteData::ovenRight[3],
-
-            tibia::SpriteData::streetLamp[0],
-            tibia::SpriteData::streetLamp[1],
-
-            tibia::SpriteData::torchBig[0],
-            tibia::SpriteData::torchBig[1],
-            tibia::SpriteData::torchBig[2],
-
-            tibia::SpriteData::torchMedium[0],
-            tibia::SpriteData::torchMedium[1],
-            tibia::SpriteData::torchMedium[2],
-
-            tibia::SpriteData::torchSmall[0],
-            tibia::SpriteData::torchSmall[1],
-            //tibia::SpriteData::torchSmall[2], // not used, decays
-
-            tibia::SpriteData::torchInsetHorizontal[0],
-            tibia::SpriteData::torchInsetHorizontal[1],
-            tibia::SpriteData::torchInsetHorizontal[2],
-
-            tibia::SpriteData::torchInsetVertical[0],
-            tibia::SpriteData::torchInsetVertical[1],
-            tibia::SpriteData::torchInsetVertical[2],
-
-            tibia::SpriteData::torchHangingHorizontal[0],
-            tibia::SpriteData::torchHangingHorizontal[1],
-            tibia::SpriteData::torchHangingHorizontal[2],
-
-            tibia::SpriteData::torchHangingVertical[0],
-            tibia::SpriteData::torchHangingVertical[1],
-            tibia::SpriteData::torchHangingVertical[2],
-
-            tibia::SpriteData::candleStick[0],
-            tibia::SpriteData::candleStick[1],
-            tibia::SpriteData::candleStick[2],
-
-            tibia::SpriteData::candleHolder[0],
-            tibia::SpriteData::candleHolder[1],
-            tibia::SpriteData::candleHolder[2],
-
-            tibia::SpriteData::lantern[0],
-            tibia::SpriteData::lantern[1],
-            tibia::SpriteData::lantern[2],
-
-            tibia::SpriteData::sign[0],
-            tibia::SpriteData::sign[1],
-            tibia::SpriteData::sign[2],
-            tibia::SpriteData::sign[3],
-            tibia::SpriteData::sign[4],
-            tibia::SpriteData::sign[5],
-
-            tibia::SpriteData::signTall[0],
-            tibia::SpriteData::signTall[1],
-
-            tibia::SpriteData::chalkboard[0],
-            tibia::SpriteData::chalkboard[1],
-
-            tibia::SpriteData::locker[0],
-            tibia::SpriteData::locker[1],
-            tibia::SpriteData::locker[2],
-            tibia::SpriteData::locker[3],
-
-            tibia::SpriteData::depot,
-            tibia::SpriteData::mailBox,
-
-            tibia::SpriteData::lever[0],
-            tibia::SpriteData::lever[1],
-
-            tibia::SpriteData::doorVertical[0],
-            tibia::SpriteData::doorVertical[1],
-
-            tibia::SpriteData::doorHorizontal[0],
-            tibia::SpriteData::doorHorizontal[1],
-
-            tibia::SpriteData::doorLockedVertical[0],
-            tibia::SpriteData::doorLockedVertical[1],
-
-            tibia::SpriteData::doorLockedHorizontal[0],
-            tibia::SpriteData::doorLockedHorizontal[1],
-
-            tibia::SpriteData::bedVertical[0],
-            tibia::SpriteData::bedVertical[1],
-            tibia::SpriteData::bedVertical[2],
-            tibia::SpriteData::bedVertical[3],
-
-            tibia::SpriteData::bedHorizontal[0],
-            tibia::SpriteData::bedHorizontal[1],
-            tibia::SpriteData::bedHorizontal[2],
-            tibia::SpriteData::bedHorizontal[3],
-
-            tibia::SpriteData::stretcherVertical[0],
-            tibia::SpriteData::stretcherVertical[1],
-            tibia::SpriteData::stretcherVertical[2],
-            tibia::SpriteData::stretcherVertical[3],
-
-            tibia::SpriteData::stretcherHorizontal[0],
-            tibia::SpriteData::stretcherHorizontal[1],
-            tibia::SpriteData::stretcherHorizontal[2],
-            tibia::SpriteData::stretcherHorizontal[3],
-
-            tibia::SpriteData::ladder,
-            tibia::SpriteData::ropeUp,
-
-            tibia::SpriteData::sewerGrate,
-
-            tibia::SpriteData::digHole[0],
-            tibia::SpriteData::digHoleIce[0],
-
-            tibia::SpriteData::bushBlueberry,
         };
 
         std::vector<int> transparent =
@@ -3320,6 +3239,7 @@ namespace tibia
             3178, 3179, 3180, 3181, 3182, 3183,
             3271, 3275, 3279,
             3322, 3326,
+            3338, 3339, 3340,
             3380, 3381,
             3391,
         };
@@ -3385,6 +3305,7 @@ namespace tibia
         {3178, 3179, 3180, 3181, 3182, 3183},
         {3271, 3275, 3279},
         {3322, 3326},
+        {3338, 3339, 3340},
         {3380, 3381},
     };
 
