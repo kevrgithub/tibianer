@@ -79,7 +79,6 @@ namespace tibia
 
     namespace Textures
     {
-        sf::Texture cursor;
         sf::Texture loading;
         sf::Texture sprites;
         sf::Texture spritesNumbered;
@@ -100,7 +99,6 @@ namespace tibia
     {
         std::unordered_map<std::string, sf::Texture&> textureFiles =
         {
-            {"images/cursor.png",           tibia::Textures::cursor},
             {"images/loading.png",          tibia::Textures::loading},
             {"images/sprites.png",          tibia::Textures::sprites},
             {"images/sprites_numbered.png", tibia::Textures::spritesNumbered},

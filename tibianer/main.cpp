@@ -16,13 +16,14 @@
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
-//#include <boost/filesystem.hpp>
 
 #include <SFML/System.hpp>
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 
 #include "iup.h"
+
+#include "jansson.h"
 
 #include "pugixml.hpp"
 
@@ -35,7 +36,7 @@
 
 tibia::Game g_game;
 
-std::string g_gameTitle = "Tibianer (WORK IN PROGRESS) BUILD DATE 010914";
+std::string g_gameTitle = "Tibianer";
 
 std::string g_configFile = "cfg/config.cfg";
 
@@ -70,8 +71,6 @@ bool loadConfig()
 
     g_mapFile = pt.get<std::string>("Map.File", g_mapFile);
 
-    g_game.options.isMouseUseDefaultMouseCursorEnabled = pt.get<bool>("Mouse.UseDefaultCursor", g_game.options.isMouseUseDefaultMouseCursorEnabled);
-
     g_game.options.isGameShowFloatingTextEnabled = pt.get<bool>("Game.ShowFloatingText", g_game.options.isGameShowFloatingTextEnabled);
     g_game.options.isGameShowNamesEnabled        = pt.get<bool>("Game.ShowNames",        g_game.options.isGameShowNamesEnabled);
     g_game.options.isGameShowCreatureBarsEnabled = pt.get<bool>("Game.ShowCreatureBars", g_game.options.isGameShowCreatureBarsEnabled);
@@ -100,11 +99,6 @@ void createMainWindow()
     if (g_windowFrameRateLimit > 0)
     {
         g_mainWindow.setFramerateLimit(g_windowFrameRateLimit);
-    }
-
-    if (g_game.options.isMouseUseDefaultMouseCursorEnabled == false)
-    {
-        g_game.setMouseCursorVisible(&g_mainWindow, false);
     }
 }
 
@@ -363,8 +357,6 @@ int main(int argc, char* argv[])
 
         g_game.drawGameWindow(&g_mainWindow);
 
-        //g_game.drawOptionsButton(&g_mainWindow);
-
         g_game.drawChatLogWindow(&g_mainWindow);
 
         g_game.drawTabButtons(&g_mainWindow);
@@ -403,12 +395,6 @@ int main(int argc, char* argv[])
         g_game.drawStatusBarText(&g_mainWindow);
 
         g_game.drawStatusEffectIcons(&g_mainWindow);
-
-        if (g_game.options.isMouseUseDefaultMouseCursorEnabled == false)
-        {
-            g_game.updateMouseWindowPosition(&g_mainWindow);
-            g_game.drawMouseCursor(&g_mainWindow);
-        }
 
         g_game.updateSounds();
 

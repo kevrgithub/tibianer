@@ -377,6 +377,21 @@ public:
                                     object->properties.bookText = objectBookText;
                                 }
                             }
+                            else if (objectType == tibia::ObjectTypes::lever)
+                            {
+                                if (docMapObjectPropertyName == "script1")
+                                {
+                                    std::string objectLeverScript1 = docMapObjectProperty.attribute("value").value();
+
+                                    object->properties.leverScript1 = objectLeverScript1;
+                                }
+                                if (docMapObjectPropertyName == "script2")
+                                {
+                                    std::string objectLeverScript2 = docMapObjectProperty.attribute("value").value();
+
+                                    object->properties.leverScript2 = objectLeverScript2;
+                                }
+                            }
                             else if (objectType == tibia::ObjectTypes::door)
                             {
                                 if (docMapObjectPropertyName == "key")

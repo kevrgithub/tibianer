@@ -48,8 +48,6 @@ public:
 
     struct Options_t
     {
-        bool isMouseUseDefaultMouseCursorEnabled = false;
-
         bool isGameShowFloatingTextEnabled      = true;
         bool isGameShowNamesEnabled             = false;
         bool isGameShowCreatureBarsEnabled      = false;
@@ -124,15 +122,8 @@ public:
         m_tileMapTileVertices.setPrimitiveType(sf::Quads);
     }
 
-    void setMouseCursorVisible(sf::RenderWindow* mainWindow, bool isVisible)
-    {
-        mainWindow->setMouseCursorVisible(isVisible);
-    }
-
     void showOptionsWindow()
     {
-        setMouseCursorVisible(m_mainWindow, true);
-
         int option_isGameShowFloatingTextEnabled = this->options.isGameShowFloatingTextEnabled;
         int option_isGameShowNamesEnabled        = this->options.isGameShowNamesEnabled;
         int option_isGameShowCreatureBarsEnabled = this->options.isGameShowCreatureBarsEnabled;
@@ -192,11 +183,6 @@ public:
 
         this->options.isCheatInfiniteHealthEnabled  = option_isCheatInfiniteHealthEnabled;
         this->options.isCheatInfiniteManaEnabled    = option_isCheatInfiniteManaEnabled;
-
-        if (this->options.isMouseUseDefaultMouseCursorEnabled == false)
-        {
-            setMouseCursorVisible(m_mainWindow, false);
-        }
 
         updateLightingStyle();
     }
@@ -287,6 +273,211 @@ public:
         showMapNameAndAuthor();
     }
 
+    bool doScript(const std::string& filename)
+    {
+        if (filename.size() == 0)
+        {
+            return false;
+        }
+
+        std::stringstream scriptPath;
+        scriptPath << "scripts/" << filename;
+
+        std::string scriptFile = scriptPath.str();
+
+        std::cout << "Script: " << scriptFile << std::endl;
+
+        if (utility::fileExists(scriptFile) == false)
+        {
+            std::cout << "Script file not found! " << scriptFile << std::endl;
+            return false;
+        }
+
+        json_error_t scriptError;
+
+        json_t* scriptRoot = json_load_file(scriptFile.c_str(), 0, &scriptError);
+        if (!scriptRoot)
+        {
+            std::cout << "Script Error: Line " << scriptError.line << ": " << scriptError.text << std::endl;
+            return false;
+        }
+
+        json_t* scriptActions = json_object_get(scriptRoot, "actions");
+        if (!scriptActions)
+        {
+            std::cout << "Script Error: actions not found" << std::endl;
+            return false;
+        }
+
+        for (std::size_t i = 0; i < json_array_size(scriptActions); i++)
+        {
+            json_t* scriptAction = json_array_get(scriptActions, i);
+            if (!scriptAction)
+            {
+                std::cout << "Script Error: action not found" << std::endl;
+                return false;
+            }
+
+            json_t* scriptActionName = json_object_get(scriptAction, "name");
+            if (!scriptActionName)
+            {
+                std::cout << "Script Error: action property 'name' not found" << std::endl;
+                return false;
+            }
+
+            std::string scriptActionNameString = json_string_value(scriptActionName);
+
+            //std::cout << "Script Action: " << scriptActionNameString << std::endl;
+
+            if (scriptActionNameString == "update_tile_id")
+            {
+                json_t* scriptActionX = json_object_get(scriptAction, "x");
+                if (!scriptActionX)
+                {
+                    std::cout << "Script Error: action property 'x' not found for '" << scriptActionNameString << "'" << std::endl;
+                    return false;
+                }
+
+                int scriptActionXInteger = json_integer_value(scriptActionX);
+
+                json_t* scriptActionY = json_object_get(scriptAction, "y");
+                if (!scriptActionY)
+                {
+                    std::cout << "Script Error: action property 'y' not found for '" << scriptActionNameString << "'" << std::endl;
+                    return false;
+                }
+
+                int scriptActionYInteger = json_integer_value(scriptActionY);
+
+                json_t* scriptActionZ = json_object_get(scriptAction, "z");
+                if (!scriptActionZ)
+                {
+                    std::cout << "Script Error: action property 'z' not found for '" << scriptActionNameString << "'" << std::endl;
+                    return false;
+                }
+
+                int scriptActionZInteger = json_integer_value(scriptActionZ);
+
+                json_t* scriptActionId = json_object_get(scriptAction, "id");
+                if (!scriptActionId)
+                {
+                    std::cout << "Script Error: action property 'id' not found for '" << scriptActionNameString << "'" << std::endl;
+                    return false;
+                }
+
+                int scriptActionIdInteger = json_integer_value(scriptActionId);
+
+                //std::cout << "Script Action X: " << scriptActionXInteger << std::endl;
+                //std::cout << "Script Action Y: " << scriptActionYInteger << std::endl;
+                //std::cout << "Script Action Z: " << scriptActionZInteger << std::endl;
+                //std::cout << "Script Action ID: " << scriptActionIdInteger << std::endl;
+
+                tibia::Tile::Ptr tile = getTile
+                (
+                    sf::Vector2u
+                    (
+                        scriptActionXInteger * tibia::TILE_SIZE,
+                        scriptActionYInteger * tibia::TILE_SIZE
+                    ),
+                    scriptActionZInteger
+                );
+
+                tile->setId(scriptActionIdInteger);
+
+                tibia::SpriteFlags_t tileFlags = tibia::UMaps::spriteFlags[scriptActionIdInteger];
+
+                tile->setFlags(tileFlags);
+            }
+            else if (scriptActionNameString == "update_tile_object_id")
+            {
+                json_t* scriptActionX = json_object_get(scriptAction, "x");
+                if (!scriptActionX)
+                {
+                    std::cout << "Script Error: action property 'x' not found for '" << scriptActionNameString << "'" << std::endl;
+                    return false;
+                }
+
+                int scriptActionXInteger = json_integer_value(scriptActionX);
+
+                json_t* scriptActionY = json_object_get(scriptAction, "y");
+                if (!scriptActionY)
+                {
+                    std::cout << "Script Error: action property 'y' not found for '" << scriptActionNameString << "'" << std::endl;
+                    return false;
+                }
+
+                int scriptActionYInteger = json_integer_value(scriptActionY);
+
+                json_t* scriptActionZ = json_object_get(scriptAction, "z");
+                if (!scriptActionZ)
+                {
+                    std::cout << "Script Error: action property 'z' not found for '" << scriptActionNameString << "'" << std::endl;
+                    return false;
+                }
+
+                int scriptActionZInteger = json_integer_value(scriptActionZ);
+
+                json_t* scriptActionIdOld = json_object_get(scriptAction, "id_old");
+                if (!scriptActionIdOld)
+                {
+                    std::cout << "Script Error: action property 'id_old' not found for '" << scriptActionNameString << "'" << std::endl;
+                    return false;
+                }
+
+                int scriptActionIdOldInteger = json_integer_value(scriptActionIdOld);
+
+                json_t* scriptActionIdNew = json_object_get(scriptAction, "id_new");
+                if (!scriptActionIdNew)
+                {
+                    std::cout << "Script Error: action property 'id_new' not found for '" << scriptActionNameString << "'" << std::endl;
+                    return false;
+                }
+
+                int scriptActionIdNewInteger = json_integer_value(scriptActionIdNew);
+
+                //std::cout << "Script Action X: " << scriptActionXInteger << std::endl;
+                //std::cout << "Script Action Y: " << scriptActionYInteger << std::endl;
+                //std::cout << "Script Action Z: " << scriptActionZInteger << std::endl;
+                //std::cout << "Script Action ID Old: " << scriptActionIdOldInteger << std::endl;
+                //std::cout << "Script Action ID New: " << scriptActionIdNewInteger << std::endl;
+
+                tibia::Tile::Ptr tile = getTile
+                (
+                    sf::Vector2u
+                    (
+                        scriptActionXInteger * tibia::TILE_SIZE,
+                        scriptActionYInteger * tibia::TILE_SIZE
+                    ),
+                    scriptActionZInteger
+                );
+
+                tibia::Object::List* objectList = tile->getObjectList();
+
+                if (objectList->size() != 0)
+                {
+                    auto objectIt = std::find_if
+                    (
+                        objectList->begin(),
+                        objectList->end(),
+                        [&scriptActionIdOldInteger](tibia::Object::Ptr const& object)
+                        { 
+                            return object->getId() == scriptActionIdOldInteger;
+                        }
+                    );
+
+                    if (objectIt != objectList->end())
+                    {
+                        objectIt->get()->setId(scriptActionIdNewInteger);
+                    }
+                }
+            }
+        }
+
+        json_decref(scriptRoot);
+
+        return true;
+    }
+
     void updateLightingStyle()
     {
         if (this->options.isGameSmoothLightingEnabled == true)
@@ -309,8 +500,6 @@ public:
                 return false;
             }
         }
-
-        m_mouseCursor.setTexture(tibia::Textures::cursor);
 
         updateLightingStyle();
 
@@ -1194,11 +1383,6 @@ public:
         {
             doPlayerClickToMove();
         }
-    }
-
-    void setMouseCursorType(unsigned int type)
-    {
-        m_mouseCursor.setTextureRect(sf::IntRect(0, type * tibia::MouseCursor::height, tibia::MouseCursor::width, tibia::MouseCursor::height));
     }
 
     void updateMiniMapWindowZoom()
@@ -2946,10 +3130,14 @@ public:
             if (object->getId() == tibia::SpriteData::lever[0])
             {
                 object->setId(tibia::SpriteData::lever[1]);
+
+                doScript(object->properties.leverScript1);
             }
             else if (object->getId() == tibia::SpriteData::lever[1])
             {
                 object->setId(tibia::SpriteData::lever[0]);
+
+                doScript(object->properties.leverScript2);
             }
 
             return true;
@@ -3376,35 +3564,9 @@ public:
         doChatLogWindowAddText(chatLogWindowText);
     }
 
-    void drawMouseCursor(sf::RenderWindow* mainWindow)
+    void updateMouseCursor(sf::RenderWindow* mainWindow)
     {
-        m_mouseCursor.setPosition(static_cast<sf::Vector2f>(getMouseWindowPosition()));
-        m_mouseCursor.setColor(tibia::Colors::white);
-        setMouseCursorType(tibia::MouseCursorTypes::point);
-
-        if (sf::Mouse::isButtonPressed(sf::Mouse::Left) == true)
-        {
-            setMouseCursorType(tibia::MouseCursorTypes::click);
-        }
-
-        // highlight creature
-        if (m_mouseTile != nullptr)
-        {
-            tibia::Creature::List* creatureList = m_mouseTile->getCreatureList();
-
-            if (creatureList->size())
-            {
-                tibia::Creature::Ptr creature = creatureList->back();
-
-                if (creature->getTeam() == tibia::Teams::evil)
-                {
-                    m_mouseCursor.setColor(tibia::Colors::MouseCursor::red);
-                    setMouseCursorType(tibia::MouseCursorTypes::open);
-                }
-            }
-        }
-
-        mainWindow->draw(m_mouseCursor);
+        //
     }
 
     bool isCreatureMovementOutOfBounds(tibia::Creature::Ptr creature, int direction)
@@ -5585,17 +5747,6 @@ public:
         mainWindow->draw(mpText);
     }
 
-/*
-    void drawOptionsButton(sf::RenderWindow* mainWindow)
-    {
-        tibia::Sprite optionsButton;
-        optionsButton.setId(tibia::SpriteData::Gui::optionsButton);
-        optionsButton.setPosition(tibia::GuiData::OptionsButton::position);
-
-        mainWindow->draw(optionsButton);
-    }
-*/
-
     void drawChatLogWindow(sf::RenderWindow* mainWindow)
     {
         if (m_chatLogWindowTextList.size() == 0)
@@ -6668,8 +6819,6 @@ private:
 
     sf::Clock m_clockGame;
     sf::Clock m_clockAnimatedWaterAndObjects;
-
-    sf::Sprite m_mouseCursor;
 
     sf::Vector2i m_mouseWindowPosition;
 

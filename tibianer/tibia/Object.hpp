@@ -30,6 +30,9 @@ public:
         std::string bookName;
         std::string bookText;
 
+        std::string leverScript1;
+        std::string leverScript2;
+
         int doorKey = tibia::KeyTypes::none;
 
         unsigned int teleporterX;
