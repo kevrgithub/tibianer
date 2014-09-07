@@ -232,7 +232,7 @@ namespace tibia
         return normal;
     }
 
-    int getCountByGroupableObjectIndex(int index)
+    int getCountByGroupableObjectIndex(int index, int numObjects)
     {
         switch (index)
         {
@@ -247,24 +247,63 @@ namespace tibia
 
             case 3:
                 return 4;
+        }
 
-            case 4:
-                return 5;
+        if (numObjects == 8)
+        {
+            switch (index)
+            {
+                case 4:
+                    return 5;
 
-            case 5:
-                return 10;
+                case 5:
+                    return 10;
 
-            case 6:
-                return 50;
+                case 6:
+                    return 50;
 
-            case 7:
-                return 100;
+                case 7:
+                    return 100;
+            }
+        }
+        else if (numObjects == 7)
+        {
+            switch (index)
+            {
+                case 4:
+                    return 5;
+
+                case 5:
+                    return 50;
+
+                case 6:
+                    return 100;
+            }
+        }
+        else if (numObjects == 6)
+        {
+            switch (index)
+            {
+                case 4:
+                    return 5;
+
+                case 5:
+                    return 100;
+            }
+        }
+        else if (numObjects == 5)
+        {
+            switch (index)
+            {
+                case 4:
+                    return 100;
+            }
         }
 
         return 1;
     }
 
-    int getGroupableObjectIndexByCount(int count)
+    int getGroupableObjectIndexByCount(int count, int numObjects)
     {
         if (count == 1)
         {
@@ -278,28 +317,86 @@ namespace tibia
         {
             return 2;
         }
-        else if (count == 4)
+
+        if (numObjects == 8)
         {
-            return 3;
+            if (count == 4)
+            {
+                return 3;
+            }
+            else if (count >= 5 && count < 10)
+            {
+                return 4;
+            }
+            else if (count >= 10 && count < 50)
+            {
+                return 5;
+            }
+            else if (count >= 50 && count < 100)
+            {
+                return 6;
+            }
+            else if (count == 100)
+            {
+                return 7;
+            }
         }
-        else if (count >= 5 && count < 10)
+        else if (numObjects == 7)
         {
-            return 4;
+            if (count == 4)
+            {
+                return 3;
+            }
+            else if (count >= 5 && count < 10)
+            {
+                return 4;
+            }
+            else if (count >= 10 && count < 50)
+            {
+                return 5;
+            }
+            else if (count >= 50)
+            {
+                return 6;
+            }
         }
-        else if (count >= 10 && count < 50)
+        else if (numObjects == 6)
         {
-            return 5;
+            if (count == 4)
+            {
+                return 3;
+            }
+            else if (count >= 5 && count < 10)
+            {
+                return 4;
+            }
+            else if (count >= 10)
+            {
+                return 5;
+            }
         }
-        else if (count >= 50 && count < 100)
+        else if (numObjects == 5)
         {
-            return 6;
+            if (count == 4)
+            {
+                return 3;
+            }
+            else if (count >= 5)
+            {
+                return 4;
+            }
         }
-        else if (count == 100)
+        else if (numObjects < 5)
         {
-            return 7;
+            int index = numObjects - 1;
+
+            if (count > index)
+            {
+                return index;
+            }
         }
 
-        return 7;
+        return 0;
     }
 
     } // namespace utility

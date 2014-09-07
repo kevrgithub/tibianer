@@ -329,7 +329,7 @@ public:
 
             //std::cout << "Script Action: " << scriptActionNameString << std::endl;
 
-            if (scriptActionNameString == "update_tile_id")
+            if (scriptActionNameString == "set_tile_id")
             {
                 json_t* scriptActionX = json_object_get(scriptAction, "x");
                 if (!scriptActionX)
@@ -388,7 +388,7 @@ public:
 
                 tile->setFlags(tileFlags);
             }
-            else if (scriptActionNameString == "update_tile_object_id")
+            else if (scriptActionNameString == "set_tile_object_id")
             {
                 json_t* scriptActionX = json_object_get(scriptAction, "x");
                 if (!scriptActionX)
@@ -1623,7 +1623,7 @@ public:
                         spawnProjectile
                         (
                             creature,
-                            tibia::ProjectileTypes::cacodemon,
+                            tibia::ProjectileTypes::spellCacodemon,
                             creature->getDirection(),
                             sf::Vector2f(creature->getTileX(), creature->getTileY()),
                             sf::Vector2f
@@ -2458,6 +2458,12 @@ public:
         if (keyId == tibia::KeyTypes::none) // unlocked
         {
             return true;
+        }
+
+        if (keyId == tibia::KeyTypes::lever) // lever activated
+        {
+            showStatusBarText("This door can only be opened by a lever or switch.");
+            return false;
         }
 
         if (creature->hasInventoryItem(tibia::SpriteData::keyRing) == true) // key ring opens all doors
@@ -3566,7 +3572,56 @@ public:
 
     void updateMouseCursor(sf::RenderWindow* mainWindow)
     {
-        //
+        bool isMouseCursorSet = false;
+
+        if (m_mouseTile != nullptr)
+        {
+            tibia::Object::List* objectList = m_mouseTile->getObjectList();
+
+            if (objectList->size() != 0)
+            {
+                tibia::Object::Ptr object = objectList->back();
+
+                tibia::SpriteFlags_t objectFlags = object->getFlags();
+
+                int objectType = object->getType();
+
+                if
+                (
+                    objectFlags.test(tibia::SpriteFlags::moveable)   ||
+                    objectFlags.test(tibia::SpriteFlags::pickupable) ||
+
+                    objectType == tibia::ObjectTypes::sign  ||
+                    objectType == tibia::ObjectTypes::book  ||
+                    objectType == tibia::ObjectTypes::bed   ||
+                    objectType == tibia::ObjectTypes::lever
+                )
+                {
+                    mainWindow->setMouseCursor(tibia::Cursors::Default3::filename);
+
+                    isMouseCursorSet = true;
+                }
+            }
+
+            tibia::Creature::List* creatureList = m_mouseTile->getCreatureList();
+
+            if (creatureList->size() != 0)
+            {
+                tibia::Creature::Ptr creature = creatureList->back();
+
+                if (creature->getTeam() == tibia::Teams::evil)
+                {
+                    mainWindow->setMouseCursor(tibia::Cursors::Default3::filename);
+
+                    isMouseCursorSet = true;
+                }
+            }
+        }
+
+        if (isMouseCursorSet == false)
+        {
+            mainWindow->setMouseCursor(tibia::Cursors::Default::filename);
+        }
     }
 
     bool isCreatureMovementOutOfBounds(tibia::Creature::Ptr creature, int direction)
@@ -4087,7 +4142,7 @@ public:
                                     (
                                         tibia::groupedObjectsList
                                             .at(groupableObjectsIndex)
-                                            .at(tibia::Utility::getGroupableObjectIndexByCount(remainderCount))
+                                            .at(tibia::Utility::getGroupableObjectIndexByCount(remainderCount, groupableObjects.size()))
                                     );
 
                                     first->setCount(remainderCount);
@@ -4096,7 +4151,7 @@ public:
                                     (
                                         tibia::groupedObjectsList
                                             .at(groupableObjectsIndex)
-                                            .at(tibia::Utility::getGroupableObjectIndexByCount(INVENTORY_ITEM_COUNT_MAX))
+                                            .at(tibia::Utility::getGroupableObjectIndexByCount(INVENTORY_ITEM_COUNT_MAX, groupableObjects.size()))
                                     );
 
                                     second->setCount(INVENTORY_ITEM_COUNT_MAX);
@@ -4108,7 +4163,7 @@ public:
                                 (
                                     tibia::groupedObjectsList
                                         .at(groupableObjectsIndex)
-                                        .at(tibia::Utility::getGroupableObjectIndexByCount(groupedCount))
+                                        .at(tibia::Utility::getGroupableObjectIndexByCount(groupedCount, groupableObjects.size()))
                                 );
 
                                 first->setCount(groupedCount);
@@ -4327,13 +4382,24 @@ public:
 
                 if (result == true)
                 {
-                    if (projectile->getType() == tibia::ProjectileTypes::spear)
+                    int projectileType = projectile->getType();
+
+                    if (projectileType == tibia::ProjectileTypes::spear)
                     {
                         spawnObject
                         (
                             projectileSpriteTilePosition,
                             projectile->getZ(),
                             tibia::SpriteData::spear
+                        );
+                    }
+                    else if (projectileType == tibia::ProjectileTypes::throwingKnife)
+                    {
+                        spawnObject
+                        (
+                            projectileSpriteTilePosition,
+                            projectile->getZ(),
+                            tibia::SpriteData::throwingKnife
                         );
                     }
 
@@ -4387,13 +4453,24 @@ public:
                         tibia::Animations::hitMiss
                     );
 
-                    if (projectile->getType() == tibia::ProjectileTypes::spear)
+                    int projectileType = projectile->getType();
+
+                    if (projectileType == tibia::ProjectileTypes::spear)
                     {
                         spawnObject
                         (
                             projectileSpriteTilePosition,
                             projectile->getZ(),
                             tibia::SpriteData::spear
+                        );
+                    }
+                    else if (projectileType == tibia::ProjectileTypes::throwingKnife)
+                    {
+                        spawnObject
+                        (
+                            projectileSpriteTilePosition,
+                            projectile->getZ(),
+                            tibia::SpriteData::throwingKnife
                         );
                     }
                 }

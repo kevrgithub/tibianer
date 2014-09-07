@@ -47,7 +47,7 @@ public:
         {
             float startY = m_textPosition.y;
 
-            m_textPosition.y -= tibia::FloatingTextData::speed * timeDelta.asSeconds();
+            m_textPosition.y -= (tibia::FloatingTextData::speed / 2.0f) * timeDelta.asSeconds();
 
             m_distanceMoved += startY - m_textPosition.y;
 

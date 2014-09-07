@@ -2,4 +2,4 @@
 
 IDI_TIBIA_ICON ICON "tibia.ico"
 
-2 24 "iup.manifest"
+ID_IUP_MANIFEST 24 "iup.manifest"

@@ -49,6 +49,8 @@ unsigned int g_windowHeight = 480;
 
 bool g_windowIsFocused = true;
 
+bool g_windowIsMouseInside = false;
+
 unsigned int g_windowFrameRateLimit = 60;
 
 bool g_showMapSelect = true;
@@ -347,6 +349,11 @@ int main(int argc, char* argv[])
         g_game.updateMouseWindowPosition(&g_mainWindow);
         g_game.updateMouseTile();
 
+        if (g_windowIsMouseInside == true)
+        {
+            g_game.updateMouseCursor(&g_mainWindow);
+        }
+
         if (g_windowIsFocused == true)
         {
             g_game.handleKeyboardInput();
@@ -444,6 +451,15 @@ int main(int argc, char* argv[])
                 }
 
                 g_game.handleKeyboardEvent(event);
+            }
+
+            else if (event.type == sf::Event::MouseEntered)
+            {
+                g_windowIsMouseInside = true;
+            }
+            else if (event.type == sf::Event::MouseLeft)
+            {
+                g_windowIsMouseInside = false;
             }
 
             else if (event.type == sf::Event::MouseButtonPressed)

@@ -76,9 +76,19 @@ public:
                 m_modifyHpType = tibia::ModifyHpTypes::spellBlack;
                 break;
 
+            case tibia::ProjectileTypes::spellCacodemon:
+                m_id           = tibia::Projectiles::spellCacodemon;
+                m_modifyHpType = tibia::ModifyHpTypes::electricity;
+                break;
+
             case tibia::ProjectileTypes::spellFire:
                 m_id           = tibia::Projectiles::spellFire[m_direction];
                 m_modifyHpType = tibia::ModifyHpTypes::fire;
+                break;
+
+            case tibia::ProjectileTypes::throwingKnife:
+                m_id           = tibia::Projectiles::throwingKnife[m_direction];
+                m_modifyHpType = tibia::ModifyHpTypes::blood;
                 break;
 
             case tibia::ProjectileTypes::spear:
@@ -91,24 +101,24 @@ public:
                 m_modifyHpType = tibia::ModifyHpTypes::blood;
                 break;
 
+            case tibia::ProjectileTypes::powerBolt:
+                m_id           = tibia::Projectiles::powerBolt[m_direction];
+                m_modifyHpType = tibia::ModifyHpTypes::blood;
+                break;
+
             case tibia::ProjectileTypes::arrow:
                 m_id           = tibia::Projectiles::arrow[m_direction];
                 m_modifyHpType = tibia::ModifyHpTypes::blood;
                 break;
 
-            case tibia::ProjectileTypes::arrowFire:
-                m_id           = tibia::Projectiles::arrowFire[m_direction];
+            case tibia::ProjectileTypes::burstArrow:
+                m_id           = tibia::Projectiles::burstArrow[m_direction];
                 m_modifyHpType = tibia::ModifyHpTypes::blood;
                 break;
 
-            case tibia::ProjectileTypes::arrowPoison:
-                m_id           = tibia::Projectiles::arrowPoison[m_direction];
+            case tibia::ProjectileTypes::poisonArrow:
+                m_id           = tibia::Projectiles::poisonArrow[m_direction];
                 m_modifyHpType = tibia::ModifyHpTypes::blood;
-                break;
-
-            case tibia::ProjectileTypes::cacodemon:
-                m_id           = tibia::Projectiles::cacodemon;
-                m_modifyHpType = tibia::ModifyHpTypes::electricity;
                 break;
         }
     }

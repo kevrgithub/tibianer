@@ -1070,7 +1070,7 @@ public:
 
             if (groupableObjectIt != groupableObjects.end())
             {
-                m_count = tibia::Utility::getCountByGroupableObjectIndex(groupableObjectIt - groupableObjects.begin());
+                m_count = tibia::Utility::getCountByGroupableObjectIndex(groupableObjectIt - groupableObjects.begin(), groupableObjects.size());
                 return;
             }
         }

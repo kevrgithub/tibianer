@@ -28,12 +28,12 @@ public:
     struct Skills_t
     {
         int fistFighting     = 10;
-        int clubFighting     = 20;
-        int swordFighting    = 30;
-        int axeFighting      = 40;
-        int distanceFighting = 50;
-        int shielding        = 60;
-        int fishing          = 70;
+        int clubFighting     = 10;
+        int swordFighting    = 10;
+        int axeFighting      = 10;
+        int distanceFighting = 10;
+        int shielding        = 10;
+        int fishing          = 10;
     };
 
     Skills_t skills;
@@ -570,6 +570,8 @@ public:
 
         int groupableObjectsIndex = 0;
 
+        std::size_t groupableObjectsSize = 1;
+
         tibia::Creature::InventoryItemList::iterator groupableInventoryItemIt;
 
         if (flags.test(tibia::SpriteFlags::groupable))
@@ -605,9 +607,9 @@ public:
                                 {
                                     if (groupableObject == id)
                                     {
-                                        //std::cout << id << " is groupable with " << inventoryItemIt->id << std::endl;
-
                                         groupableInventoryItemIt = inventoryItemIt;
+
+                                        groupableObjectsSize = groupableObjects.size();
 
                                         foundGroupableObject = true;
                                         break;
@@ -643,13 +645,13 @@ public:
                     groupableInventoryItemIt->id =
                         tibia::groupedObjectsList
                             .at(groupableObjectsIndex)
-                            .at(tibia::Utility::getGroupableObjectIndexByCount(groupableInventoryItemIt->count));
+                            .at(tibia::Utility::getGroupableObjectIndexByCount(groupableInventoryItemIt->count, groupableObjectsSize));
 
                     tibia::Creature::InventoryItem_t inventoryItem;
                     inventoryItem.id =
                         tibia::groupedObjectsList
                             .at(groupableObjectsIndex)
-                            .at(tibia::Utility::getGroupableObjectIndexByCount(remainderCount));
+                            .at(tibia::Utility::getGroupableObjectIndexByCount(remainderCount, groupableObjectsSize));
                     inventoryItem.count = remainderCount;
                     inventoryItem.flags = groupableInventoryItemIt->flags;
 
@@ -663,7 +665,7 @@ public:
                 groupableInventoryItemIt->id =
                     tibia::groupedObjectsList
                         .at(groupableObjectsIndex)
-                        .at(tibia::Utility::getGroupableObjectIndexByCount(groupableInventoryItemIt->count));
+                        .at(tibia::Utility::getGroupableObjectIndexByCount(groupableInventoryItemIt->count, groupableObjectsSize));
 
                 return tibia::CreatureAddInventoryItemResult::success;
             }
