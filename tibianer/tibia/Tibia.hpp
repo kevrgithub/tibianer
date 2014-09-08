@@ -381,6 +381,7 @@ namespace tibia
             ring,
             crowbar,
             lever,
+            stepTile,
         };
     }
 
@@ -388,30 +389,32 @@ namespace tibia
     {
         std::unordered_map<std::string, int> keyTypes
         {
-            {"none",    tibia::KeyTypes::none},
-            {"silver",  tibia::KeyTypes::silver},
-            {"blue",    tibia::KeyTypes::blue},
-            {"green",   tibia::KeyTypes::green},
-            {"red",     tibia::KeyTypes::red},
-            {"white",   tibia::KeyTypes::white},
-            {"gold",    tibia::KeyTypes::gold},
-            {"ring",    tibia::KeyTypes::ring},
-            {"crowbar", tibia::KeyTypes::crowbar},
-            {"lever",   tibia::KeyTypes::lever},
+            {"none",      tibia::KeyTypes::none},
+            {"silver",    tibia::KeyTypes::silver},
+            {"blue",      tibia::KeyTypes::blue},
+            {"green",     tibia::KeyTypes::green},
+            {"red",       tibia::KeyTypes::red},
+            {"white",     tibia::KeyTypes::white},
+            {"gold",      tibia::KeyTypes::gold},
+            {"ring",      tibia::KeyTypes::ring},
+            {"crowbar",   tibia::KeyTypes::crowbar},
+            {"lever",     tibia::KeyTypes::lever},
+            {"step_tile", tibia::KeyTypes::stepTile},
         };
 
         std::unordered_map<int, std::string> keyTypesStrings
         {
-            {tibia::KeyTypes::none,    "none"},
-            {tibia::KeyTypes::silver,  "silver"},
-            {tibia::KeyTypes::blue,    "blue"},
-            {tibia::KeyTypes::green,   "green"},
-            {tibia::KeyTypes::red,     "red"},
-            {tibia::KeyTypes::white,   "white"},
-            {tibia::KeyTypes::gold,    "gold"},
-            {tibia::KeyTypes::ring,    "key ring"},
-            {tibia::KeyTypes::crowbar, "crowbar"},
-            {tibia::KeyTypes::lever,   "lever"},
+            {tibia::KeyTypes::none,     "none"},
+            {tibia::KeyTypes::silver,   "silver"},
+            {tibia::KeyTypes::blue,     "blue"},
+            {tibia::KeyTypes::green,    "green"},
+            {tibia::KeyTypes::red,      "red"},
+            {tibia::KeyTypes::white,    "white"},
+            {tibia::KeyTypes::gold,     "gold"},
+            {tibia::KeyTypes::ring,     "key ring"},
+            {tibia::KeyTypes::crowbar,  "crowbar"},
+            {tibia::KeyTypes::lever,    "lever"},
+            {tibia::KeyTypes::stepTile, "switch"},
         };
     }
 
@@ -1493,6 +1496,7 @@ namespace tibia
         {
             objects,
             creatures,
+            entities,
         };
     }
 
@@ -1511,6 +1515,8 @@ namespace tibia
             book,
             playMusic,
             playSound,
+            doScript,
+            stepTile,
         };
     }
 
@@ -1529,6 +1535,8 @@ namespace tibia
             {"book",        tibia::ObjectTypes::book},
             {"play_music",  tibia::ObjectTypes::playMusic},
             {"play_sound",  tibia::ObjectTypes::playSound},
+            {"do_script",   tibia::ObjectTypes::doScript},
+            {"step_tile",   tibia::ObjectTypes::stepTile},
         };
     }
 
@@ -2377,6 +2385,8 @@ namespace tibia
 
     namespace SpriteData
     {
+        const int entity = 3388;
+
         std::vector<int> corpse = {491, 492, 493, 494, 495, 496, 497}; // decaying
 
         std::vector<int> chair = {522, 1054, 521, 1055}; // up, right, down, left
@@ -3169,7 +3179,7 @@ namespace tibia
         std::vector<int> transparent =
         {
             1,    // pink square
-            3388, // invisible tile
+            3388, // entity object
         };
 
         // right to left, bottom then top

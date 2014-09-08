@@ -30,8 +30,8 @@ public:
         std::string bookName;
         std::string bookText;
 
-        std::string leverScript1;
-        std::string leverScript2;
+        std::string leverOnScriptFilename;
+        std::string leverOffScriptFilename;
 
         int doorKey = tibia::KeyTypes::none;
 
@@ -40,6 +40,11 @@ public:
         unsigned int teleporterZ;
 
         std::string changeMapName;
+
+        std::string doScriptFilename;
+
+        std::string stepTileOnStartTouchScriptFilename;
+        std::string stepTileOnStopTouchScriptFilename;
     };
 
     Properties_t properties;

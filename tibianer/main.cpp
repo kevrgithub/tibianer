@@ -27,6 +27,8 @@
 
 #include "pugixml.hpp"
 
+#include "lua.hpp"
+
 #include "utility.hpp"
 
 #include "tibia/Tibia.hpp"
@@ -34,7 +36,11 @@
 
 #include "resource.h"
 
+lua_State* g_luaState;
+
 tibia::Game g_game;
+
+#include "tibia/LuaFunctions.hpp"
 
 std::string g_gameTitle = "Tibianer";
 
@@ -181,6 +187,14 @@ void showMapSelect()
 
 int main(int argc, char* argv[])
 {
+    g_luaState = luaL_newstate();
+
+    luaL_openlibs(g_luaState);
+
+    tibia::LuaFunctions::registerFunctions();
+
+    g_game.setLuaState(g_luaState);
+
     IupOpen(&argc, &argv);
 
     std::cout << g_gameTitle << std::endl;
@@ -489,6 +503,8 @@ int main(int argc, char* argv[])
     }
 
     IupClose();
+
+    lua_close(g_luaState);
 
     return EXIT_SUCCESS;
 }

@@ -107,6 +107,11 @@ public:
         return &m_creatureList;
     }
 
+    tibia::Object::List* getEntityList()
+    {
+        return &m_entityList;
+    }
+
     tibia::Animation::List* getAnimationList()
     {
         return &m_animationList;
@@ -129,6 +134,11 @@ public:
         m_creatureList.push_back(creature);
     }
 
+    void addEntity(tibia::Object::Ptr entity)
+    {
+        m_entityList.push_back(entity);
+    }
+
     void addAnimation(tibia::Animation::Ptr animation)
     {
         m_animationList.push_back(animation);
@@ -149,6 +159,7 @@ private:
 
     tibia::Object::List m_objectList;
     tibia::Creature::List m_creatureList;
+    tibia::Object::List m_entityList;
     tibia::Animation::List m_animationList;
 
 }; // class Tile

@@ -20,6 +20,8 @@
 
 #include "iup.h"
 
+#include "lua.hpp"
+
 #include "tibia/Tibia.hpp"
 #include "tibia/Utility.hpp"
 #include "tibia/Tile.hpp"
@@ -293,187 +295,15 @@ public:
             return false;
         }
 
-        json_error_t scriptError;
+        int error = luaL_dofile(m_luaState, scriptFile.c_str());
 
-        json_t* scriptRoot = json_load_file(scriptFile.c_str(), 0, &scriptError);
-        if (!scriptRoot)
+        if (error != 0)
         {
-            std::cout << "Script Error: Line " << scriptError.line << ": " << scriptError.text << std::endl;
+            std::cout << "Script Lua Error: " << lua_tostring(m_luaState, -1) << std::endl;
+            lua_pop(m_luaState, 1);
+
             return false;
         }
-
-        json_t* scriptActions = json_object_get(scriptRoot, "actions");
-        if (!scriptActions)
-        {
-            std::cout << "Script Error: actions not found" << std::endl;
-            return false;
-        }
-
-        for (std::size_t i = 0; i < json_array_size(scriptActions); i++)
-        {
-            json_t* scriptAction = json_array_get(scriptActions, i);
-            if (!scriptAction)
-            {
-                std::cout << "Script Error: action not found" << std::endl;
-                return false;
-            }
-
-            json_t* scriptActionName = json_object_get(scriptAction, "name");
-            if (!scriptActionName)
-            {
-                std::cout << "Script Error: action property 'name' not found" << std::endl;
-                return false;
-            }
-
-            std::string scriptActionNameString = json_string_value(scriptActionName);
-
-            //std::cout << "Script Action: " << scriptActionNameString << std::endl;
-
-            if (scriptActionNameString == "set_tile_id")
-            {
-                json_t* scriptActionX = json_object_get(scriptAction, "x");
-                if (!scriptActionX)
-                {
-                    std::cout << "Script Error: action property 'x' not found for '" << scriptActionNameString << "'" << std::endl;
-                    return false;
-                }
-
-                int scriptActionXInteger = json_integer_value(scriptActionX);
-
-                json_t* scriptActionY = json_object_get(scriptAction, "y");
-                if (!scriptActionY)
-                {
-                    std::cout << "Script Error: action property 'y' not found for '" << scriptActionNameString << "'" << std::endl;
-                    return false;
-                }
-
-                int scriptActionYInteger = json_integer_value(scriptActionY);
-
-                json_t* scriptActionZ = json_object_get(scriptAction, "z");
-                if (!scriptActionZ)
-                {
-                    std::cout << "Script Error: action property 'z' not found for '" << scriptActionNameString << "'" << std::endl;
-                    return false;
-                }
-
-                int scriptActionZInteger = json_integer_value(scriptActionZ);
-
-                json_t* scriptActionId = json_object_get(scriptAction, "id");
-                if (!scriptActionId)
-                {
-                    std::cout << "Script Error: action property 'id' not found for '" << scriptActionNameString << "'" << std::endl;
-                    return false;
-                }
-
-                int scriptActionIdInteger = json_integer_value(scriptActionId);
-
-                //std::cout << "Script Action X: " << scriptActionXInteger << std::endl;
-                //std::cout << "Script Action Y: " << scriptActionYInteger << std::endl;
-                //std::cout << "Script Action Z: " << scriptActionZInteger << std::endl;
-                //std::cout << "Script Action ID: " << scriptActionIdInteger << std::endl;
-
-                tibia::Tile::Ptr tile = getTile
-                (
-                    sf::Vector2u
-                    (
-                        scriptActionXInteger * tibia::TILE_SIZE,
-                        scriptActionYInteger * tibia::TILE_SIZE
-                    ),
-                    scriptActionZInteger
-                );
-
-                tile->setId(scriptActionIdInteger);
-
-                tibia::SpriteFlags_t tileFlags = tibia::UMaps::spriteFlags[scriptActionIdInteger];
-
-                tile->setFlags(tileFlags);
-            }
-            else if (scriptActionNameString == "set_tile_object_id")
-            {
-                json_t* scriptActionX = json_object_get(scriptAction, "x");
-                if (!scriptActionX)
-                {
-                    std::cout << "Script Error: action property 'x' not found for '" << scriptActionNameString << "'" << std::endl;
-                    return false;
-                }
-
-                int scriptActionXInteger = json_integer_value(scriptActionX);
-
-                json_t* scriptActionY = json_object_get(scriptAction, "y");
-                if (!scriptActionY)
-                {
-                    std::cout << "Script Error: action property 'y' not found for '" << scriptActionNameString << "'" << std::endl;
-                    return false;
-                }
-
-                int scriptActionYInteger = json_integer_value(scriptActionY);
-
-                json_t* scriptActionZ = json_object_get(scriptAction, "z");
-                if (!scriptActionZ)
-                {
-                    std::cout << "Script Error: action property 'z' not found for '" << scriptActionNameString << "'" << std::endl;
-                    return false;
-                }
-
-                int scriptActionZInteger = json_integer_value(scriptActionZ);
-
-                json_t* scriptActionIdOld = json_object_get(scriptAction, "id_old");
-                if (!scriptActionIdOld)
-                {
-                    std::cout << "Script Error: action property 'id_old' not found for '" << scriptActionNameString << "'" << std::endl;
-                    return false;
-                }
-
-                int scriptActionIdOldInteger = json_integer_value(scriptActionIdOld);
-
-                json_t* scriptActionIdNew = json_object_get(scriptAction, "id_new");
-                if (!scriptActionIdNew)
-                {
-                    std::cout << "Script Error: action property 'id_new' not found for '" << scriptActionNameString << "'" << std::endl;
-                    return false;
-                }
-
-                int scriptActionIdNewInteger = json_integer_value(scriptActionIdNew);
-
-                //std::cout << "Script Action X: " << scriptActionXInteger << std::endl;
-                //std::cout << "Script Action Y: " << scriptActionYInteger << std::endl;
-                //std::cout << "Script Action Z: " << scriptActionZInteger << std::endl;
-                //std::cout << "Script Action ID Old: " << scriptActionIdOldInteger << std::endl;
-                //std::cout << "Script Action ID New: " << scriptActionIdNewInteger << std::endl;
-
-                tibia::Tile::Ptr tile = getTile
-                (
-                    sf::Vector2u
-                    (
-                        scriptActionXInteger * tibia::TILE_SIZE,
-                        scriptActionYInteger * tibia::TILE_SIZE
-                    ),
-                    scriptActionZInteger
-                );
-
-                tibia::Object::List* objectList = tile->getObjectList();
-
-                if (objectList->size() != 0)
-                {
-                    auto objectIt = std::find_if
-                    (
-                        objectList->begin(),
-                        objectList->end(),
-                        [&scriptActionIdOldInteger](tibia::Object::Ptr const& object)
-                        { 
-                            return object->getId() == scriptActionIdOldInteger;
-                        }
-                    );
-
-                    if (objectIt != objectList->end())
-                    {
-                        objectIt->get()->setId(scriptActionIdNewInteger);
-                    }
-                }
-            }
-        }
-
-        json_decref(scriptRoot);
 
         return true;
     }
@@ -1036,35 +866,7 @@ public:
 
                         if (object->getFlags().test(tibia::SpriteFlags::pickupable))
                         {
-                            int objectTileDistance = tibia::Utility::calculateTileDistance
-                            (
-                                m_player->getTileX(),
-                                m_player->getTileY(),
-                                object->getTileX(),
-                                object->getTileY()
-                            );
-
-                            if (objectTileDistance > 1)
-                            {
-                                showStatusBarText("Object is too far away.");
-                            }
-                            else
-                            {
-                                int creatureAddInventoryItemResult = m_player->addInventoryItem(object->getId(), object->getCount(), object->getFlags());
-
-                                if (creatureAddInventoryItemResult == tibia::CreatureAddInventoryItemResult::success)
-                                {
-                                    object->setIsReadyForErase(true);
-                                }
-                                else if (creatureAddInventoryItemResult == tibia::CreatureAddInventoryItemResult::inventoryItemCountMax)
-                                {
-                                    showStatusBarText("You cannot pick up any more of that object.");
-                                }
-                                else if (creatureAddInventoryItemResult == tibia::CreatureAddInventoryItemResult::inventoryItemsMax)
-                                {
-                                    showStatusBarText("Your inventory is full.");
-                                }
-                            }
+                            doCreaturePickUpObject(m_player, object);
                         }
                         else
                         {
@@ -1775,6 +1577,58 @@ public:
         return tileProperties;
     }
 
+    void setTileId(int x, int y, int z, int id)
+    {
+        tibia::Tile::Ptr tile = getTile
+        (
+            sf::Vector2u
+            (
+                x * tibia::TILE_SIZE,
+                y * tibia::TILE_SIZE
+            ),
+            z
+        );
+
+        tile->setId(id);
+
+        tibia::SpriteFlags_t tileFlags = tibia::UMaps::spriteFlags[id];
+
+        tile->setFlags(tileFlags);
+    }
+
+    void setTileObjectId(int x, int y, int z, int oldId, int newId)
+    {
+        tibia::Tile::Ptr tile = getTile
+        (
+            sf::Vector2u
+            (
+                x * tibia::TILE_SIZE,
+                y * tibia::TILE_SIZE
+            ),
+            z
+        );
+
+        tibia::Object::List* objectList = tile->getObjectList();
+
+        if (objectList->size() != 0)
+        {
+            auto objectIt = std::find_if
+            (
+                objectList->begin(),
+                objectList->end(),
+                [&oldId](tibia::Object::Ptr const& object)
+                { 
+                    return object->getId() == oldId;
+                }
+            );
+
+            if (objectIt != objectList->end())
+            {
+                objectIt->get()->setId(newId);
+            }
+        }
+    }
+
     tibia::Tile::Ptr getTile(sf::Vector2u tileCoords, int z)
     {
         int tileNumber = m_map.getTileNumberByTileCoords(tileCoords);
@@ -2282,6 +2136,21 @@ public:
         updateStepTile(fromTile);
         updateStepTile(toTile);
 
+        tibia::Object::List* entityList = toTile->getEntityList();
+
+        for (auto& entity : *entityList)
+        {
+            if (entity->getType() == tibia::ObjectTypes::doScript)
+            {
+                std::string scriptFilename = entity->properties.doScriptFilename;
+
+                if (scriptFilename.size())
+                {
+                    doScript(scriptFilename);
+                }
+            }
+        }
+
         if (teleporterObject != nullptr)
         {
             spawnAnimation(toTile->getPosition(), toZ, tibia::Animations::spellBlue);
@@ -2455,18 +2324,24 @@ public:
 
     bool doesCreatureHaveDoorKey(tibia::Creature::Ptr creature, int keyId)
     {
-        if (keyId == tibia::KeyTypes::none) // unlocked
+        // unlocked
+        if (keyId == tibia::KeyTypes::none)
         {
             return true;
         }
 
-        if (keyId == tibia::KeyTypes::lever) // lever activated
+        // script activated
+        if (keyId == tibia::KeyTypes::lever || keyId == tibia::KeyTypes::stepTile)
         {
-            showStatusBarText("This door can only be opened by a lever or switch.");
+            std::stringstream ssKeyText;
+            ssKeyText << "This door can only be opened by a " << tibia::UMaps::keyTypesStrings[keyId] << "." << std::endl;
+
+            showStatusBarText(ssKeyText.str());
             return false;
         }
 
-        if (creature->hasInventoryItem(tibia::SpriteData::keyRing) == true) // key ring opens all doors
+        // key ring opens all doors
+        if (creature->hasInventoryItem(tibia::SpriteData::keyRing) == true)
         {
             return true;
         }
@@ -3137,13 +3012,13 @@ public:
             {
                 object->setId(tibia::SpriteData::lever[1]);
 
-                doScript(object->properties.leverScript1);
+                doScript(object->properties.leverOnScriptFilename);
             }
             else if (object->getId() == tibia::SpriteData::lever[1])
             {
                 object->setId(tibia::SpriteData::lever[0]);
 
-                doScript(object->properties.leverScript2);
+                doScript(object->properties.leverOffScriptFilename);
             }
 
             return true;
@@ -3482,9 +3357,50 @@ public:
         return false;
     }
 
+    void doCreaturePickUpObject(tibia::Creature::Ptr creature, tibia::Object::Ptr object)
+    {
+        int objectTileDistance = tibia::Utility::calculateTileDistance
+        (
+            creature->getTileX(),
+            creature->getTileY(),
+            object->getTileX(),
+            object->getTileY()
+        );
+
+        if (objectTileDistance > 1)
+        {
+            showStatusBarText("Object is too far away to pick up.");
+        }
+        else
+        {
+            int creatureAddInventoryItemResult = creature->addInventoryItem(object->getId(), object->getCount(), object->getFlags());
+
+            if (creatureAddInventoryItemResult == tibia::CreatureAddInventoryItemResult::success)
+            {
+                object->setIsReadyForErase(true);
+            }
+            else if (creatureAddInventoryItemResult == tibia::CreatureAddInventoryItemResult::inventoryItemCountMax)
+            {
+                if (creature->isPlayer() == true)
+                {
+                    showStatusBarText("You cannot pick up any more of that object.");
+                }
+            }
+            else if (creatureAddInventoryItemResult == tibia::CreatureAddInventoryItemResult::inventoryItemsMax)
+            {
+                if (creature->isPlayer() == true)
+                {
+                    showStatusBarText("Your inventory is full.");
+                }
+            }
+        }
+    }
+
     void doCreatureDropInventoryItem(tibia::Creature::Ptr creature, tibia::Creature::InventoryItemList::iterator& inventoryItemIt)
     {
         tibia::Object::Ptr droppedObject = spawnObject(creature->getTilePosition(), creature->getZ(), inventoryItemIt->id);
+
+        updateStepTile(getTile(creature->getTilePosition(), creature->getZ()));
 
         if (inventoryItemIt->count > 1)
         {
@@ -3990,6 +3906,23 @@ public:
             {
                 tile->setId(tibia::SpriteData::stepTileStone[1]);
             }
+
+            tibia::Object::List* entityList = tile->getEntityList();
+
+            for (auto& entity : *entityList)
+            {
+                if (entity->getType() == tibia::ObjectTypes::stepTile)
+                {
+                    std::string scriptFilename = entity->properties.stepTileOnStartTouchScriptFilename;
+
+                    if (scriptFilename.size())
+                    {
+                        doScript(scriptFilename);
+                    }
+
+                    break;
+                }
+            }
         }
         else
         {
@@ -4003,6 +3936,23 @@ public:
             else if (tile->getId() == tibia::SpriteData::stepTileStone[1])
             {
                 tile->setId(tibia::SpriteData::stepTileStone[0]);
+            }
+
+            tibia::Object::List* entityList = tile->getEntityList();
+
+            for (auto& entity : *entityList)
+            {
+                if (entity->getType() == tibia::ObjectTypes::stepTile)
+                {
+                    std::string scriptFilename = entity->properties.stepTileOnStopTouchScriptFilename;
+
+                    if (scriptFilename.size())
+                    {
+                        doScript(scriptFilename);
+                    }
+
+                    break;
+                }
             }
         }
     }
@@ -4867,7 +4817,7 @@ public:
                     continue;
                 }
 
-                updateStepTile(tile);
+                //updateStepTile(tile);
                 updateTileHeight(tile);
                 updateTileGroupedObjects(tile);
                 updateTileTransformObjects(tile);
@@ -4957,6 +4907,9 @@ public:
                         {
                             creatureIt = tileCreatures->erase(creatureIt);
                             creatureIt--;
+
+                            updateStepTile(getTile(creature->getTilePosition(), creature->getZ()));
+
                             continue;
                         }
                     }
@@ -5009,6 +4962,9 @@ public:
                         {
                             objectIt = tileObjects->erase(objectIt);
                             objectIt--;
+
+                            updateStepTile(getTile(object->getTilePosition(), object->getZ()));
+
                             continue;
                         }
 
@@ -6887,7 +6843,14 @@ public:
         m_mainWindow = window;
     }
 
+    void setLuaState(lua_State* L)
+    {
+        m_luaState = L;
+    }
+
 private:
+
+    lua_State* m_luaState;
 
     sf::RenderWindow* m_mainWindow;
 

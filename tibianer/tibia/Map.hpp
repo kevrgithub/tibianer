@@ -379,17 +379,17 @@ public:
                             }
                             else if (objectType == tibia::ObjectTypes::lever)
                             {
-                                if (docMapObjectPropertyName == "script1")
+                                if (docMapObjectPropertyName == "scriptOn")
                                 {
-                                    std::string objectLeverScript1 = docMapObjectProperty.attribute("value").value();
+                                    std::string objectLeverScriptOn = docMapObjectProperty.attribute("value").value();
 
-                                    object->properties.leverScript1 = objectLeverScript1;
+                                    object->properties.leverOnScriptFilename = objectLeverScriptOn;
                                 }
-                                if (docMapObjectPropertyName == "script2")
+                                if (docMapObjectPropertyName == "scriptOff")
                                 {
-                                    std::string objectLeverScript2 = docMapObjectProperty.attribute("value").value();
+                                    std::string objectLeverScriptOff = docMapObjectProperty.attribute("value").value();
 
-                                    object->properties.leverScript2 = objectLeverScript2;
+                                    object->properties.leverOffScriptFilename = objectLeverScriptOff;
                                 }
                             }
                             else if (objectType == tibia::ObjectTypes::door)
@@ -473,6 +473,43 @@ public:
                     }
 
                     tile->addCreature(creature);
+                }
+                else if (docMapObjectLayerType == tibia::ObjectLayerTypes::entities)
+                {
+                    tibia::Object::Ptr object = std::make_shared<tibia::Object>(sf::Vector2u(docMapObjectTileX, docMapObjectTileY), docMapObjectZ, docMapObjectId);
+
+                    object->setType(objectType);
+
+                    auto docMapObjectProperties = docMapObject.child("properties");
+
+                    if (docMapObjectProperties != NULL)
+                    {
+                        for (auto docMapObjectProperty : docMapObjectProperties.children("property"))
+                        {
+                            std::string docMapObjectPropertyName = docMapObjectProperty.attribute("name").value();
+
+                            if (objectType == tibia::ObjectTypes::doScript)
+                            {
+                                if (docMapObjectPropertyName == "script")
+                                {
+                                    object->properties.doScriptFilename = docMapObjectProperty.attribute("value").value();
+                                }
+                            }
+                            else if (objectType == tibia::ObjectTypes::stepTile)
+                            {
+                                if (docMapObjectPropertyName == "scriptOnStartTouch")
+                                {
+                                    object->properties.stepTileOnStartTouchScriptFilename = docMapObjectProperty.attribute("value").value();
+                                }
+                                else if (docMapObjectPropertyName == "scriptOnStopTouch")
+                                {
+                                    object->properties.stepTileOnStopTouchScriptFilename = docMapObjectProperty.attribute("value").value();
+                                }
+                            }
+                        }
+                    }
+
+                    tile->addEntity(object);
                 }
             }
         }
