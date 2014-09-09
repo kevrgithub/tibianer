@@ -24,6 +24,8 @@ public:
 
     struct Properties_t
     {
+        std::string onInteractScriptFilename;
+
         std::string signName;
         std::string signText;
 
@@ -171,6 +173,186 @@ public:
                 (
                     m_sprite[0].getPosition().x - tibia::TILE_SIZE,
                     m_sprite[0].getPosition().y
+                )
+            );
+
+            m_sprite[2].setPosition
+            (
+                sf::Vector2f
+                (
+                    m_sprite[0].getPosition().x - tibia::TILE_SIZE,
+                    m_sprite[0].getPosition().y - tibia::TILE_SIZE
+                )
+            );
+
+            m_shouldDrawExtraSprite[1] = true;
+            m_shouldDrawExtraSprite[2] = true;
+
+            return;
+        }
+
+        // long painting horizontal
+        if (m_id == 3691)
+        {
+            m_sprite[1].setId(m_id - 1);
+            m_sprite[2].setId(m_id - 2);
+
+            m_sprite[1].setPosition
+            (
+                sf::Vector2f
+                (
+                    m_sprite[0].getPosition().x - tibia::TILE_SIZE,
+                    m_sprite[0].getPosition().y
+                )
+            );
+
+            m_sprite[2].setPosition
+            (
+                sf::Vector2f
+                (
+                    m_sprite[0].getPosition().x - (tibia::TILE_SIZE * 2),
+                    m_sprite[0].getPosition().y
+                )
+            );
+
+            m_shouldDrawExtraSprite[1] = true;
+            m_shouldDrawExtraSprite[2] = true;
+
+            return;
+        }
+
+        // long painting vertical
+        if (m_id == 3688)
+        {
+            m_sprite[1].setId(m_id - 1);
+            m_sprite[2].setId(m_id - 2);
+
+            m_sprite[1].setPosition
+            (
+                sf::Vector2f
+                (
+                    m_sprite[0].getPosition().x,
+                    m_sprite[0].getPosition().y - tibia::TILE_SIZE
+                )
+            );
+
+            m_sprite[2].setPosition
+            (
+                sf::Vector2f
+                (
+                    m_sprite[0].getPosition().x,
+                    m_sprite[0].getPosition().y - (tibia::TILE_SIZE * 2)
+                )
+            );
+
+            m_shouldDrawExtraSprite[1] = true;
+            m_shouldDrawExtraSprite[2] = true;
+
+            return;
+        }
+
+        // metal gate horizontal
+        if (m_id == 3694)
+        {
+            m_sprite[1].setId(m_id - 1);
+            m_sprite[2].setId(m_id - 2);
+
+            m_sprite[1].setPosition
+            (
+                sf::Vector2f
+                (
+                    m_sprite[0].getPosition().x - tibia::TILE_SIZE,
+                    m_sprite[0].getPosition().y
+                )
+            );
+
+            m_sprite[2].setPosition
+            (
+                sf::Vector2f
+                (
+                    m_sprite[0].getPosition().x - tibia::TILE_SIZE,
+                    m_sprite[0].getPosition().y - tibia::TILE_SIZE
+                )
+            );
+
+            m_shouldDrawExtraSprite[1] = true;
+            m_shouldDrawExtraSprite[2] = true;
+
+            return;
+        }
+
+        // metal gate vertical
+        if (m_id == 3697)
+        {
+            m_sprite[1].setId(m_id - 1);
+            m_sprite[2].setId(m_id - 2);
+
+            m_sprite[1].setPosition
+            (
+                sf::Vector2f
+                (
+                    m_sprite[0].getPosition().x,
+                    m_sprite[0].getPosition().y - tibia::TILE_SIZE 
+                )
+            );
+
+            m_sprite[2].setPosition
+            (
+                sf::Vector2f
+                (
+                    m_sprite[0].getPosition().x - tibia::TILE_SIZE,
+                    m_sprite[0].getPosition().y - tibia::TILE_SIZE
+                )
+            );
+
+            m_shouldDrawExtraSprite[1] = true;
+            m_shouldDrawExtraSprite[2] = true;
+
+            return;
+        }
+
+        // metal fence horizontal
+        if (m_id == 3700)
+        {
+            m_sprite[1].setId(m_id - 1);
+            m_sprite[2].setId(m_id - 2);
+
+            m_sprite[1].setPosition
+            (
+                sf::Vector2f
+                (
+                    m_sprite[0].getPosition().x - tibia::TILE_SIZE,
+                    m_sprite[0].getPosition().y
+                )
+            );
+
+            m_sprite[2].setPosition
+            (
+                sf::Vector2f
+                (
+                    m_sprite[0].getPosition().x - tibia::TILE_SIZE,
+                    m_sprite[0].getPosition().y - tibia::TILE_SIZE
+                )
+            );
+
+            m_shouldDrawExtraSprite[1] = true;
+            m_shouldDrawExtraSprite[2] = true;
+
+            return;
+        }
+
+        // metal fence vertical
+        if (m_id == 3703)
+        {
+            m_sprite[1].setId(m_id - 1);
+            m_sprite[2].setId(m_id - 2);
+
+            m_sprite[1].setPosition
+            (
+                sf::Vector2f
+                (
+                    m_sprite[0].getPosition().x,
+                    m_sprite[0].getPosition().y - tibia::TILE_SIZE 
                 )
             );
 

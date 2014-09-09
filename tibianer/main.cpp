@@ -42,7 +42,7 @@ tibia::Game g_game;
 
 #include "tibia/LuaFunctions.hpp"
 
-std::string g_gameTitle = "Tibianer";
+std::string g_gameTitle = "Tibianer (WORK IN PROGRESS)";
 
 std::string g_configFile = "cfg/config.cfg";
 

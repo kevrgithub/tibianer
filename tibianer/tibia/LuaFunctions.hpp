@@ -38,10 +38,53 @@ namespace LuaFunctions
         return 0;
     }
 
+    int doPlayerAddInventoryItem(lua_State* L)
+    {
+        const int id    = luaL_checkinteger(L, 1);
+        const int count = luaL_checkinteger(L, 2);
+
+        g_game.doPlayerAddInventoryItem(id, count);
+
+        return 0;
+    }
+
+    int doesPlayerHaveInventoryItem(lua_State* L)
+    {
+        const int id = luaL_checkinteger(L, 1);
+
+        bool result = g_game.getPlayer()->hasInventoryItem(id);
+
+        lua_pushinteger(L, result);
+
+        return 1;
+    }
+
+    int showStatusBarText(lua_State* L)
+    {
+        const char* text = luaL_checkstring(L, 1);
+
+        g_game.showStatusBarText(text);
+
+        return 0;
+    }
+
+    int doChatLogWindowAddText(lua_State* L)
+    {
+        const char* text = luaL_checkstring(L, 1);
+
+        g_game.doChatLogWindowAddText(text, sf::Color::Black);
+
+        return 0;
+    }
+
     void registerFunctions()
     {
-        lua_register(g_luaState, "setTileId",       setTileId);
+        lua_register(g_luaState, "setTileId", setTileId);
         lua_register(g_luaState, "setTileObjectId", setTileObjectId);
+        lua_register(g_luaState, "doPlayerAddInventoryItem", doPlayerAddInventoryItem);
+        lua_register(g_luaState, "doesPlayerHaveInventoryItem", doesPlayerHaveInventoryItem);
+        lua_register(g_luaState, "showStatusBarText", showStatusBarText);
+        lua_register(g_luaState, "doChatLogWindowAddText", doChatLogWindowAddText);
     }
 } // namespace LuaFunctions
 

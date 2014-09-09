@@ -2395,6 +2395,15 @@ public:
             return false;
         }
 
+        bool objectOnInteractScript = false;
+
+        if (object->properties.onInteractScriptFilename.size())
+        {
+            doScript(object->properties.onInteractScriptFilename);
+
+            objectOnInteractScript = true;
+        }
+
         // signs
         if (object->getType() == tibia::ObjectTypes::sign)
         {
@@ -3354,6 +3363,11 @@ public:
             return true;
         }
 
+        if (objectOnInteractScript == true)
+        {
+            return true;
+        }
+
         return false;
     }
 
@@ -3438,6 +3452,13 @@ public:
 
             inventoryItemIt--;
         }
+    }
+
+    void doPlayerAddInventoryItem(int id, int count)
+    {
+        tibia::SpriteFlags_t spriteFlags = tibia::UMaps::spriteFlags[id];
+
+        m_player->addInventoryItem(id, count, spriteFlags);
     }
 
     void doCreatureSpeech(tibia::Creature::Ptr creature, const std::string& text, int speechType = tibia::SpeechTypes::say)

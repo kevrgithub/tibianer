@@ -343,6 +343,11 @@ public:
                                 objectCount = docMapObjectProperty.attribute("value").as_int();
                             }
 
+                            if (docMapObjectPropertyName == "script_on_interact")
+                            {
+                                object->properties.onInteractScriptFilename = docMapObjectProperty.attribute("value").value();
+                            }
+
                             if (objectType == tibia::ObjectTypes::sign)
                             {
                                 if (docMapObjectPropertyName == "name")
@@ -379,13 +384,13 @@ public:
                             }
                             else if (objectType == tibia::ObjectTypes::lever)
                             {
-                                if (docMapObjectPropertyName == "scriptOn")
+                                if (docMapObjectPropertyName == "script_on")
                                 {
                                     std::string objectLeverScriptOn = docMapObjectProperty.attribute("value").value();
 
                                     object->properties.leverOnScriptFilename = objectLeverScriptOn;
                                 }
-                                if (docMapObjectPropertyName == "scriptOff")
+                                if (docMapObjectPropertyName == "script_off")
                                 {
                                     std::string objectLeverScriptOff = docMapObjectProperty.attribute("value").value();
 
@@ -497,11 +502,11 @@ public:
                             }
                             else if (objectType == tibia::ObjectTypes::stepTile)
                             {
-                                if (docMapObjectPropertyName == "scriptOnStartTouch")
+                                if (docMapObjectPropertyName == "script_on_start_touch")
                                 {
                                     object->properties.stepTileOnStartTouchScriptFilename = docMapObjectProperty.attribute("value").value();
                                 }
-                                else if (docMapObjectPropertyName == "scriptOnStopTouch")
+                                else if (docMapObjectPropertyName == "script_on_stop_touch")
                                 {
                                     object->properties.stepTileOnStopTouchScriptFilename = docMapObjectProperty.attribute("value").value();
                                 }
