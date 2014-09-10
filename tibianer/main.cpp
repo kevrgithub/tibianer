@@ -21,13 +21,13 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 
-#include "iup.h"
-
-#include "jansson.h"
+#include "stlastar.h"
 
 #include "pugixml.hpp"
 
 #include "lua.hpp"
+
+#include "iup.h"
 
 #include "utility.hpp"
 

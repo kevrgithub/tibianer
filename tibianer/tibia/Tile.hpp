@@ -144,6 +144,92 @@ public:
         m_animationList.push_back(animation);
     }
 
+    Properties_t getProperties()
+    {
+        Properties_t tileProperties;
+
+        if (m_flags.test(tibia::SpriteFlags::solid))
+        {
+            tileProperties.isSolid = true;
+        }
+
+        if (m_flags.test(tibia::SpriteFlags::moveAbove))
+        {
+            tileProperties.isMoveAbove = true;
+        }
+
+        if (m_flags.test(tibia::SpriteFlags::moveBelow))
+        {
+            tileProperties.isMoveBelow = true;
+        }
+
+        tibia::Object::List* objectList = this->getObjectList();
+
+        for (auto& object : *objectList)
+        {
+            tibia::SpriteFlags_t objectFlags = object->getFlags();
+
+            if (objectFlags.test(tibia::SpriteFlags::solid))
+            {
+                tileProperties.hasSolidObject = true;
+            }
+
+            if (objectFlags.test(tibia::SpriteFlags::blockProjectiles))
+            {
+                tileProperties.hasBlockProjectilesObject = true;
+            }
+
+            if (objectFlags.test(tibia::SpriteFlags::hasHeight))
+            {
+                tileProperties.hasHasHeightObject = true;
+            }
+
+            if (objectFlags.test(tibia::SpriteFlags::moveAbove))
+            {
+                tileProperties.hasMoveAboveObject = true;
+            }
+
+            if (objectFlags.test(tibia::SpriteFlags::moveBelow))
+            {
+                tileProperties.hasMoveBelowObject = true;
+            }
+
+            if (objectFlags.test(tibia::SpriteFlags::modifyHpOnTouch))
+            {
+                tileProperties.hasModifyHpOnTouchObject = true;
+            }
+
+            if (object->getType() == tibia::ObjectTypes::teleporter)
+            {
+                tileProperties.hasTeleporterObject = true;
+            }
+
+            int objectId = object->getId();
+
+            if (objectId == tibia::SpriteData::mountainRampLeft)
+            {
+                tileProperties.hasMountainRampLeftObject = true;
+            }
+            else if (objectId == tibia::SpriteData::mountainRampRight)
+            {
+                tileProperties.hasMountainRampRightObject = true;
+            }
+        }
+
+        tibia::Creature::List* creatureList = this->getCreatureList();
+
+        for (auto& creature : *creatureList)
+        {
+            if (creature->isDead() == false && creature->isSleeping() == false)
+            {
+                tileProperties.hasSolidCreature = true;
+                break; // break for now since only checking for one thing with creatures
+            }
+        }
+
+        return tileProperties;
+    }
+
 private:
 
     int m_number;

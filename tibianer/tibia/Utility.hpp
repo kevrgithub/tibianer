@@ -183,7 +183,8 @@ namespace tibia
         return vec;
     }
 
-    int getDirectionByVector(sf::Vector2f vec)
+    template <class T>
+    int getDirectionByVector(T vec)
     {
         int direction = tibia::Directions::null;
 

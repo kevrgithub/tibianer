@@ -18,15 +18,18 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 
-#include "iup.h"
+#include "stlastar.h"
 
 #include "lua.hpp"
+
+#include "iup.h"
 
 #include "tibia/Tibia.hpp"
 #include "tibia/Utility.hpp"
 #include "tibia/Tile.hpp"
 #include "tibia/TileMap.hpp"
 #include "tibia/Map.hpp"
+#include "tibia/MapSearchNode.hpp"
 #include "tibia/BitmapFont.hpp"
 #include "tibia/BitmapFontText.hpp"
 #include "tibia/Sound.hpp"
@@ -1392,6 +1395,12 @@ public:
                 continue;
             }
 
+            if (creature->getZ() == m_player->getZ())
+            {
+                doCreatureWalkToTile(creature, getPlayerTile());
+            }
+
+/*
             int randomShouldMove = utility::getRandomNumber(1, 100);
 
             if (randomShouldMove > 50)
@@ -1400,6 +1409,7 @@ public:
 
                 handleCreatureMovement(creature, direction);
             }
+
 
             if (creature->getType() == tibia::CreatureTypes::cacodemon && creature->getTeam() == tibia::Teams::evil)
             {
@@ -1438,11 +1448,116 @@ public:
                     }
                 }
             }
+*/
 
             creature->setIsLogicReady(false);
 
             creature->getClockLogic()->restart();
         }
+    }
+
+    bool doCreatureWalkToTile(tibia::Creature::Ptr creature, tibia::Tile::Ptr toTile)
+    {
+        bool result = false;
+
+        tibia::tileMap_MapSearchNode = &m_map.tileMapTiles[creature->getZ()];
+
+        AStarSearch<tibia::MapSearchNode> aStarSearch;
+
+        MapSearchNode nodeStart;
+        nodeStart.x = creature->getX();
+        nodeStart.y = creature->getY();
+
+        MapSearchNode nodeEnd;
+        nodeEnd.x = toTile->getPosition().x / tibia::TILE_SIZE;
+        nodeEnd.y = toTile->getPosition().y / tibia::TILE_SIZE;
+
+        //std::cout << "creature x: " << creature->getX() << std::endl;
+        //std::cout << "creature y: " << creature->getY() << std::endl;
+
+        //std::cout << "node start x: " << nodeStart.x << std::endl;
+        //std::cout << "node start y: " << nodeStart.y << std::endl;
+
+        //std::cout << "node end x: " << nodeEnd.x << std::endl;
+        //std::cout << "node end y: " << nodeEnd.y << std::endl;
+
+        aStarSearch.SetStartAndGoalStates(nodeStart, nodeEnd);
+
+        unsigned int searchState;
+        unsigned int searchSteps = 0;
+
+        do
+        {
+            searchState = aStarSearch.SearchStep();
+
+            searchSteps++;
+        }
+        while (searchState == AStarSearch<MapSearchNode>::SEARCH_STATE_SEARCHING);
+
+        if (searchState == AStarSearch<MapSearchNode>::SEARCH_STATE_SUCCEEDED)
+        {
+            MapSearchNode* startNode = aStarSearch.GetSolutionStart();
+
+            //std::cout << "node start x: " << startNode->x << std::endl;
+            //std::cout << "node start y: " << startNode->y << std::endl;
+
+            tibia::Sprite redSquare;
+            redSquare.setId(441);
+
+            redSquare.setPosition(sf::Vector2f(startNode->x * tibia::TILE_SIZE, startNode->y * tibia::TILE_SIZE));
+            m_gameWindowLayer.draw(redSquare);
+
+            MapSearchNode* nextNode = aStarSearch.GetSolutionNext();
+
+            if (nextNode)
+            {
+                redSquare.setPosition(sf::Vector2f(nextNode->x * tibia::TILE_SIZE, nextNode->y * tibia::TILE_SIZE));
+                m_gameWindowLayer.draw(redSquare);
+
+                int direction = tibia::Utility::getDirectionByVector
+                (
+                    sf::Vector2i
+                    (
+                        nextNode->x - creature->getX(),
+                        nextNode->y - creature->getY()
+                    )
+                );
+
+                handleCreatureMovement(creature, direction);
+
+                //std::cout << "node next x: " << nextNode->x << std::endl;
+                //std::cout << "node next y: " << nextNode->y << std::endl;
+
+                //std::cout << "direction: " << direction << std::endl;
+            }
+
+            for (;;)
+            {
+                MapSearchNode* moreNode = aStarSearch.GetSolutionNext();
+
+                if (!moreNode)
+                {
+                    break;
+                }
+
+                redSquare.setPosition(sf::Vector2f(moreNode->x * tibia::TILE_SIZE, moreNode->y * tibia::TILE_SIZE));
+                m_gameWindowLayer.draw(redSquare);
+            }
+
+            result = true;
+
+            aStarSearch.FreeSolutionNodes();
+        }
+        else if (searchState == AStarSearch<MapSearchNode>::SEARCH_STATE_FAILED)
+        {
+            result = false;
+
+            //std::cout << "astar search failed" << std::endl;
+        }
+
+        aStarSearch.EnsureMemoryFreed();
+
+        return result;
     }
 
     bool doPlayerInteractWithPlayerTileObjects()
@@ -1497,84 +1612,7 @@ public:
 
     tibia::Tile::Properties_t getTileProperties(tibia::Tile::Ptr tile)
     {
-        tibia::Tile::Properties_t tileProperties;
-
-        if (tile->getFlags().test(tibia::SpriteFlags::solid))
-        {
-            tileProperties.isSolid = true;
-        }
-
-        if (tile->getFlags().test(tibia::SpriteFlags::moveAbove))
-        {
-            tileProperties.isMoveAbove = true;
-        }
-
-        if (tile->getFlags().test(tibia::SpriteFlags::moveBelow))
-        {
-            tileProperties.isMoveBelow = true;
-        }
-
-        tibia::Object::List* objectList = tile->getObjectList();
-
-        for (auto& object : *objectList)
-        {
-            if (object->getFlags().test(tibia::SpriteFlags::solid))
-            {
-                tileProperties.hasSolidObject = true;
-            }
-
-            if (object->getFlags().test(tibia::SpriteFlags::blockProjectiles))
-            {
-                tileProperties.hasBlockProjectilesObject = true;
-            }
-
-            if (object->getFlags().test(tibia::SpriteFlags::hasHeight))
-            {
-                tileProperties.hasHasHeightObject = true;
-            }
-
-            if (object->getFlags().test(tibia::SpriteFlags::moveAbove))
-            {
-                tileProperties.hasMoveAboveObject = true;
-            }
-
-            if (object->getFlags().test(tibia::SpriteFlags::moveBelow))
-            {
-                tileProperties.hasMoveBelowObject = true;
-            }
-
-            if (object->getFlags().test(tibia::SpriteFlags::modifyHpOnTouch))
-            {
-                tileProperties.hasModifyHpOnTouchObject = true;
-            }
-
-            if (object->getType() == tibia::ObjectTypes::teleporter)
-            {
-                tileProperties.hasTeleporterObject = true;
-            }
-
-            if (object->getId() == tibia::SpriteData::mountainRampLeft)
-            {
-                tileProperties.hasMountainRampLeftObject = true;
-            }
-            else if (object->getId() == tibia::SpriteData::mountainRampRight)
-            {
-                tileProperties.hasMountainRampRightObject = true;
-            }
-        }
-
-        tibia::Creature::List* creatureList = tile->getCreatureList();
-
-        for (auto& creature : *creatureList)
-        {
-            if (creature->isDead() == false && creature->isSleeping() == false)
-            {
-                tileProperties.hasSolidCreature = true;
-                break; // break for now since only checking for one thing with creatures
-            }
-        }
-
-        return tileProperties;
+        return tile->getProperties();
     }
 
     void setTileId(int x, int y, int z, int id)
