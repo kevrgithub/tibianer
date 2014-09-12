@@ -66,8 +66,8 @@ public:
         m_width  = docMap.attribute("width").as_uint();
         m_height = docMap.attribute("height").as_uint();
 
-        m_tileWidth  = m_width * tibia::TILE_SIZE;
-        m_tileHeight = m_width * tibia::TILE_SIZE;
+        m_tileWidth  = m_width  * tibia::TILE_SIZE;
+        m_tileHeight = m_height * tibia::TILE_SIZE;
 
         m_size = m_width * m_height;
 

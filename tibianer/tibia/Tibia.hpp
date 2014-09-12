@@ -691,7 +691,7 @@ namespace tibia
         namespace ChatLogWindow
         {
             int x = 11;
-            int y = 363;
+            int y = 365;
 
             int width  = 496;
             int height = 70;
@@ -713,7 +713,7 @@ namespace tibia
                 namespace ScrollDown
                 {
                     int x = 471;
-                    int y = 401;
+                    int y = 403;
 
                     int width  = 32;
                     int height = 32;
@@ -726,7 +726,7 @@ namespace tibia
                 namespace ScrollUp
                 {
                     int x = 471;
-                    int y = 363;
+                    int y = 365;
 
                     int width  = 32;
                     int height = 32;
@@ -734,6 +734,35 @@ namespace tibia
                     sf::Vector2f position(x, y);
 
                     sf::IntRect rect(x, y, width, height);
+                }
+            }
+        }
+
+        namespace ChatInputWindow
+        {
+            int x = 11;
+            int y = 447;
+
+            int width  = 496;
+            int height = 22;
+
+            sf::Vector2f position(x, y);
+
+            sf::IntRect rect(x, y, width, height);
+
+            namespace Text
+            {
+                int x = 13;
+                int y = 451;
+
+                sf::Vector2f position(x, y);
+
+                int offsetX = 2;
+
+                namespace Caret
+                {
+                    int width  = 2;
+                    int height = 16;
                 }
             }
         }

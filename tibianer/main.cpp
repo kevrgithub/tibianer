@@ -380,6 +380,8 @@ int main(int argc, char* argv[])
 
         g_game.drawChatLogWindow(&g_mainWindow);
 
+        g_game.drawChatInputText(&g_mainWindow);
+
         g_game.drawTabButtons(&g_mainWindow);
 
         if (g_game.gui.topStatus == true)
@@ -443,6 +445,11 @@ int main(int argc, char* argv[])
                 // aspect ratio correction
                 //g_mainWindow.setView(calculateMainWindowView(g_mainWindow.getSize(), sf::Vector2u(g_windowWidth, g_windowHeight)));
             //}
+
+            else if (event.type == sf::Event::TextEntered)
+            {
+                g_game.handleTextEnteredEvent(event);
+            }
 
             else if (event.type == sf::Event::KeyPressed)
             {

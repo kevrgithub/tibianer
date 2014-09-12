@@ -74,6 +74,12 @@ public:
 
         int combatButtonsState = tibia::GuiData::CombatButtons::State::normal;
 
+        bool isInventorySplit = false;
+
+        bool isChatInputWindowActive = false;
+
+        bool isChatInputWindowTextCaretVisible = false;
+
         bool topMiniMap   = true;
         bool topStatus    = false;
         bool topEquipment = false;
@@ -81,8 +87,6 @@ public:
         bool bottomInventory  = true;
         bool bottomSkills     = false;
         bool bottomCombat     = false;
-
-        bool isInventorySplit = false;
 
         bool chatLogWindowButtonScrollUp   = false;
         bool chatLogWindowButtonScrollDown = false;
@@ -115,6 +119,19 @@ public:
 
         m_chatLogWindow.create(tibia::GuiData::ChatLogWindow::width, tibia::GuiData::ChatLogWindow::height);
         m_chatLogWindowView.reset(sf::FloatRect(0, 0, tibia::GuiData::ChatLogWindow::width, tibia::GuiData::ChatLogWindow::height));
+
+        m_chatInputWindowText.setPosition(tibia::GuiData::ChatInputWindow::Text::position);
+
+        m_chatInputWindowTextCaret.setSize
+        (
+            sf::Vector2f
+            (
+                tibia::GuiData::ChatInputWindow::Text::Caret::width,
+                tibia::GuiData::ChatInputWindow::Text::Caret::height
+            )
+        );
+
+        m_chatInputWindowTextCaret.setFillColor(sf::Color::Black);
 
         m_inventorySlotsWindow.create(tibia::GuiData::InventoryWindow::Slots::Window::width, tibia::GuiData::InventoryWindow::Slots::Window::height);
         m_inventorySlotsWindowView.reset(sf::FloatRect(0, 0, tibia::GuiData::InventoryWindow::Slots::Window::width, tibia::GuiData::InventoryWindow::Slots::Window::height));
@@ -356,6 +373,10 @@ public:
             return false;
         }
 
+        m_chatInputWindowText.setFont(m_fontSystem);
+        m_chatInputWindowText.setCharacterSize(tibia::Fonts::System::characterSize);
+        m_chatInputWindowText.setColor(sf::Color::Black);
+
         return true;
     }
 
@@ -411,37 +432,155 @@ public:
         //
     }
 
+    void handleTextEnteredEvent(sf::Event event)
+    {
+        if (this->gui.isChatInputWindowActive == false)
+        {
+            return;
+        }
+
+        // skip non ascii characters and invalid ascii characters
+        if (event.text.unicode < 32 || event.text.unicode > 127)
+        {
+            return;
+        }
+
+        sf::String inputText = m_chatInputWindowText.getString();
+
+        inputText.insert(inputText.getSize(), event.text.unicode);
+
+        m_chatInputWindowText.setString(inputText);
+    }
+
     void handleKeyboardEvent(sf::Event event)
     {
+        if (this->gui.isChatInputWindowActive == true)
+        {
+            sf::String inputText = m_chatInputWindowText.getString();
+
+            if (event.key.code == sf::Keyboard::Key::Return)
+            {
+                if (inputText.getSize() != 0)
+                {
+                    int speechType = tibia::SpeechTypes::say;
+
+                    std::string text = inputText.toAnsiString();
+
+                    if (text == "/cls")
+                    {
+                        m_chatLogWindowTextList.clear();
+
+                        m_chatInputWindowText.setString("");
+                        return;
+                    }
+
+                    if (text.size() > 1)
+                    {
+                        if (text.substr(0, 2) == "#y")
+                        {
+                            text.erase(0, 2);
+
+                            speechType = tibia::SpeechTypes::yell;
+                        }
+                        else if (text.substr(0, 2) == "#w")
+                        {
+                            text.erase(0, 2);
+
+                            speechType = tibia::SpeechTypes::whisper;
+                        }
+                    }
+
+                    // trim leading and trailing spaces
+                    boost::trim_left(text);
+                    boost::trim_right(text);
+
+                    doCreatureSpeech(m_player, text, speechType);
+
+                    m_chatInputWindowText.setString("");
+                }
+
+                this->gui.isChatInputWindowActive = false;
+                this->gui.isChatInputWindowTextCaretVisible = false;
+            }
+            else if (event.key.code == sf::Keyboard::Key::BackSpace)
+            {
+                if (inputText.getSize() != 0)
+                {
+                    inputText.erase(inputText.getSize() - 1);
+
+                    m_chatInputWindowText.setString(inputText);
+                }
+            }
+            else if (event.key.code == sf::Keyboard::Key::Delete)
+            {
+                m_chatInputWindowText.setString("");
+            }
+
+            if (event.key.control == true)
+            {
+                if (event.key.code == sf::Keyboard::Key::X)
+                {
+                    Ihandle* clipboard = IupClipboard();
+                    IupSetAttribute(clipboard, "TEXT", inputText.toAnsiString().c_str());
+                    IupDestroy(clipboard);
+
+                    m_chatInputWindowText.setString("");
+                }
+                else if (event.key.code == sf::Keyboard::Key::C)
+                {
+                    Ihandle* clipboard = IupClipboard();
+                    IupSetAttribute(clipboard, "TEXT", inputText.toAnsiString().c_str());
+                    IupDestroy(clipboard);
+                }
+                else if (event.key.code == sf::Keyboard::Key::V)
+                {
+                    Ihandle* clipboard = IupClipboard();
+                    const char* clipboardText = IupGetAttribute(clipboard, "TEXT");
+
+                    inputText.insert(inputText.getSize(), clipboardText);
+                    m_chatInputWindowText.setString(inputText);
+
+                    IupDestroy(clipboard);
+                }
+            }
+
+            return;
+        }
+
         switch (event.key.code)
         {
-            case sf::Keyboard::Space:
+            case sf::Keyboard::Key::Return:
+                this->gui.isChatInputWindowActive = true;
+                this->gui.isChatInputWindowTextCaretVisible = true;
+                break;
+
+            case sf::Keyboard::Key::Space:
                 doPlayerInteractWithPlayerTileObjects();
                 break;
 
-            case sf::Keyboard::B:
+            case sf::Keyboard::Key::B:
                 spawnAnimation(m_player->getTilePosition(), m_player->getZ(), tibia::Animations::spellBlue);
                 break;
 
-            case sf::Keyboard::F:
+            case sf::Keyboard::Key::F:
                 spawnFloatingText(m_player->getTilePosition(), m_player->getZ(), "Floating Text", tibia::Colors::Text::white);
                 break;
 
-            case sf::Keyboard::H:
+            case sf::Keyboard::Key::H:
                 doCreatureSpeech(m_player, "Hello!");
                 break;
 
-            case sf::Keyboard::M:
+            case sf::Keyboard::Key::M:
                 spawnDecayObject(m_player->getTilePosition(), m_player->getZ(), tibia::SpriteData::magicWall);
                 break;
 
-            case sf::Keyboard::P:
+            case sf::Keyboard::Key::P:
             {
                 spawnDecayObject(m_player->getTilePosition(), m_player->getZ(), tibia::SpriteData::poolRed, true);
                 break;
             }
 
-            case sf::Keyboard::R:
+            case sf::Keyboard::Key::R:
             {
                 tibia::Tile::Ptr toTile = getTile
                 (
@@ -466,21 +605,21 @@ public:
                 break;
             }
 
-            case sf::Keyboard::T:
+            case sf::Keyboard::Key::T:
                 spawnDecayObject(m_player->getTilePosition(), m_player->getZ(), tibia::SpriteData::torchBig);
                 break;
 
-            case sf::Keyboard::U:
+            case sf::Keyboard::Key::U:
             {
                 spawnDecayObject(m_player->getTilePosition(), m_player->getZ(), tibia::SpriteData::fieldFire);
                 break;
             }
 
-            case sf::Keyboard::N:
+            case sf::Keyboard::Key::N:
                 toggleTimeOfDay();
                 break;
 
-            case sf::Keyboard::O:
+            case sf::Keyboard::Key::O:
                 m_player->setOutfitRandom();
 
                 std::cout << "Player Head: " << m_player->getOutfitHead() << std::endl;
@@ -489,7 +628,7 @@ public:
                 std::cout << "Player Feet: " << m_player->getOutfitFeet() << std::endl;
                 break;
 
-            case sf::Keyboard::I:
+            case sf::Keyboard::Key::I:
             {
                 std::cout << "Player HP,MP: " << m_player->getHp() << "," << m_player->getMp() << std::endl;
                 std::cout << "Player X,Y,Z: " << m_player->getX()  << "," << m_player->getY()  << "," << m_player->getZ() <<std::endl;
@@ -501,19 +640,19 @@ public:
                 break;
             }
 
-            case sf::Keyboard::Z:
+            case sf::Keyboard::Key::Z:
                 m_player->setZ(utility::getRandomNumber(tibia::ZAxis::min, tibia::ZAxis::max));
 
                 std::cout << "Player Z: " << m_player->getZ() << std::endl;
                 break;
 
-            case sf::Keyboard::G:
+            case sf::Keyboard::Key::G:
             {
                 handleCreatureModifyHp(nullptr, m_player, -(m_player->getHp()), tibia::ModifyHpTypes::blood);
                 break;
             }
 
-            case sf::Keyboard::X:
+            case sf::Keyboard::Key::X:
             {
                 spawnProjectile
                 (
@@ -531,7 +670,7 @@ public:
                 break;
             }
 
-            case sf::Keyboard::C:
+            case sf::Keyboard::Key::C:
             {
                 spawnProjectile
                 (
@@ -553,23 +692,36 @@ public:
 
     void handleKeyboardInput()
     {
-        bool isKeyControlPressed = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl);
+        if (this->gui.isChatInputWindowActive == true)
+        {
+            return;
+        }
+
+        bool isKeyLControlPressed = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl);
+        bool isKeyLShiftPressed   = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LShift);
+
+        bool turnOnly = false;
+
+        if (isKeyLControlPressed == true || isKeyLShiftPressed == true)
+        {
+            turnOnly = true;
+        }
 
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W))
         {
-            handleCreatureMovement(m_player, tibia::Directions::up, isKeyControlPressed);
+            handleCreatureMovement(m_player, tibia::Directions::up, turnOnly);
         }
         else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D))
         {
-            handleCreatureMovement(m_player, tibia::Directions::right, isKeyControlPressed);
+            handleCreatureMovement(m_player, tibia::Directions::right, turnOnly);
         }
         else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S))
         {
-            handleCreatureMovement(m_player, tibia::Directions::down, isKeyControlPressed);
+            handleCreatureMovement(m_player, tibia::Directions::down, turnOnly);
         }
         else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left) || sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A))
         {
-            handleCreatureMovement(m_player, tibia::Directions::left, isKeyControlPressed);
+            handleCreatureMovement(m_player, tibia::Directions::left, turnOnly);
         }
     }
 
@@ -577,6 +729,17 @@ public:
     {
         if (event.mouseButton.button == sf::Mouse::Button::Left)
         {
+            if (tibia::GuiData::ChatInputWindow::rect.contains(getMouseWindowPosition()) == true)
+            {
+                this->gui.isChatInputWindowActive = true;
+                this->gui.isChatInputWindowTextCaretVisible = true;
+            }
+            else
+            {
+                this->gui.isChatInputWindowActive = false;
+                this->gui.isChatInputWindowTextCaretVisible = false;
+            }
+
             if (isMouseInsideMiniMapWindow() == true)
             {
                 if (m_miniMapWindowZoom == tibia::GuiData::MiniMapWindow::zoomDefault)
@@ -1195,6 +1358,11 @@ public:
         m_miniMapWindowView.setSize(sf::Vector2f(tibia::TILES_WIDTH * m_miniMapWindowZoom, tibia::TILES_WIDTH * m_miniMapWindowZoom));
     }
 
+    void setChatInputWindowText(const std::string& text)
+    {
+        m_chatInputWindowText.setString(text);
+    }
+
     void doChatLogWindowAddText(const std::string& text, sf::Color color = sf::Color::Black)
     {
         sf::Text chatLogWindowText;
@@ -1460,7 +1628,7 @@ public:
     {
         bool result = false;
 
-        tibia::tileMap_MapSearchNode = &m_map.tileMapTiles[creature->getZ()];
+        tibia::MapSearchNode_tileMap = &m_map.tileMapTiles[creature->getZ()];
 
         AStarSearch<tibia::MapSearchNode> aStarSearch;
 
@@ -1552,7 +1720,7 @@ public:
         {
             result = false;
 
-            //std::cout << "astar search failed" << std::endl;
+            std::cout << "astar search failed" << std::endl;
         }
 
         aStarSearch.EnsureMemoryFreed();
@@ -1608,11 +1776,6 @@ public:
         int playerMovementDirection = tibia::Utility::getDirectionByVector(playerMovementNormal);
 
         handleCreatureMovement(m_player, playerMovementDirection);
-    }
-
-    tibia::Tile::Properties_t getTileProperties(tibia::Tile::Ptr tile)
-    {
-        return tile->getProperties();
     }
 
     void setTileId(int x, int y, int z, int id)
@@ -1860,7 +2023,7 @@ public:
             }
         }
 
-        tibia::Tile::Properties_t toTileProperties = getTileProperties(toTile);
+        tibia::Tile::Properties_t toTileProperties = toTile->getProperties();
 
         tibia::Object::Ptr teleporterObject = getTileObjectByType(toTile->getPosition(), toTile->getZ(), tibia::ObjectTypes::teleporter);
 
@@ -1945,7 +2108,7 @@ public:
             {
                 if (aboveThingTile->getId() == tibia::TILE_NULL && climbUpToTile->getId() != tibia::TILE_NULL)
                 {
-                    tibia::Tile::Properties_t climbUpToTileProperties = getTileProperties(climbUpToTile);
+                    tibia::Tile::Properties_t climbUpToTileProperties = climbUpToTile->getProperties();
 
                     if(climbUpToTileProperties.hasSolidObject == false) // && climbUpToTile->getHeight() < tibia::TILE_HEIGHT_MOVEMENT_DIFFERENCE
                     {
@@ -1979,7 +2142,7 @@ public:
             {
                 if (mountainRampDownToTile->getId() != tibia::TILE_NULL)
                 {
-                    tibia::Tile::Properties_t mountainRampDownToTileProperties = getTileProperties(mountainRampDownToTile);
+                    tibia::Tile::Properties_t mountainRampDownToTileProperties = mountainRampDownToTile->getProperties();
 
                     if
                     (
@@ -2086,7 +2249,7 @@ public:
 
         if (ignoreAllCollision == false)
         {
-            toTileProperties = getTileProperties(toTile);
+            toTileProperties = toTile->getProperties();
 
             if (ignoreTileCollision == false && toTileProperties.isSolid == true)
             {
@@ -2318,7 +2481,7 @@ public:
 
         bool ignoreTileObjectCollision = false;
 
-        tibia::Tile::Properties_t toTileProperties = getTileProperties(toTile);
+        tibia::Tile::Properties_t toTileProperties = toTile->getProperties();
 
         if (object->getFlags().test(tibia::SpriteFlags::solid) == false && toTileProperties.hasHasHeightObject == true)
         {
@@ -2346,7 +2509,7 @@ public:
                     return false;
                 }
 
-                tibia::Tile::Properties_t toTileProperties = getTileProperties(toTile);
+                tibia::Tile::Properties_t toTileProperties = toTile->getProperties();
 
                 if (object->getFlags().test(tibia::SpriteFlags::solid) == false && toTileProperties.hasHasHeightObject == true)
                 {
@@ -3274,7 +3437,7 @@ public:
             tibia::Tile::Ptr toTile = getTile(sf::Vector2u(object->getTilePosition().x, object->getTilePosition().y + tibia::TILE_SIZE), object->getZ());
 
             // do not close the counter on solid objects or creatures
-            tibia::Tile::Properties_t tileProperties = getTileProperties(toTile);
+            tibia::Tile::Properties_t tileProperties = toTile->getProperties();
             if (tileProperties.hasSolidObject == true || tileProperties.hasSolidCreature == true)
             {
                 return false;
@@ -3312,7 +3475,7 @@ public:
             tibia::Tile::Ptr toTile = getTile(sf::Vector2u(object->getTilePosition().x + tibia::TILE_SIZE, object->getTilePosition().y), object->getZ());
 
             // do not close the counter on solid objects or creatures
-            tibia::Tile::Properties_t tileProperties = getTileProperties(toTile);
+            tibia::Tile::Properties_t tileProperties = toTile->getProperties();
             if (tileProperties.hasSolidObject == true || tileProperties.hasSolidCreature == true)
             {
                 return false;
@@ -3521,7 +3684,19 @@ public:
                 ssText << "s";
             }
 
-            ssText << ":\n" << text;
+            ssText << ":\n";
+
+            if (speechType == tibia::SpeechTypes::yell)
+            {
+                std::string textToUpper = text;
+                std::transform(textToUpper.begin(), textToUpper.end(), textToUpper.begin(), ::toupper);
+
+                ssText << textToUpper;
+            }
+            else
+            {
+                ssText << text;
+            }
         }
 
         sf::Vector2u textPosition = creature->getTilePosition();
@@ -4362,7 +4537,7 @@ public:
                 continue;
             }
 
-            tibia::Tile::Properties_t projectileTileProperties = getTileProperties(projectileTile);
+            tibia::Tile::Properties_t projectileTileProperties = projectileTile->getProperties();
 
             tibia::Object::Ptr teleporterObject = getTileObjectByType(projectileTile->getPosition(), projectileTile->getZ(), tibia::ObjectTypes::teleporter);
 
@@ -5916,6 +6091,43 @@ public:
         mainWindow->draw(m_chatLogWindowSprite);
     }
 
+    void drawChatInputText(sf::RenderWindow* mainWindow)
+    {
+        mainWindow->draw(m_chatInputWindowText);
+
+        if (this->gui.isChatInputWindowActive == true)
+        {
+            sf::RectangleShape highlight;
+            highlight.setSize(sf::Vector2f(tibia::GuiData::ChatInputWindow::width + 2, tibia::GuiData::ChatInputWindow::height + 2));
+            highlight.setPosition(sf::Vector2f(tibia::GuiData::ChatInputWindow::x - 1, tibia::GuiData::ChatInputWindow::y - 1));
+            highlight.setOutlineColor(sf::Color::Red);
+            highlight.setOutlineThickness(1.0f);
+            highlight.setFillColor(sf::Color::Transparent);
+
+            mainWindow->draw(highlight);
+
+            sf::Time timeElapsed = m_chatInputWindowTextCaretClock.getElapsedTime();
+
+            if (timeElapsed.asSeconds() > 0.5f)
+            {
+                utility::toggleBool(this->gui.isChatInputWindowTextCaretVisible);
+
+                m_chatInputWindowTextCaretClock.restart();
+            }
+
+            if (this->gui.isChatInputWindowTextCaretVisible == true)
+            {
+                m_chatInputWindowTextCaret.setPosition
+                (
+                    tibia::GuiData::ChatInputWindow::x + tibia::GuiData::ChatInputWindow::Text::offsetX + m_chatInputWindowText.getLocalBounds().width + 1,
+                    tibia::GuiData::ChatInputWindow::y + 1
+                );
+
+                mainWindow->draw(m_chatInputWindowTextCaret);
+            }
+        }
+    }
+
     void drawTabButtons(sf::RenderWindow* mainWindow)
     {
         int tabButtonId = tibia::SpriteData::Gui::tabButtonMiniMap[1];
@@ -6961,6 +7173,10 @@ private:
     sf::Sprite m_chatLogWindowSprite;
 
     std::vector<sf::Text> m_chatLogWindowTextList;
+
+    sf::Text m_chatInputWindowText;
+    sf::RectangleShape m_chatInputWindowTextCaret;
+    sf::Clock m_chatInputWindowTextCaretClock;
 
     sf::RenderTexture m_inventorySlotsWindow;
     sf::View m_inventorySlotsWindowView;

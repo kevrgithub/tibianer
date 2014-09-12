@@ -1,8 +1,6 @@
 #ifndef TIBIA_MAPSEARCHNODE_HPP
 #define TIBIA_MAPSEARCHNODE_HPP
 
-#include "stlastar.h"
-
 #include "tibia/Tibia.hpp"
 #include "tibia/Utility.hpp"
 #include "tibia/Map.hpp"
@@ -14,7 +12,7 @@
 namespace tibia
 {
 
-tibia::TileMap* tileMap_MapSearchNode;
+tibia::TileMap* MapSearchNode_tileMap;
 
 class MapSearchNode
 {
@@ -36,9 +34,9 @@ public:
         y = py;
     }
 
-    bool IsSameState(MapSearchNode &rhs)
+    bool IsSameState(MapSearchNode& rhs)
     {
-        if (x == rhs.x && y == rhs.y)
+        if ((x == rhs.x) && (y == rhs.y))
         {
             return true;
         }
@@ -46,7 +44,7 @@ public:
         return false;
     }
 
-    float GoalDistanceEstimate(MapSearchNode &nodeGoal)
+    float GoalDistanceEstimate(MapSearchNode& nodeGoal)
     {
         float xd = float(((float)x - (float)nodeGoal.x));
         float yd = float(((float)y - (float)nodeGoal.y));
@@ -54,9 +52,9 @@ public:
         return xd + yd;
     }
 
-    bool IsGoal(MapSearchNode &nodeGoal)
+    bool IsGoal(MapSearchNode& nodeGoal)
     {
-        if (x == nodeGoal.x && y == nodeGoal.y)
+        if ((x == nodeGoal.x) && (y == nodeGoal.y))
         {
             return true;
         }
@@ -64,18 +62,25 @@ public:
         return false;
     }
 
-    tibia::Tile::Ptr GetTile(int x, int y)
+    tibia::Tile::Ptr GetTile(int px, int py)
     {
-        if (x < 0 || y < 0)
+        if (px < 0 || py < 0 || px > tibia::mapSize - 1 || py > tibia::mapSize - 1)
+        {
+            //std::cout << "px,py: " << px << "," << py << std::endl;
+
+            return nullptr;
+        }
+
+        tibia::Tile::List* tileList = tibia::MapSearchNode_tileMap->getTileList();
+
+        if (tileList->size() == 0)
         {
             return nullptr;
         }
 
-        tibia::Tile::List* tileList = tibia::tileMap_MapSearchNode->getTileList();
+        int tileNumber = px + (py * tibia::mapWidth);
 
-        int tileNumber = x + (y * tibia::mapWidth);
-
-        if (tileNumber < 0|| tileNumber > tileList->size())
+        if (tileNumber < 0 || tileNumber > tibia::mapSize - 1)
         {
             return nullptr;
         }
@@ -106,8 +111,9 @@ public:
 
             if
             (
-                //(tileProperties1.hasSolidObject == false && tileProperties1.hasSolidCreature == false)
-                //&&
+                (tile1->getId() != tibia::TILE_NULL) &&
+                (tileProperties1.isSolid        == false) &&
+                (tileProperties1.hasSolidObject == false) &&
                 !(
                     (parentX == x - 1) && (parentY == y)
                 )
@@ -126,8 +132,9 @@ public:
 
             if
             (
-                //(tileProperties2.hasSolidObject == false && tileProperties2.hasSolidCreature == false)
-                //&&
+                (tile2->getId() != tibia::TILE_NULL) &&
+                (tileProperties2.isSolid        == false) &&
+                (tileProperties2.hasSolidObject == false) &&
                 !(
                     (parentX == x) && (parentY == y - 1)
                 )
@@ -146,8 +153,9 @@ public:
 
             if
             (
-                //(tileProperties3.hasSolidObject == false && tileProperties3.hasSolidCreature == false)
-                //&&
+                (tile3->getId() != tibia::TILE_NULL) &&
+                (tileProperties3.isSolid        == false) &&
+                (tileProperties3.hasSolidObject == false) &&
                 !(
                     (parentX == x + 1) && (parentY == y)
                 )
@@ -166,8 +174,9 @@ public:
 
             if
             (
-                //(tileProperties4.hasSolidObject == false && tileProperties4.hasSolidCreature == false)
-                //&&
+                (tile4->getId() != tibia::TILE_NULL) &&
+                (tileProperties4.isSolid        == false) &&
+                (tileProperties4.hasSolidObject == false) &&
                 !(
                     (parentX == x) && (parentY == y + 1)
                 )
@@ -181,14 +190,27 @@ public:
         return true;
     }
 
-    float GetCost(MapSearchNode &successor)
+    float GetCost(MapSearchNode& successor)
     {
         tibia::Tile::Ptr tile = GetTile(x, y);
+
+        if (tile == nullptr)
+        {
+            return 10.0f;
+        }
+
         tibia::Tile::Properties_t tileProperties = tile->getProperties();
 
-        if (tileProperties.hasSolidObject == true || tileProperties.hasSolidCreature == true)
+        if
+        (
+            tile->getId() == tibia::TILE_NULL ||
+
+            tileProperties.isSolid          == true ||
+            tileProperties.hasSolidObject   == true ||
+            tileProperties.hasSolidCreature == true
+        )
         {
-            return 9.0f;
+            return 8.0f;
         }
 
         if (tileProperties.hasModifyHpOnTouchObject == true || tileProperties.hasTeleporterObject == true)
@@ -196,9 +218,14 @@ public:
             return 6.0f;
         }
 
+        if (tile->getHeight() > 1)
+        {
+            return 6.0f;
+        }
+
         if (tileProperties.isMoveBelow == true || tileProperties.hasMoveBelowObject == true)
         {
-            return 3.0f;
+            return 4.0f;
         }
 
         return 1.0f;
