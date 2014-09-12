@@ -317,6 +317,9 @@ int main(int argc, char* argv[])
 
     std::cout << "Time elapsed loading map: " << std::chrono::duration_cast<std::chrono::seconds>(timeLoadMapElapsed).count() << "s" << std::endl;
 
+    std::cout << "Loading map scripts" << std::endl;
+    g_game.loadMapScripts();
+
     std::cout << "Loading windows" << std::endl;
     g_game.loadWindows();
 

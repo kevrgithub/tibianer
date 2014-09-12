@@ -419,6 +419,21 @@ public:
         return m_map.load(filename);
     }
 
+    void loadMapScripts()
+    {
+        std::vector<std::string>* mapScriptFilenames = m_map.getScriptFilenames();
+
+        for (auto& mapScriptFilename : *mapScriptFilenames)
+        {
+            std::stringstream mapScriptFilenameStream;
+            mapScriptFilenameStream << "require('scripts/" << mapScriptFilename << "')";
+
+            luaL_dostring(m_luaState, mapScriptFilenameStream.str().c_str());
+
+            //std::cout << mapScriptFilenameStream.str() << std::endl;
+        }
+    }
+
     void loadSpriteFlags()
     {
         for (unsigned int i = 1; i < tibia::SPRITES_TOTAL + 1; i++)
@@ -1114,17 +1129,69 @@ public:
         {
             if (isMouseInsideGameWindow() == true)
             {
-                // push object
+                // push dead creature, push object, push live creature
+
+                tibia::Creature::List* creatureList = m_mouseTile->getCreatureList();
+
+                tibia::Creature::Ptr creatureDead = nullptr;
+                tibia::Creature::Ptr creatureLive = nullptr;
+
+                if (creatureList->size())
+                {
+                    creatureLive = creatureList->back();
+
+                    auto creatureDeadIt = std::find_if
+                    (
+                        creatureList->begin(),
+                        creatureList->end(),
+                        [](tibia::Creature::Ptr const& c)
+                        { 
+                            return c->isDead() == true;
+                        }
+                    );
+
+                    if (creatureDeadIt != creatureList->end())
+                    {
+                        creatureDead = *creatureDeadIt;
+                    }
+                }
 
                 tibia::Object::List* objectList = m_mouseTile->getObjectList();
 
+                tibia::Object::Ptr object = nullptr;
+
                 if (objectList->size())
                 {
-                    tibia::Object::Ptr object = objectList->back();
+                    object = objectList->back();
+                }
 
-                    //std::cout << "Push Object ID: " << object->getId() << std::endl;
+                if (creatureDead != nullptr && creatureDead->isPlayer() == false)
+                {
+                    // push dead creature
+                    doCreaturePushCreature(m_player, creatureDead);
+                }
+                else
+                {
+                    bool pushObjectResult = false;
 
-                    doCreaturePushObject(m_player, object);
+                    if (object != nullptr)
+                    {
+                        // push object
+                        pushObjectResult = doCreaturePushObject(m_player, object);
+                    }
+                    else
+                    {
+                        pushObjectResult = false;
+                    }
+
+                    if (pushObjectResult == false)
+                    {
+                        if (creatureLive != nullptr && creatureLive->isPlayer() == false && creatureLive->isDead() == false)
+                        {
+                            // push live creature
+                            doCreaturePushCreature(m_player, creatureLive);
+                        }
+                    }
                 }
             }
             else if (isMouseInsideMiniMapWindow() == true)
@@ -1563,7 +1630,7 @@ public:
                 continue;
             }
 
-            if (creature->getZ() == m_player->getZ())
+            if (creature->getZ() == m_player->getZ() && m_player->isSleeping() == false && m_player->isDead() == false)
             {
                 doCreatureWalkToTile(creature, getPlayerTile());
             }
@@ -2276,7 +2343,7 @@ public:
                         {
                             if (thingCreature->isPlayer() == true)
                             {
-                                showStatusBarText("You cannot move there, it is too high up.");
+                                showStatusBarText("You cannot move there. It is too high up.");
                             }
 
                             return false;
@@ -2436,6 +2503,56 @@ public:
         return result;
     }
 
+    bool doCreaturePushCreature(tibia::Creature::Ptr creaturePusher, tibia::Creature::Ptr creaturePushed)
+    {
+        if (creaturePusher == nullptr || creaturePushed == nullptr)
+        {
+            return false;
+        }
+
+        // creature is too far away
+        if
+        (
+            tibia::Utility::calculateTileDistance
+            (
+                creaturePusher->getTileX(),
+                creaturePusher->getTileY(),
+                creaturePushed->getTileX(),
+                creaturePushed->getTileY()
+            )
+            > 1
+        )
+        {
+            showStatusBarText("Creature is too far away to push.");
+            return false;
+        }
+
+        if (creaturePushed->isDead() == true)
+        {
+            tibia::Tile::Ptr fromTile = getThingTile(creaturePushed);
+
+            if (fromTile == nullptr)
+            {
+                return false;
+            }
+
+            tibia::Tile::Ptr toTile = getTileByTileDirection(fromTile, creaturePusher->getDirection());
+
+            if (toTile == nullptr)
+            {
+                return false;
+            }
+
+            doMoveThingToTile(creaturePushed, toTile, creaturePusher->getDirection(), false, false, false, true);
+        }
+        else
+        {
+            handleCreatureMovement(creaturePushed, creaturePusher->getDirection());
+        }
+
+        return true;
+    }
+
     bool doCreaturePushObject(tibia::Creature::Ptr creature, tibia::Object::Ptr object)
     {
         if (creature == nullptr || object == nullptr)
@@ -2456,7 +2573,12 @@ public:
             > 1
         )
         {
-            showStatusBarText("Object is too far away.");
+            showStatusBarText("Object is too far away to push.");
+            return false;
+        }
+
+        if (object->getFlags().test(tibia::SpriteFlags::decal) == true)
+        {
             return false;
         }
 
@@ -2472,7 +2594,7 @@ public:
             return false;
         }
 
-        tibia::Tile::Ptr toTile = getTileByTileDirection(fromTile, m_player->getDirection());
+        tibia::Tile::Ptr toTile = getTileByTileDirection(fromTile, creature->getDirection());
 
         if (toTile == nullptr)
         {
@@ -2517,6 +2639,8 @@ public:
                 }
 
                 result = doMoveThingToTile(object, toTile, creature->getDirection(), false, false, ignoreTileObjectCollision, ignoreTileCreatureCollision);
+
+                return result;
             }
         }
 
@@ -2897,6 +3021,15 @@ public:
                     nextObject->setId(tibia::SpriteData::bedVertical[3]);
                 }
 
+                int bedExitDirection = object->properties.bedDirection;
+
+                if (bedExitDirection != tibia::Directions::null)
+                {
+                    tibia::Tile::Ptr bedTile = getTile(object->getTilePosition(), creature->getZ());
+
+                    doMoveThingToTile(creature, bedTile, creature->getDirection(), true);
+                }
+
                 creature->setIsSleeping(true);
             }
             else if (object->getId() == tibia::SpriteData::bedVertical[1])
@@ -2913,6 +3046,15 @@ public:
                 if (nextObject != nullptr)
                 {
                     nextObject->setId(tibia::SpriteData::bedVertical[2]);
+                }
+
+                int bedExitDirection = object->properties.bedDirection;
+
+                if (bedExitDirection != tibia::Directions::null)
+                {
+                    tibia::Tile::Ptr bedTile = getTile(object->getTilePosition(), creature->getZ());
+
+                    doMoveThingToTile(creature, bedTile, creature->getDirection(), true);
                 }
 
                 creature->setIsSleeping(true);
@@ -2933,6 +3075,32 @@ public:
                     nextObject->setId(tibia::SpriteData::bedVertical[1]);
                 }
 
+                int bedExitDirection = object->properties.bedDirection;
+
+                if (bedExitDirection != tibia::Directions::null)
+                {
+                    int bedExitX = object->properties.bedX;
+                    int bedExitY = object->properties.bedY;
+
+                    if (bedExitX == 0 || bedExitY == 0)
+                    {
+                        bedExitX = object->getX();
+                        bedExitY = object->getY();
+                    }
+
+                    tibia::Tile::Ptr bedExitTile = getTile
+                    (
+                        sf::Vector2u
+                        (
+                            bedExitX * tibia::TILE_SIZE,
+                            bedExitY * tibia::TILE_SIZE
+                        ),
+                        creature->getZ()
+                    );
+
+                    doMoveThingToTile(creature, bedExitTile, bedExitDirection, true);
+                }
+
                 creature->setIsSleeping(false);
             }
             else if (object->getId() == tibia::SpriteData::bedVertical[3])
@@ -2949,6 +3117,32 @@ public:
                 if (nextObject != nullptr)
                 {
                     nextObject->setId(tibia::SpriteData::bedVertical[0]);
+                }
+
+                int bedExitDirection = object->properties.bedDirection;
+
+                if (bedExitDirection != tibia::Directions::null)
+                {
+                    int bedExitX = object->properties.bedX;
+                    int bedExitY = object->properties.bedY;
+
+                    if (bedExitX == 0 || bedExitY == 0)
+                    {
+                        bedExitX = object->getX();
+                        bedExitY = object->getY();
+                    }
+
+                    tibia::Tile::Ptr bedExitTile = getTile
+                    (
+                        sf::Vector2u
+                        (
+                            bedExitX * tibia::TILE_SIZE,
+                            bedExitY * tibia::TILE_SIZE
+                        ),
+                        creature->getZ()
+                    );
+
+                    doMoveThingToTile(creature, bedExitTile, bedExitDirection, true);
                 }
 
                 creature->setIsSleeping(false);
@@ -2971,6 +3165,15 @@ public:
                     nextObject->setId(tibia::SpriteData::bedHorizontal[3]);
                 }
 
+                int bedExitDirection = object->properties.bedDirection;
+
+                if (bedExitDirection != tibia::Directions::null)
+                {
+                    tibia::Tile::Ptr bedTile = getTile(object->getTilePosition(), creature->getZ());
+
+                    doMoveThingToTile(creature, bedTile, creature->getDirection(), true);
+                }
+
                 creature->setIsSleeping(true);
             }
             else if (object->getId() == tibia::SpriteData::bedHorizontal[1])
@@ -2987,6 +3190,15 @@ public:
                 if (nextObject != nullptr)
                 {
                     nextObject->setId(tibia::SpriteData::bedHorizontal[2]);
+                }
+
+                int bedExitDirection = object->properties.bedDirection;
+
+                if (bedExitDirection != tibia::Directions::null)
+                {
+                    tibia::Tile::Ptr bedTile = getTile(object->getTilePosition(), creature->getZ());
+
+                    doMoveThingToTile(creature, bedTile, creature->getDirection(), true);
                 }
 
                 creature->setIsSleeping(true);
@@ -3007,6 +3219,32 @@ public:
                     nextObject->setId(tibia::SpriteData::bedHorizontal[1]);
                 }
 
+                int bedExitDirection = object->properties.bedDirection;
+
+                if (bedExitDirection != tibia::Directions::null)
+                {
+                    int bedExitX = object->properties.bedX;
+                    int bedExitY = object->properties.bedY;
+
+                    if (bedExitX == 0 || bedExitY == 0)
+                    {
+                        bedExitX = object->getX();
+                        bedExitY = object->getY();
+                    }
+
+                    tibia::Tile::Ptr bedExitTile = getTile
+                    (
+                        sf::Vector2u
+                        (
+                            bedExitX * tibia::TILE_SIZE,
+                            bedExitY * tibia::TILE_SIZE
+                        ),
+                        creature->getZ()
+                    );
+
+                    doMoveThingToTile(creature, bedExitTile, bedExitDirection, true);
+                }
+
                 creature->setIsSleeping(false);
             }
             else if (object->getId() == tibia::SpriteData::bedHorizontal[3])
@@ -3023,6 +3261,32 @@ public:
                 if (nextObject != nullptr)
                 {
                     nextObject->setId(tibia::SpriteData::bedHorizontal[0]);
+                }
+
+                int bedExitDirection = object->properties.bedDirection;
+
+                if (bedExitDirection != tibia::Directions::null)
+                {
+                    int bedExitX = object->properties.bedX;
+                    int bedExitY = object->properties.bedY;
+
+                    if (bedExitX == 0 || bedExitY == 0)
+                    {
+                        bedExitX = object->getX();
+                        bedExitY = object->getY();
+                    }
+
+                    tibia::Tile::Ptr bedExitTile = getTile
+                    (
+                        sf::Vector2u
+                        (
+                            bedExitX * tibia::TILE_SIZE,
+                            bedExitY * tibia::TILE_SIZE
+                        ),
+                        creature->getZ()
+                    );
+
+                    doMoveThingToTile(creature, bedExitTile, bedExitDirection, true);
                 }
 
                 creature->setIsSleeping(false);
@@ -3045,6 +3309,15 @@ public:
                     nextObject->setId(tibia::SpriteData::stretcherVertical[3]);
                 }
 
+                int bedExitDirection = object->properties.bedDirection;
+
+                if (bedExitDirection != tibia::Directions::null)
+                {
+                    tibia::Tile::Ptr bedTile = getTile(object->getTilePosition(), creature->getZ());
+
+                    doMoveThingToTile(creature, bedTile, creature->getDirection(), true);
+                }
+
                 creature->setIsSleeping(true);
             }
             else if (object->getId() == tibia::SpriteData::stretcherVertical[1])
@@ -3061,6 +3334,15 @@ public:
                 if (nextObject != nullptr)
                 {
                     nextObject->setId(tibia::SpriteData::stretcherVertical[2]);
+                }
+
+                int bedExitDirection = object->properties.bedDirection;
+
+                if (bedExitDirection != tibia::Directions::null)
+                {
+                    tibia::Tile::Ptr bedTile = getTile(object->getTilePosition(), creature->getZ());
+
+                    doMoveThingToTile(creature, bedTile, creature->getDirection(), true);
                 }
 
                 creature->setIsSleeping(true);
@@ -3081,6 +3363,32 @@ public:
                     nextObject->setId(tibia::SpriteData::stretcherVertical[1]);
                 }
 
+                int bedExitDirection = object->properties.bedDirection;
+
+                if (bedExitDirection != tibia::Directions::null)
+                {
+                    int bedExitX = object->properties.bedX;
+                    int bedExitY = object->properties.bedY;
+
+                    if (bedExitX == 0 || bedExitY == 0)
+                    {
+                        bedExitX = object->getX();
+                        bedExitY = object->getY();
+                    }
+
+                    tibia::Tile::Ptr bedExitTile = getTile
+                    (
+                        sf::Vector2u
+                        (
+                            bedExitX * tibia::TILE_SIZE,
+                            bedExitY * tibia::TILE_SIZE
+                        ),
+                        creature->getZ()
+                    );
+
+                    doMoveThingToTile(creature, bedExitTile, bedExitDirection, true);
+                }
+
                 creature->setIsSleeping(false);
             }
             else if (object->getId() == tibia::SpriteData::stretcherVertical[3])
@@ -3097,6 +3405,32 @@ public:
                 if (nextObject != nullptr)
                 {
                     nextObject->setId(tibia::SpriteData::stretcherVertical[0]);
+                }
+
+                int bedExitDirection = object->properties.bedDirection;
+
+                if (bedExitDirection != tibia::Directions::null)
+                {
+                    int bedExitX = object->properties.bedX;
+                    int bedExitY = object->properties.bedY;
+
+                    if (bedExitX == 0 || bedExitY == 0)
+                    {
+                        bedExitX = object->getX();
+                        bedExitY = object->getY();
+                    }
+
+                    tibia::Tile::Ptr bedExitTile = getTile
+                    (
+                        sf::Vector2u
+                        (
+                            bedExitX * tibia::TILE_SIZE,
+                            bedExitY * tibia::TILE_SIZE
+                        ),
+                        creature->getZ()
+                    );
+
+                    doMoveThingToTile(creature, bedExitTile, bedExitDirection, true);
                 }
 
                 creature->setIsSleeping(false);
@@ -3119,6 +3453,15 @@ public:
                     nextObject->setId(tibia::SpriteData::stretcherHorizontal[3]);
                 }
 
+                int bedExitDirection = object->properties.bedDirection;
+
+                if (bedExitDirection != tibia::Directions::null)
+                {
+                    tibia::Tile::Ptr bedTile = getTile(object->getTilePosition(), creature->getZ());
+
+                    doMoveThingToTile(creature, bedTile, creature->getDirection(), true);
+                }
+
                 creature->setIsSleeping(true);
             }
             else if (object->getId() == tibia::SpriteData::stretcherHorizontal[1])
@@ -3135,6 +3478,15 @@ public:
                 if (nextObject != nullptr)
                 {
                     nextObject->setId(tibia::SpriteData::stretcherHorizontal[2]);
+                }
+
+                int bedExitDirection = object->properties.bedDirection;
+
+                if (bedExitDirection != tibia::Directions::null)
+                {
+                    tibia::Tile::Ptr bedTile = getTile(object->getTilePosition(), creature->getZ());
+
+                    doMoveThingToTile(creature, bedTile, creature->getDirection(), true);
                 }
 
                 creature->setIsSleeping(true);
@@ -3155,6 +3507,32 @@ public:
                     nextObject->setId(tibia::SpriteData::stretcherHorizontal[1]);
                 }
 
+                int bedExitDirection = object->properties.bedDirection;
+
+                if (bedExitDirection != tibia::Directions::null)
+                {
+                    int bedExitX = object->properties.bedX;
+                    int bedExitY = object->properties.bedY;
+
+                    if (bedExitX == 0 || bedExitY == 0)
+                    {
+                        bedExitX = object->getX();
+                        bedExitY = object->getY();
+                    }
+
+                    tibia::Tile::Ptr bedExitTile = getTile
+                    (
+                        sf::Vector2u
+                        (
+                            bedExitX * tibia::TILE_SIZE,
+                            bedExitY * tibia::TILE_SIZE
+                        ),
+                        creature->getZ()
+                    );
+
+                    doMoveThingToTile(creature, bedExitTile, bedExitDirection, true);
+                }
+
                 creature->setIsSleeping(false);
             }
             else if (object->getId() == tibia::SpriteData::stretcherHorizontal[3])
@@ -3173,6 +3551,32 @@ public:
                     nextObject->setId(tibia::SpriteData::stretcherHorizontal[0]);
                 }
 
+                int bedExitDirection = object->properties.bedDirection;
+
+                if (bedExitDirection != tibia::Directions::null)
+                {
+                    int bedExitX = object->properties.bedX;
+                    int bedExitY = object->properties.bedY;
+
+                    if (bedExitX == 0 || bedExitY == 0)
+                    {
+                        bedExitX = object->getX();
+                        bedExitY = object->getY();
+                    }
+
+                    tibia::Tile::Ptr bedExitTile = getTile
+                    (
+                        sf::Vector2u
+                        (
+                            bedExitX * tibia::TILE_SIZE,
+                            bedExitY * tibia::TILE_SIZE
+                        ),
+                        creature->getZ()
+                    );
+
+                    doMoveThingToTile(creature, bedExitTile, bedExitDirection, true);
+                }
+
                 creature->setIsSleeping(false);
             }
 
@@ -3186,7 +3590,7 @@ public:
             (
                 m_player->getTilePosition(),
                 m_player->getZ(),
-                tibia::SpriteData::blueBerry[2]
+                tibia::SpriteData::blueBerry[2] // 3 blueberries
             );
 
             creature->addInventoryItem(blueBerriesObject->getId(), blueBerriesObject->getCount(), blueBerriesObject->getFlags());
@@ -4020,7 +4424,7 @@ public:
 
                 std::cout
                     << defender->getName()
-                    << "for "
+                    << " for "
                     << std::abs(hpChange)
                     << " points of health."
                     << std::endl;

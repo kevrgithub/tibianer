@@ -24,6 +24,8 @@ public:
     {
         m_bitmapFont = bf;
 
+        m_vertexArray.clear();
+
         m_vertexArray.resize(text.size() * 4);
 
         int x = 0;

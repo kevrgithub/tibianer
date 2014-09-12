@@ -131,7 +131,14 @@ public:
 
     void addCreature(tibia::Creature::Ptr creature)
     {
-        m_creatureList.push_back(creature);
+        if (creature->isDead() == true)
+        {
+            m_creatureList.insert(m_creatureList.begin(), creature);
+        }
+        else
+        {
+            m_creatureList.push_back(creature);
+        }
     }
 
     void addEntity(tibia::Object::Ptr entity)

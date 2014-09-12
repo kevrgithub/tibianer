@@ -345,7 +345,11 @@ public:
 
                             if (docMapObjectPropertyName == "script_on_interact")
                             {
-                                object->properties.onInteractScriptFilename = docMapObjectProperty.attribute("value").value();
+                                std::string objectOnInteractScript = docMapObjectProperty.attribute("value").value();
+
+                                object->properties.onInteractScriptFilename = objectOnInteractScript;
+
+                                m_scriptFilenames.push_back(objectOnInteractScript);
                             }
 
                             if (objectType == tibia::ObjectTypes::sign)
@@ -389,12 +393,16 @@ public:
                                     std::string objectLeverScriptOn = docMapObjectProperty.attribute("value").value();
 
                                     object->properties.leverOnScriptFilename = objectLeverScriptOn;
+
+                                    m_scriptFilenames.push_back(objectLeverScriptOn);
                                 }
                                 if (docMapObjectPropertyName == "script_off")
                                 {
                                     std::string objectLeverScriptOff = docMapObjectProperty.attribute("value").value();
 
                                     object->properties.leverOffScriptFilename = objectLeverScriptOff;
+
+                                    m_scriptFilenames.push_back(objectLeverScriptOff);
                                 }
                             }
                             else if (objectType == tibia::ObjectTypes::door)
@@ -410,15 +418,32 @@ public:
                             {
                                 if (docMapObjectPropertyName == "x")
                                 {
-                                    object->properties.teleporterX = docMapObjectProperty.attribute("value").as_int();
+                                    object->properties.teleporterX = docMapObjectProperty.attribute("value").as_uint();
                                 }
                                 else if (docMapObjectPropertyName == "y")
                                 {
-                                    object->properties.teleporterY = docMapObjectProperty.attribute("value").as_int();
+                                    object->properties.teleporterY = docMapObjectProperty.attribute("value").as_uint();
                                 }
                                 else if (docMapObjectPropertyName == "z")
                                 {
-                                    object->properties.teleporterZ = docMapObjectProperty.attribute("value").as_int();
+                                    object->properties.teleporterZ = docMapObjectProperty.attribute("value").as_uint();
+                                }
+                            }
+                            else if (objectType == tibia::ObjectTypes::bed)
+                            {
+                                if (docMapObjectPropertyName == "x")
+                                {
+                                    object->properties.bedX = docMapObjectProperty.attribute("value").as_uint();
+                                }
+                                else if (docMapObjectPropertyName == "y")
+                                {
+                                    object->properties.bedY = docMapObjectProperty.attribute("value").as_uint();
+                                }
+                                else if (docMapObjectPropertyName == "direction")
+                                {
+                                    std::string objectBedDirection = docMapObjectProperty.attribute("value").value();
+
+                                    object->properties.bedDirection = tibia::UMaps::directions[objectBedDirection];
                                 }
                             }
                         }
@@ -452,7 +477,7 @@ public:
 
                             if (docMapObjectPropertyName == "name")
                             {
-                                std::string creatureName = docMapObjectProperty.attribute("value").value();;
+                                std::string creatureName = docMapObjectProperty.attribute("value").value();
 
                                 creature->setName(creatureName);
 
@@ -460,7 +485,7 @@ public:
                             }
                             else if (docMapObjectPropertyName == "type")
                             {
-                                std::string creatureTypeString = docMapObjectProperty.attribute("value").value();;
+                                std::string creatureTypeString = docMapObjectProperty.attribute("value").value();
 
                                 int creatureType = tibia::UMaps::creatureTypes[creatureTypeString];
 
@@ -468,7 +493,7 @@ public:
                             }
                             else if (docMapObjectPropertyName == "team")
                             {
-                                std::string creatureTeamString = docMapObjectProperty.attribute("value").value();;
+                                std::string creatureTeamString = docMapObjectProperty.attribute("value").value();
 
                                 int creatureTeam = tibia::UMaps::teams[creatureTeamString];
 
@@ -497,18 +522,30 @@ public:
                             {
                                 if (docMapObjectPropertyName == "script")
                                 {
-                                    object->properties.doScriptFilename = docMapObjectProperty.attribute("value").value();
+                                    std::string objectDoScript = docMapObjectProperty.attribute("value").value();
+
+                                    object->properties.doScriptFilename = objectDoScript;
+
+                                    m_scriptFilenames.push_back(objectDoScript);
                                 }
                             }
                             else if (objectType == tibia::ObjectTypes::stepTile)
                             {
                                 if (docMapObjectPropertyName == "script_on_start_touch")
                                 {
-                                    object->properties.stepTileOnStartTouchScriptFilename = docMapObjectProperty.attribute("value").value();
+                                    std::string objectStepTileOnStartTouchScript = docMapObjectProperty.attribute("value").value();
+
+                                    object->properties.stepTileOnStartTouchScriptFilename = objectStepTileOnStartTouchScript;
+
+                                    m_scriptFilenames.push_back(objectStepTileOnStartTouchScript);
                                 }
                                 else if (docMapObjectPropertyName == "script_on_stop_touch")
                                 {
-                                    object->properties.stepTileOnStopTouchScriptFilename = docMapObjectProperty.attribute("value").value();
+                                    std::string objectStepTileOnStopTouchScript = docMapObjectProperty.attribute("value").value();
+
+                                    object->properties.stepTileOnStopTouchScriptFilename = objectStepTileOnStopTouchScript;
+
+                                    m_scriptFilenames.push_back(objectStepTileOnStopTouchScript);
                                 }
                             }
                         }
@@ -592,6 +629,11 @@ public:
         return m_size;
     }
 
+    std::vector<std::string>* getScriptFilenames()
+    {
+        return &m_scriptFilenames;
+    }
+
 private:
 
     bool m_isCompressed;
@@ -605,6 +647,8 @@ private:
     unsigned int m_tileHeight;
 
     unsigned int m_size;
+
+    std::vector<std::string> m_scriptFilenames;
 
 }; // class Map
 

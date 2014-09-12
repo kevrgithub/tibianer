@@ -37,9 +37,13 @@ public:
 
         int doorKey = tibia::KeyTypes::none;
 
-        unsigned int teleporterX;
-        unsigned int teleporterY;
-        unsigned int teleporterZ;
+        unsigned int teleporterX = 0;
+        unsigned int teleporterY = 0;
+        unsigned int teleporterZ = tibia::ZAxis::default;
+
+        unsigned int bedX = 0;
+        unsigned int bedY = 0;
+        unsigned int bedDirection = tibia::Directions::null;
 
         std::string changeMapName;
 
