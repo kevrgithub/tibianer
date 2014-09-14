@@ -20,6 +20,42 @@ public:
     typedef std::shared_ptr<tibia::Thing> Ptr;
     typedef std::vector<tibia::Thing::Ptr> List;
 
+    struct SortByTileNumber
+    {
+        bool operator()(tibia::Thing::Ptr a, tibia::Thing::Ptr b) const
+        {
+            return (a->getTileNumber() < b->getTileNumber());
+        }
+    };
+
+    struct SortByTileCoords
+    {
+        bool operator()(tibia::Thing::Ptr a, tibia::Thing::Ptr b) const
+        {
+            //return (a->getTileX() == b->getTileX() ? a->getTileY() < b->getTileY() : a->getTileX() < b->getTileX());
+
+            if (a->getTileX() == b->getTileX())
+            {
+                if (a->getTileY() == b->getTileY())
+                {
+                    return a->getDrawIndex() < b->getDrawIndex();
+                }
+                else
+                {
+                    return a->getTileY() < b->getTileY();
+                }
+            }
+
+            // attempt to fix draw order: fixes trees overlapping trees, breaks walls overlapping objects
+            //if (a->getTileX() != b->getTileX() && a->getTileY() != b->getTileY())
+            //{
+                //return a->getTileY() < b->getTileY();
+            //}
+
+            return a->getTileX() < b->getTileX();
+        }
+    };
+
     Thing::Thing()
     {
         m_drawIndex = tibia::DRAW_INDEX_DEFAULT;
@@ -173,45 +209,6 @@ private:
     bool m_isReadyForErase;
 
 }; // class Thing
-
-namespace ThingSort
-{
-    struct sortByTileNumber
-    {
-        bool operator()(tibia::Thing::Ptr a, tibia::Thing::Ptr b) const
-        {
-            return (a->getTileNumber() < b->getTileNumber());
-        }
-    };
-
-    struct sortByTileCoords
-    {
-        bool operator()(tibia::Thing::Ptr a, tibia::Thing::Ptr b) const
-        {
-            //return (a->getTileX() == b->getTileX() ? a->getTileY() < b->getTileY() : a->getTileX() < b->getTileX());
-
-            if (a->getTileX() == b->getTileX())
-            {
-                if (a->getTileY() == b->getTileY())
-                {
-                    return a->getDrawIndex() < b->getDrawIndex();
-                }
-                else
-                {
-                    return a->getTileY() < b->getTileY();
-                }
-            }
-
-            // attempt to fix draw order: fixes trees overlapping trees, breaks walls overlapping objects
-            //if (a->getTileX() != b->getTileX() && a->getTileY() != b->getTileY())
-            //{
-                //return a->getTileY() < b->getTileY();
-            //}
-
-            return a->getTileX() < b->getTileX();
-        }
-    };
-} // namespace Sort
 
 } // namespace tibia
 

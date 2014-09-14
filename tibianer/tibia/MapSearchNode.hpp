@@ -22,6 +22,8 @@ public:
     int x;
     int y;
 
+    bool isDiagonal = false;
+
     MapSearchNode::MapSearchNode()
     {
         x = 0;
@@ -87,6 +89,22 @@ public:
 
         tibia::Tile::Ptr tile = tileList->at(tileNumber);
 
+        if (tile != nullptr)
+        {
+            tibia::Tile::Properties_t tileProperties = tile->getProperties();
+
+            if
+            (
+                (tile->getId() == tibia::TILE_NULL) ||
+
+                (tileProperties.isSolid        == true) ||
+                (tileProperties.hasSolidObject == true)
+            )
+            {
+                return nullptr;
+            }
+        }
+
         return tile;
     }
 
@@ -103,86 +121,126 @@ public:
 
         MapSearchNode newNode;
 
-        tibia::Tile::Ptr tile1 = GetTile(x - 1, y);
-
-        if (tile1 != nullptr)
+        // up
+        if (GetTile(x, y - 1) != nullptr)
         {
-            tibia::Tile::Properties_t tileProperties1 = tile1->getProperties();
-
             if
             (
-                (tile1->getId() != tibia::TILE_NULL) &&
-                (tileProperties1.isSolid        == false) &&
-                (tileProperties1.hasSolidObject == false) &&
-                !(
-                    (parentX == x - 1) && (parentY == y)
-                )
-            ) 
-            {
-                newNode = MapSearchNode(x - 1, y);
-                aStarSearch->AddSuccessor(newNode);
-            }
-        }
-
-        tibia::Tile::Ptr tile2 = GetTile(x, y - 1);
-
-        if (tile2 != nullptr)
-        {
-            tibia::Tile::Properties_t tileProperties2 = tile2->getProperties();
-
-            if
-            (
-                (tile2->getId() != tibia::TILE_NULL) &&
-                (tileProperties2.isSolid        == false) &&
-                (tileProperties2.hasSolidObject == false) &&
                 !(
                     (parentX == x) && (parentY == y - 1)
                 )
-            ) 
+            )
             {
                 newNode = MapSearchNode(x, y - 1);
                 aStarSearch->AddSuccessor(newNode);
             }
         }
 
-        tibia::Tile::Ptr tile3 = GetTile(x + 1, y);
-
-        if (tile3 != nullptr)
+        // right
+        if (GetTile(x + 1, y) != nullptr)
         {
-            tibia::Tile::Properties_t tileProperties3 = tile3->getProperties();
-
             if
             (
-                (tile3->getId() != tibia::TILE_NULL) &&
-                (tileProperties3.isSolid        == false) &&
-                (tileProperties3.hasSolidObject == false) &&
                 !(
                     (parentX == x + 1) && (parentY == y)
                 )
-            ) 
+            )
             {
                 newNode = MapSearchNode(x + 1, y);
                 aStarSearch->AddSuccessor(newNode);
             }
         }
 
-        tibia::Tile::Ptr tile4 = GetTile(x, y + 1);
-
-        if (tile4 != nullptr)
+        // down
+        if (GetTile(x, y + 1) != nullptr)
         {
-            tibia::Tile::Properties_t tileProperties4 = tile4->getProperties();
-
             if
             (
-                (tile4->getId() != tibia::TILE_NULL) &&
-                (tileProperties4.isSolid        == false) &&
-                (tileProperties4.hasSolidObject == false) &&
                 !(
                     (parentX == x) && (parentY == y + 1)
                 )
-            ) 
+            )
             {
                 newNode = MapSearchNode(x, y + 1);
+                aStarSearch->AddSuccessor(newNode);
+            }
+        }
+
+        // left
+        if (GetTile(x - 1, y) != nullptr)
+        {
+            if
+            (
+                !(
+                    (parentX == x - 1) && (parentY == y)
+                )
+            )
+            {
+                newNode = MapSearchNode(x - 1, y);
+                aStarSearch->AddSuccessor(newNode);
+            }
+        }
+
+        // up left
+        if (GetTile(x - 1, y - 1) != nullptr)
+        {
+            if
+            (
+                !(
+                    (parentX == x - 1) && (parentY == y - 1)
+                )
+            )
+            {
+                newNode = MapSearchNode(x - 1, y - 1);
+                newNode.isDiagonal = true;
+                aStarSearch->AddSuccessor(newNode);
+            }
+        }
+
+        // up right
+        if (GetTile(x + 1, y - 1) != nullptr)
+        {
+            if
+            (
+                !(
+                    (parentX == x + 1) && (parentY == y - 1)
+                )
+            )
+            {
+                newNode = MapSearchNode(x + 1, y - 1);
+                newNode.isDiagonal = true;
+                aStarSearch->AddSuccessor(newNode);
+            }
+        }
+
+        // down right
+        if (GetTile(x + 1, y + 1) != nullptr)
+        {
+            if
+            (
+                !(
+                    (parentX == x + 1) && (parentY == y + 1)
+                )
+            )
+            {
+                newNode = MapSearchNode(x + 1, y + 1);
+                newNode.isDiagonal = true;
+                aStarSearch->AddSuccessor(newNode);
+            }
+        }
+
+        // down left
+        if (GetTile(x - 1, y + 1) != nullptr)
+        {
+            if
+            (
+                !(
+                    (parentX == x - 1) && (parentY == y + 1)
+                )
+            )
+            {
+                newNode = MapSearchNode(x - 1, y + 1);
+                newNode.isDiagonal = true;
                 aStarSearch->AddSuccessor(newNode);
             }
         }
@@ -195,6 +253,11 @@ public:
         tibia::Tile::Ptr tile = GetTile(x, y);
 
         if (tile == nullptr)
+        {
+            return 10.0f;
+        }
+
+        if (successor.isDiagonal == true)
         {
             return 10.0f;
         }
@@ -213,19 +276,19 @@ public:
             return 8.0f;
         }
 
-        if (tileProperties.hasModifyHpOnTouchObject == true || tileProperties.hasTeleporterObject == true)
+        if ((tile->getHeight() > 1) || tileProperties.hasTeleporterObject == true)
         {
             return 6.0f;
         }
 
-        if (tile->getHeight() > 1)
-        {
-            return 6.0f;
-        }
-
-        if (tileProperties.isMoveBelow == true || tileProperties.hasMoveBelowObject == true)
+        if (tileProperties.isMoveBelow == true || tileProperties.hasMoveBelowObject == true || tileProperties.hasMoveAboveObject == true)
         {
             return 4.0f;
+        }
+
+        if (tileProperties.hasModifyHpOnTouchObject == true || tileProperties.hasBearTrapOpenObject == true)
+        {
+            return 2.0f;
         }
 
         return 1.0f;

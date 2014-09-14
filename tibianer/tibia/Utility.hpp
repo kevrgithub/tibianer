@@ -224,6 +224,48 @@ namespace tibia
         return direction;
     }
 
+    int getOppositeDirection(int direction)
+    {
+        int result = tibia::Directions::null;
+
+        switch (direction)
+        {
+            case tibia::Directions::up:
+                result = tibia::Directions::down;
+                break;
+
+            case tibia::Directions::right:
+                result = tibia::Directions::left;
+                break;
+
+            case tibia::Directions::down:
+                result = tibia::Directions::up;
+                break;
+
+            case tibia::Directions::left:
+                result = tibia::Directions::right;
+                break;
+
+            case tibia::Directions::upLeft:
+                result = tibia::Directions::downRight;
+                break;
+
+            case tibia::Directions::upRight:
+                result = tibia::Directions::downLeft;
+                break;
+
+            case tibia::Directions::downRight:
+                result = tibia::Directions::upLeft;
+                break;
+
+            case tibia::Directions::downLeft:
+                result = tibia::Directions::upRight;
+                break;
+        }
+
+        return result;
+    }
+
     sf::Vector2f getNormalByVectors(sf::Vector2f origin, sf::Vector2f destination)
     {
         sf::Vector2f normal = destination - origin;

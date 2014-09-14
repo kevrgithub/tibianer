@@ -120,7 +120,8 @@ public:
         m_chatLogWindow.create(tibia::GuiData::ChatLogWindow::width, tibia::GuiData::ChatLogWindow::height);
         m_chatLogWindowView.reset(sf::FloatRect(0, 0, tibia::GuiData::ChatLogWindow::width, tibia::GuiData::ChatLogWindow::height));
 
-        m_chatInputWindowText.setPosition(tibia::GuiData::ChatInputWindow::Text::position);
+        m_chatInputWindow.create(tibia::GuiData::ChatInputWindow::width, tibia::GuiData::ChatInputWindow::height);
+        m_chatInputWindowView.reset(sf::FloatRect(0, 0, tibia::GuiData::ChatInputWindow::width, tibia::GuiData::ChatInputWindow::height));
 
         m_chatInputWindowTextCaret.setSize
         (
@@ -240,7 +241,7 @@ public:
 
         tibia::Creature::Ptr player = std::make_shared<tibia::Creature>(*creature);
 
-        player->getInventoryItemList()->clear();
+        player->getInventoryObjectList()->clear();
         player->setIsDead(false);
         player->setIsPlayer(true);
         player->setHp(player->getHpMax());
@@ -462,7 +463,14 @@ public:
 
         sf::String inputText = m_chatInputWindowText.getString();
 
-        inputText.insert(inputText.getSize(), event.text.unicode);
+        std::size_t inputTextSize = inputText.getSize();
+
+        if (inputTextSize >= tibia::GuiData::ChatInputWindow::Text::maxCharacters)
+        {
+            return;
+        }
+
+        inputText.insert(inputTextSize, event.text.unicode);
 
         m_chatInputWindowText.setString(inputText);
     }
@@ -533,6 +541,7 @@ public:
 
             if (event.key.control == true)
             {
+                // cut
                 if (event.key.code == sf::Keyboard::Key::X)
                 {
                     Ihandle* clipboard = IupClipboard();
@@ -541,18 +550,40 @@ public:
 
                     m_chatInputWindowText.setString("");
                 }
+
+                // copy
                 else if (event.key.code == sf::Keyboard::Key::C)
                 {
                     Ihandle* clipboard = IupClipboard();
                     IupSetAttribute(clipboard, "TEXT", inputText.toAnsiString().c_str());
                     IupDestroy(clipboard);
                 }
+
+                // paste
                 else if (event.key.code == sf::Keyboard::Key::V)
                 {
                     Ihandle* clipboard = IupClipboard();
                     const char* clipboardText = IupGetAttribute(clipboard, "TEXT");
 
-                    inputText.insert(inputText.getSize(), clipboardText);
+                    std::string clipboardTextStr = clipboardText;
+
+                    std::size_t clipboardTextSize = clipboardTextStr.size();
+
+                    std::size_t inputTextSize = inputText.getSize();
+
+                    std::size_t totalSize = inputTextSize + clipboardTextStr.size();
+
+                    if (totalSize >= tibia::GuiData::ChatInputWindow::Text::maxCharacters)
+                    {
+                        std::size_t remainder = totalSize - tibia::GuiData::ChatInputWindow::Text::maxCharacters;
+
+                        if (remainder > 0)
+                        {
+                            clipboardTextStr.resize(clipboardTextSize - remainder);
+                        }
+                    }
+
+                    inputText.insert(inputTextSize, clipboardTextStr);
                     m_chatInputWindowText.setString(inputText);
 
                     IupDestroy(clipboard);
@@ -849,7 +880,7 @@ public:
                 }
                 else if (tibia::GuiData::InventoryWindow::Icons::Container::rect.contains(getMouseWindowPosition()) == true)
                 {
-                    m_player->sortInventoryItemsById();
+                    m_player->sortInventoryObjectsById(m_player->getInventoryObjectList());
                 }
                 else if (tibia::GuiData::InventoryWindow::Slots::Window::rect.contains(getMouseWindowPosition()) == true)
                 {
@@ -859,15 +890,15 @@ public:
 
                     //std::cout << "inventoryWindowSlotIndex: " << inventoryWindowSlotIndex << std::endl;
 
-                    tibia::Creature::InventoryItemList* inventoryItemList = m_player->getInventoryItemList();
+                    tibia::Object::List* inventoryObjectList = m_player->getInventoryObjectList();
 
-                    if (inventoryItemList->size() != 0 && (inventoryWindowSlotIndex < inventoryItemList->size()))
+                    if (inventoryObjectList->size() != 0 && (inventoryWindowSlotIndex < inventoryObjectList->size()))
                     {
-                        auto inventoryItemIt = inventoryItemList->begin() + inventoryWindowSlotIndex;
+                        auto inventoryObjectIt = inventoryObjectList->begin() + inventoryWindowSlotIndex;
 
-                        inventoryItemList->insert(inventoryItemList->begin(), *inventoryItemIt);
+                        inventoryObjectList->insert(inventoryObjectList->begin(), *inventoryObjectIt);
 
-                        m_player->removeInventoryItem(inventoryWindowSlotIndex + 1);
+                        m_player->removeInventoryObject(inventoryObjectList, inventoryWindowSlotIndex + 1);
                     }
                 }
             }
@@ -968,7 +999,7 @@ public:
                 if (m_mouseTile != nullptr)
                 {
                     // rope up things
-                    if (m_player->getZ() > tibia::ZAxis::min && m_player->hasInventoryItem(tibia::SpriteData::rope))
+                    if (m_player->getZ() > tibia::ZAxis::min && m_player->hasInventoryObject(m_player->getInventoryObjectList(), tibia::SpriteData::rope))
                     {
                         if (m_mouseTile->getFlags().test(tibia::SpriteFlags::moveBelow))
                         {
@@ -1047,7 +1078,7 @@ public:
 
                         if (object->getFlags().test(tibia::SpriteFlags::pickupable))
                         {
-                            doCreaturePickUpObject(m_player, object);
+                            doCreaturePickUpObject(m_player, object, m_mouseTile);
                         }
                         else
                         {
@@ -1089,21 +1120,24 @@ public:
                 }
                 else if (tibia::GuiData::InventoryWindow::Icons::Container::rect.contains(getMouseWindowPosition()) == true)
                 {
-                    m_player->sortInventoryItemsByCount();
+                    m_player->sortInventoryObjectsByCount(m_player->getInventoryObjectList());
                 }
                 else if (tibia::GuiData::InventoryWindow::Slots::Window::rect.contains(getMouseWindowPosition()) == true)
                 {
-                    // interact with inventory item
+                    // interact with inventory object
 
                     int inventoryWindowSlotIndex = getMouseInventoryWindowSlotIndex();
 
-                    tibia::Creature::InventoryItemList* inventoryItemList = m_player->getInventoryItemList();
+                    tibia::Object::List* inventoryObjectList = m_player->getInventoryObjectList();
 
-                    if (inventoryItemList->size() != 0 && inventoryWindowSlotIndex < inventoryItemList->size())
+                    if (inventoryObjectList->size() != 0 && inventoryWindowSlotIndex < inventoryObjectList->size())
                     {
-                        auto inventoryItemIt = inventoryItemList->begin() + inventoryWindowSlotIndex;
+                        auto inventoryObjectIt = inventoryObjectList->begin() + inventoryWindowSlotIndex;
 
-                        //
+                        if (inventoryObjectIt->get()->getType() == tibia::ObjectTypes::book)
+                        {
+                            doPlayerReadBook(*inventoryObjectIt);
+                        }
                     }
                 }
             }
@@ -1207,7 +1241,7 @@ public:
             {
                 if (tibia::GuiData::InventoryWindow::Icons::Container::rect.contains(getMouseWindowPosition()) == true)
                 {
-                    m_player->sortInventoryItemsReverse();
+                    m_player->sortInventoryObjectsReverse(m_player->getInventoryObjectList());
                 }
                 else if (tibia::GuiData::InventoryWindow::Slots::Window::rect.contains(getMouseWindowPosition()) == true)
                 {
@@ -1217,13 +1251,13 @@ public:
 
                     //std::cout << "inventoryWindowSlotIndex: " << inventoryWindowSlotIndex << std::endl;
 
-                    tibia::Creature::InventoryItemList* inventoryItemList = m_player->getInventoryItemList();
+                    tibia::Object::List* inventoryObjectList = m_player->getInventoryObjectList();
 
-                    if (inventoryItemList->size() != 0 && inventoryWindowSlotIndex < inventoryItemList->size())
+                    if (inventoryObjectList->size() != 0 && inventoryWindowSlotIndex < inventoryObjectList->size())
                     {
-                        auto inventoryItemIt = inventoryItemList->begin() + inventoryWindowSlotIndex;
+                        auto inventoryObjectIt = inventoryObjectList->begin() + inventoryWindowSlotIndex;
 
-                        doCreatureDropInventoryItem(m_player, inventoryItemIt);
+                        doCreatureDropInventoryObject(m_player, inventoryObjectIt);
                     }
                 }
             }
@@ -1529,7 +1563,7 @@ public:
 
     int getInventoryWindowSlotsViewMaxScrollY()
     {
-        int maxScrollY = (m_player->getInventoryItemList()->size() / tibia::GuiData::InventoryWindow::Slots::numSlotsHorizontal) * tibia::GuiData::InventoryWindow::Slots::size;
+        int maxScrollY = (m_player->getInventoryObjectList()->size() / tibia::GuiData::InventoryWindow::Slots::numSlotsHorizontal) * tibia::GuiData::InventoryWindow::Slots::size;
 
         maxScrollY -= (tibia::GuiData::InventoryWindow::height - (tibia::GuiData::InventoryWindow::Slots::size * 3));
 
@@ -1693,6 +1727,11 @@ public:
 
     bool doCreatureWalkToTile(tibia::Creature::Ptr creature, tibia::Tile::Ptr toTile)
     {
+        if (creature == nullptr || toTile == nullptr)
+        {
+            return false;
+        }
+
         bool result = false;
 
         tibia::MapSearchNode_tileMap = &m_map.tileMapTiles[creature->getZ()];
@@ -1726,11 +1765,18 @@ public:
             searchState = aStarSearch.SearchStep();
 
             searchSteps++;
+
+            if (searchSteps >= tibia::ASTAR_SEARCH_STEPS_MAX)
+            {
+                searchState = AStarSearch<MapSearchNode>::SEARCH_STATE_FAILED;
+            }
         }
         while (searchState == AStarSearch<MapSearchNode>::SEARCH_STATE_SEARCHING);
 
         if (searchState == AStarSearch<MapSearchNode>::SEARCH_STATE_SUCCEEDED)
         {
+            //std::cout << "astar search succeeded in " << searchSteps << " steps" << std::endl;
+
             MapSearchNode* startNode = aStarSearch.GetSolutionStart();
 
             //std::cout << "node start x: " << startNode->x << std::endl;
@@ -1787,7 +1833,7 @@ public:
         {
             result = false;
 
-            std::cout << "astar search failed" << std::endl;
+            //std::cout << "astar search FAILED in " << searchSteps << " steps" << std::endl;
         }
 
         aStarSearch.EnsureMemoryFreed();
@@ -2093,6 +2139,8 @@ public:
         tibia::Tile::Properties_t toTileProperties = toTile->getProperties();
 
         tibia::Object::Ptr teleporterObject = getTileObjectByType(toTile->getPosition(), toTile->getZ(), tibia::ObjectTypes::teleporter);
+
+        tibia::Object::Ptr bearTrapOpenObject = getTileObjectById(toTile->getPosition(), toTile->getZ(), tibia::SpriteData::bearTrap[1]);
 
         int toZ = toTile->getZ();
 
@@ -2458,13 +2506,29 @@ public:
                 {
                     std::string statusEffectName = tibia::UMaps::creatureStatusEffectsNames[statusEffectType];
 
-                    std::transform(statusEffectName.begin(), statusEffectName.end(), statusEffectName.begin(), ::tolower);
+                    boost::to_lower(statusEffectName);
 
                     std::stringstream ssStatusEffectMessage;
                     ssStatusEffectMessage << "You are " << statusEffectName << ".";
 
                     showStatusBarText(ssStatusEffectMessage.str());
                 }
+            }
+        }
+
+        if (bearTrapOpenObject != nullptr && toTileProperties.hasBearTrapOpenObject == true)
+        {
+            bearTrapOpenObject->setId(tibia::SpriteData::bearTrap[0]);
+
+            if (thingCreature != nullptr)
+            {
+                handleCreatureModifyHp
+                (
+                    nullptr,
+                    thingCreature,
+                    -(tibia::BearTrap::damage),
+                    tibia::ModifyHpTypes::blood
+                );
             }
         }
 
@@ -2666,12 +2730,12 @@ public:
         }
 
         // key ring opens all doors
-        if (creature->hasInventoryItem(tibia::SpriteData::keyRing) == true)
+        if (creature->hasInventoryObject(creature->getInventoryObjectList(), tibia::SpriteData::keyRing) == true)
         {
             return true;
         }
 
-        if (creature->hasInventoryItem(tibia::UMaps::keyIds[keyId]) == false)
+        if (creature->hasInventoryObject(creature->getInventoryObjectList(), tibia::UMaps::keyIds[keyId]) == false)
         {
             std::stringstream ssKeyText;
 
@@ -2759,40 +2823,6 @@ public:
             std::cout << signText.str() << std::endl;
 
             showGameWindowText(signText.str(), tibia::Colors::Text::green);
-
-            return true;
-        }
-
-        // books
-        if (object->getType() == tibia::ObjectTypes::book)
-        {
-            std::string bookName;
-
-            if (object->properties.bookName.size() == 0)
-            {
-                bookName = tibia::OBJECT_BOOK_NAME_DEFAULT;
-            }
-            else
-            {
-                bookName = object->properties.bookName;
-            }
-
-            std::stringstream bookText;
-
-            bookText << "You see " << bookName << ".";
-
-            if (object->properties.bookText.size() == 0)
-            {
-                bookText << " It is blank." << std::endl;
-            }
-            else
-            {
-                bookText << " It reads:\n" << object->properties.bookText;
-            }
-
-            std::cout << bookText.str() << std::endl;
-
-            IupGetText("Book", (char*)object->properties.bookText.c_str());
 
             return true;
         }
@@ -2898,7 +2928,12 @@ public:
         // ladder and rope up
         if (object->getId() == tibia::SpriteData::ladder || object->getId() == tibia::SpriteData::ropeUp)
         {
-            if (object->getId() == tibia::SpriteData::ropeUp && creature->hasInventoryItem(tibia::SpriteData::rope) == false)
+            if
+            (
+                object->getId() == tibia::SpriteData::ropeUp &&
+
+                creature->hasInventoryObject(creature->getInventoryObjectList(), tibia::SpriteData::rope) == false
+            )
             {
                 showStatusBarText("You need a rope to climb up.");
                 return false;
@@ -2924,7 +2959,11 @@ public:
         // dig holes
         if (object->getId() == tibia::SpriteData::digHole[0] || object->getId() == tibia::SpriteData::digHoleIce[0])
         {
-            if (creature->hasInventoryItem(tibia::SpriteData::shovel) == false && creature->hasInventoryItem(tibia::SpriteData::pick) == false)
+            if
+            (
+                creature->hasInventoryObject(creature->getInventoryObjectList(), tibia::SpriteData::shovel) == false &&
+                creature->hasInventoryObject(creature->getInventoryObjectList(), tibia::SpriteData::pick)   == false
+            )
             {
                 showStatusBarText("You need a shovel or pick to dig.");
                 return false;
@@ -3586,14 +3625,11 @@ public:
         // blueberry bushes
         if (object->getId() == tibia::SpriteData::bushBlueBerry)
         {
-            tibia::Object::Ptr blueBerriesObject = std::make_shared<tibia::Object>
-            (
-                m_player->getTilePosition(),
-                m_player->getZ(),
-                tibia::SpriteData::blueBerry[2] // 3 blueberries
-            );
+            tibia::Object::Ptr blueBerriesObject = std::make_shared<tibia::Object>();
+            blueBerriesObject->setId(tibia::SpriteData::blueBerry[2]);
+            blueBerriesObject->setCountById();
 
-            creature->addInventoryItem(blueBerriesObject->getId(), blueBerriesObject->getCount(), blueBerriesObject->getFlags());
+            creature->addInventoryObject(creature->getInventoryObjectList(), blueBerriesObject);
 
             object->getClockRegenerate()->restart();
             object->setId(tibia::SpriteData::bushBlueBerryEmpty);
@@ -3604,14 +3640,10 @@ public:
         // snow ball mounds
         if (object->getId() == tibia::SpriteData::snowBallMound)
         {
-            tibia::Object::Ptr snowBallObject = std::make_shared<tibia::Object>
-            (
-                m_player->getTilePosition(),
-                m_player->getZ(),
-                tibia::SpriteData::snowBall[0]
-            );
+            tibia::Object::Ptr snowBallObject = std::make_shared<tibia::Object>();
+            snowBallObject->setId(tibia::SpriteData::snowBall[0]);
 
-            creature->addInventoryItem(snowBallObject->getId(), snowBallObject->getCount(), snowBallObject->getFlags());
+            creature->addInventoryObject(creature->getInventoryObjectList(), snowBallObject);
 
             object->getClockRegenerate()->restart();
             object->setId(tibia::SpriteData::snowBallMoundEmpty);
@@ -3926,7 +3958,7 @@ public:
         // jungle grass
         if (object->getId() == tibia::SpriteData::grassJungle)
         {
-            if (creature->hasInventoryItem(tibia::SpriteData::machete) == false)
+            if (creature->hasInventoryObject(creature->getInventoryObjectList(), tibia::SpriteData::machete) == false)
             {
                 showStatusBarText("You need a machete to cut the grass.");
                 return false;
@@ -3941,7 +3973,7 @@ public:
         // wheat
         if (object->getId() == tibia::SpriteData::wheatGreen || object->getId() == tibia::SpriteData::wheatYellow)
         {
-            if (creature->hasInventoryItem(tibia::SpriteData::scythe) == false)
+            if (creature->hasInventoryObject(creature->getInventoryObjectList(), tibia::SpriteData::scythe) == false)
             {
                 showStatusBarText("You need a scythe to cut the wheat.");
                 return false;
@@ -3976,7 +4008,7 @@ public:
         return false;
     }
 
-    void doCreaturePickUpObject(tibia::Creature::Ptr creature, tibia::Object::Ptr object)
+    void doCreaturePickUpObject(tibia::Creature::Ptr creature, tibia::Object::Ptr object, tibia::Tile::Ptr tile)
     {
         int objectTileDistance = tibia::Utility::calculateTileDistance
         (
@@ -3992,20 +4024,20 @@ public:
         }
         else
         {
-            int creatureAddInventoryItemResult = creature->addInventoryItem(object->getId(), object->getCount(), object->getFlags());
+            int creatureAddInventoryItemResult = creature->addInventoryObject(creature->getInventoryObjectList(), object);
 
-            if (creatureAddInventoryItemResult == tibia::CreatureAddInventoryItemResult::success)
+            if (creatureAddInventoryItemResult == tibia::CreatureAddInventoryObjectResult::success)
             {
-                object->setIsReadyForErase(true);
+                tile->removeObject(object);
             }
-            else if (creatureAddInventoryItemResult == tibia::CreatureAddInventoryItemResult::inventoryItemCountMax)
+            else if (creatureAddInventoryItemResult == tibia::CreatureAddInventoryObjectResult::inventoryObjectCountMax)
             {
                 if (creature->isPlayer() == true)
                 {
                     showStatusBarText("You cannot pick up any more of that object.");
                 }
             }
-            else if (creatureAddInventoryItemResult == tibia::CreatureAddInventoryItemResult::inventoryItemsMax)
+            else if (creatureAddInventoryItemResult == tibia::CreatureAddInventoryObjectResult::inventoryObjectsMax)
             {
                 if (creature->isPlayer() == true)
                 {
@@ -4015,92 +4047,222 @@ public:
         }
     }
 
-    void doCreatureDropInventoryItem(tibia::Creature::Ptr creature, tibia::Creature::InventoryItemList::iterator& inventoryItemIt)
+    void doCreatureDropInventoryObject(tibia::Creature::Ptr creature, tibia::Object::List::iterator& inventoryObjectIt)
     {
-        tibia::Object::Ptr droppedObject = spawnObject(creature->getTilePosition(), creature->getZ(), inventoryItemIt->id);
+        tibia::Object::Ptr inventoryObject = *inventoryObjectIt;
 
-        updateStepTile(getTile(creature->getTilePosition(), creature->getZ()));
+        tibia::Object::Ptr dropObject = std::make_shared<tibia::Object>(*inventoryObject);
 
-        if (inventoryItemIt->count > 1)
+        if (inventoryObject->getCount() > 1)
         {
-            if (inventoryItemIt->flags.test(tibia::SpriteFlags::groupable))
+            if (inventoryObject->getFlags().test(tibia::SpriteFlags::groupable))
             {
-                droppedObject->setCount(inventoryItemIt->count);
+                dropObject->setCount(inventoryObject->getCount());
 
-                creature->removeInventoryItem(inventoryItemIt);
+                spawnObject(creature->getTilePosition(), creature->getZ(), dropObject);
+
+                creature->removeInventoryObject(creature->getInventoryObjectList(), inventoryObjectIt);
             }
             else
             {
-                inventoryItemIt->count--;
+                inventoryObject->setCount(inventoryObject->getCount() - 1);
             }
         }
         else
         {
-            creature->removeInventoryItem(inventoryItemIt);
+            spawnObject(creature->getTilePosition(), creature->getZ(), dropObject);
+
+            creature->removeInventoryObject(creature->getInventoryObjectList(), inventoryObjectIt);
         }
+
+        updateStepTile(getTile(creature->getTilePosition(), creature->getZ()));
     }
 
-    void doCreatureDropAllInventoryItems(tibia::Creature::Ptr creature)
+    void doCreatureDropAllInventoryObjects(tibia::Creature::Ptr creature)
     {
-        tibia::Creature::InventoryItemList* inventoryItemList = creature->getInventoryItemList();
+        tibia::Object::List* inventoryObjectList = creature->getInventoryObjectList();
 
-        if (inventoryItemList->size() == 0)
+        if (inventoryObjectList->size() == 0)
         {
             return;
         }
 
-        for (auto inventoryItemIt = inventoryItemList->begin(); inventoryItemIt != inventoryItemList->end(); ++inventoryItemIt)
+        for (auto inventoryObjectIt = inventoryObjectList->begin(); inventoryObjectIt != inventoryObjectList->end(); ++inventoryObjectIt)
         {
-            //std::cout << inventoryItemIt->id << std::endl;
+            doCreatureDropInventoryObject(creature, inventoryObjectIt);
 
-            doCreatureDropInventoryItem(creature, inventoryItemIt);
-
-            inventoryItemIt--;
+            inventoryObjectIt--;
         }
     }
 
-    void doPlayerAddInventoryItem(int id, int count)
+    void doPlayerAddInventoryObject(int id, int count, bool depot = false)
     {
-        tibia::SpriteFlags_t spriteFlags = tibia::UMaps::spriteFlags[id];
+        tibia::Object::Ptr object = std::make_shared<tibia::Object>();
+        object->setId(id);
+        object->setCount(count);
 
-        m_player->addInventoryItem(id, count, spriteFlags);
+        tibia::Object::List* inventoryObjectList;
+
+        if (depot == false)
+        {
+            inventoryObjectList = m_player->getInventoryObjectList();
+        }
+        else
+        {
+            inventoryObjectList = m_player->getInventoryDepotObjectList();
+        }
+
+        m_player->addInventoryObject(inventoryObjectList, object);
     }
 
-    void doCreatureSpeech(tibia::Creature::Ptr creature, const std::string& text, int speechType = tibia::SpeechTypes::say)
+    bool doesPlayerHaveInventoryObject(int id, bool depot = false)
     {
-        std::stringstream ssText;
+        tibia::Object::List* inventoryObjectList;
+
+        if (depot == false)
+        {
+            inventoryObjectList = m_player->getInventoryObjectList();
+        }
+        else
+        {
+            inventoryObjectList = m_player->getInventoryDepotObjectList();
+        }
+
+        return (m_player->hasInventoryObject(inventoryObjectList, id));
+    }
+
+    bool doPlayerReadBook(tibia::Object::Ptr object)
+    {
+        if (object->getType() != tibia::ObjectTypes::book)
+        {
+            return false;
+        }
+
+        std::string bookName;
+
+        if (object->properties.bookName.size() == 0)
+        {
+            bookName = tibia::OBJECT_BOOK_NAME_DEFAULT;
+        }
+        else
+        {
+            bookName = object->properties.bookName;
+        }
+
+        std::stringstream bookText;
+
+        bookText << "You see " << bookName << ".";
+
+        if (object->properties.bookText.size() == 0)
+        {
+            bookText << " It is blank." << std::endl;
+        }
+        else
+        {
+            bookText << " It reads:\n" << object->properties.bookText;
+        }
+
+        std::cout << bookText.str() << std::endl;
+
+        IupGetText(bookName.c_str(), (char*)object->properties.bookText.c_str());
+
+        return true;
+    }
+
+    void doCreatureSpeech(tibia::Creature::Ptr creature, std::string text, int speechType = tibia::SpeechTypes::say)
+    {
+        std::vector<std::string> textWords;
+        boost::split(textWords, text, boost::is_any_of(" "));
+
+        // hyphenate long words
+        std::size_t wordSizeMax = 20;
+
+        std::stringstream textLinesStream;
+
+        for (std::size_t i = 0; i < textWords.size(); i++)
+        {
+            std::cout << textWords[i] << std::endl;
+
+            std::size_t textWordSize = textWords[i].size();
+
+            if (textWordSize > wordSizeMax)
+            {
+                for (std::size_t j = 0; j < textWordSize; j++)
+                {
+                    if ((j != 0) && (((j + 1) % wordSizeMax) == 0))
+                    {
+                        textWords[i].insert(j, "-\n-");
+                    }
+                }
+
+                textLinesStream << textWords[i];
+            }
+            else
+            {
+                textLinesStream << textWords[i] << " ";
+            }
+        }
+
+        text = textLinesStream.str();
+
+        // split sets of words to separate lines
+        std::size_t wordsPerLine = 4;
+
+        if (textWords.size() > wordsPerLine)
+        {
+            std::stringstream textLinesStream;
+
+            for (std::size_t i = 0; i < textWords.size(); i++)
+            {
+                textLinesStream << textWords[i];
+
+                if ((i != 0) && (((i + 1) % wordsPerLine) == 0))
+                {
+                    textLinesStream << "\n";
+                }
+                else
+                {
+                    textLinesStream << " ";
+                }
+            }
+
+            text = textLinesStream.str();
+        }
+
+        std::stringstream textStream;
 
         if (speechType != tibia::SpeechTypes::monster)
         {
             if (creature->isPlayer() == true)
             {
-                ssText << "You ";
+                textStream << "You ";
             }
             else
             {
-                ssText << creature->getName() << " ";
+                textStream << creature->getName() << " ";
             }
 
-            ssText << tibia::UMaps::speechTypes[speechType];
+            textStream << tibia::UMaps::speechTypes[speechType];
 
             if (creature->isPlayer() == false)
             {
-                ssText << "s";
+                textStream << "s";
             }
 
-            ssText << ":\n";
+            textStream << ":\n";
 
             if (speechType == tibia::SpeechTypes::yell)
             {
-                std::string textToUpper = text;
-                std::transform(textToUpper.begin(), textToUpper.end(), textToUpper.begin(), ::toupper);
-
-                ssText << textToUpper;
+                boost::to_upper(text);
             }
-            else
+            else if (speechType == tibia::SpeechTypes::whisper)
             {
-                ssText << text;
+                boost::to_lower(text);
             }
+
+            boost::trim_right(text);
+
+            textStream << text;
         }
 
         sf::Vector2u textPosition = creature->getTilePosition();
@@ -4113,11 +4275,13 @@ public:
         (
             textPosition,
             creature->getZ(),
-            ssText.str(),
+            textStream.str(),
             tibia::UMaps::speechTypesTextColors[speechType]
         );
 
-        std::string chatLogWindowText = ssText.str();
+        std::string chatLogWindowText = textStream.str();
+
+        boost::replace_all(chatLogWindowText, "-\n-", "");
 
         boost::replace_all(chatLogWindowText, "\n", " ");
 
@@ -4483,7 +4647,7 @@ public:
                     );
                 }
 
-                doCreatureDropAllInventoryItems(defender);
+                doCreatureDropAllInventoryObjects(defender);
 
                 if (defender->isPlayer() == true)
                 {
@@ -4608,6 +4772,20 @@ public:
 
         tibia::Object::Ptr belowTop = objectList->end()[-2];
 
+        // dustbin destroys the object on top of it
+        if (belowTop->getId() == tibia::SpriteData::dustBin)
+        {
+            spawnAnimation
+            (
+                belowTop->getTilePosition(),
+                belowTop->getZ(),
+                tibia::Animations::hitMiss
+            );
+
+            top->setIsReadyForErase(true);
+            return;
+        }
+
         // empty bucket to bucket of water
         if (top->getId() == tibia::SpriteData::bucket[0])
         {
@@ -4703,7 +4881,7 @@ public:
 
         if (first->getFlags().test(tibia::SpriteFlags::groupable) && second->getFlags().test(tibia::SpriteFlags::groupable))
         {
-            if (first->getCount() == tibia::INVENTORY_ITEM_COUNT_MAX || second->getCount() == INVENTORY_ITEM_COUNT_MAX)
+            if (first->getCount() == tibia::OBJECT_COUNT_MAX || second->getCount() == OBJECT_COUNT_MAX)
             {
                 return;
             }
@@ -4722,9 +4900,9 @@ public:
                             {
                                 int groupedCount = first->getCount() + second->getCount();
 
-                                if (groupedCount > INVENTORY_ITEM_COUNT_MAX)
+                                if (groupedCount > OBJECT_COUNT_MAX)
                                 {
-                                    int remainderCount = groupedCount - INVENTORY_ITEM_COUNT_MAX;
+                                    int remainderCount = groupedCount - OBJECT_COUNT_MAX;
 
                                     first->setId
                                     (
@@ -4739,10 +4917,10 @@ public:
                                     (
                                         tibia::groupedObjectsList
                                             .at(groupableObjectsIndex)
-                                            .at(tibia::Utility::getGroupableObjectIndexByCount(INVENTORY_ITEM_COUNT_MAX, groupableObjects.size()))
+                                            .at(tibia::Utility::getGroupableObjectIndexByCount(OBJECT_COUNT_MAX, groupableObjects.size()))
                                     );
 
-                                    second->setCount(INVENTORY_ITEM_COUNT_MAX);
+                                    second->setCount(OBJECT_COUNT_MAX);
 
                                     return;
                                 }
@@ -5220,6 +5398,28 @@ public:
         return object;
     }
 
+    bool spawnObject(sf::Vector2u tileCoords, int z, tibia::Object::Ptr object)
+    {
+        if (object == nullptr)
+        {
+            return false;
+        }
+
+        object->setTileCoords(tileCoords.x, tileCoords.y);
+        object->setZ(z);
+
+        tibia::Tile::Ptr tile = getTile(tileCoords, z);
+
+        if (tile == nullptr)
+        {
+            return false;
+        }
+
+        tile->addObject(object);
+
+        return true;
+    }
+
     tibia::Object::Ptr spawnDecayObject(sf::Vector2u tileCoords, int z, std::vector<int> id, bool isDecal = false)
     {
         tibia::Object::Ptr object = std::make_shared<tibia::Object>(tileCoords, z, id[0]);
@@ -5355,10 +5555,10 @@ public:
 
                 if (tileFlags.test(tibia::SpriteFlags::transparent))
                 {
-                    quad[0].color = tibia::Colors::transparent;
-                    quad[1].color = tibia::Colors::transparent;
-                    quad[2].color = tibia::Colors::transparent;
-                    quad[3].color = tibia::Colors::transparent;
+                    quad[0].color = sf::Color::Transparent;
+                    quad[1].color = sf::Color::Transparent;
+                    quad[2].color = sf::Color::Transparent;
+                    quad[3].color = sf::Color::Transparent;
                 }
 
                 m_tileMapTileVertices.append(quad[0]);
@@ -5509,7 +5709,7 @@ public:
                                     {
                                         std::string statusEffectName = statusEffectIt->name;
 
-                                        std::transform(statusEffectName.begin(), statusEffectName.end(), statusEffectName.begin(), ::tolower);
+                                        boost::to_lower(statusEffectName);
 
                                         std::stringstream ssStatusEffectMessage;
                                         ssStatusEffectMessage << "You are no longer " << statusEffectName << ".";
@@ -5641,7 +5841,7 @@ public:
 
     void drawThingList(tibia::Thing::List* thingList)
     {
-        std::stable_sort(thingList->begin(), thingList->end(), tibia::ThingSort::sortByTileCoords());
+        std::stable_sort(thingList->begin(), thingList->end(), tibia::Thing::SortByTileCoords());
 
         for (auto& thing : *thingList)
         {
@@ -5737,7 +5937,7 @@ public:
     void drawGameLayer(int z)
     {
         m_gameWindowLayer.setView(m_gameWindowView);
-        m_gameWindowLayer.clear(tibia::Colors::transparent);
+        m_gameWindowLayer.clear(sf::Color::Transparent);
 
         drawTileMap(&m_map.tileMapTiles[z]);
         drawTileMap(&m_map.tileMapTileEdges[z]);
@@ -5968,7 +6168,7 @@ public:
                         quad[2].position = sf::Vector2f((i + 1) * tibia::TILE_SIZE, (j + 1) * tibia::TILE_SIZE);
                         quad[3].position = sf::Vector2f(i       * tibia::TILE_SIZE, (j + 1) * tibia::TILE_SIZE);
 
-                        sf::Color objectColor = tibia::Colors::transparent;
+                        sf::Color objectColor = sf::Color::Transparent;
 
                         if (objectFlags.test(tibia::SpriteFlags::solid))
                         {
@@ -6467,7 +6667,7 @@ public:
         }
 
         m_chatLogWindow.setView(m_chatLogWindowView);
-        m_chatLogWindow.clear(tibia::Colors::transparent);
+        m_chatLogWindow.clear(sf::Color::Transparent);
 
         sf::Vector2f chatLogWindowTextPosition
         (
@@ -6495,21 +6695,37 @@ public:
         mainWindow->draw(m_chatLogWindowSprite);
     }
 
-    void drawChatInputText(sf::RenderWindow* mainWindow)
+    void drawChatInputWindow(sf::RenderWindow* mainWindow)
     {
-        mainWindow->draw(m_chatInputWindowText);
+        if (m_chatInputWindowText.getLocalBounds().width > tibia::GuiData::ChatInputWindow::width)
+        {
+            sf::Vector2f center = m_chatInputWindowView.getCenter();
+
+            sf::Vector2f half   = m_chatInputWindowView.getSize() / 2.0f;
+
+            sf::Vector2f result = center - half;
+
+            m_chatInputWindowView.setCenter
+            (
+                m_chatInputWindowText.getLocalBounds().width,
+                tibia::GuiData::ChatInputWindow::height / 2.0f
+            );
+        }
+        else
+        {
+            m_chatInputWindowView.reset(sf::FloatRect(0, 0, tibia::GuiData::ChatInputWindow::width, tibia::GuiData::ChatInputWindow::height));
+        }
+
+        m_chatInputWindow.setView(m_chatInputWindowView);
+        m_chatInputWindow.clear(sf::Color::Transparent);
+
+        m_chatInputWindowText.setPosition(tibia::GuiData::ChatInputWindow::Text::offsetX, tibia::GuiData::ChatInputWindow::Text::offsetY);
+
+        m_chatInputWindow.draw(m_chatInputWindowText);
+        //mainWindow->draw(m_chatInputWindowText);
 
         if (this->gui.isChatInputWindowActive == true)
         {
-            sf::RectangleShape highlight;
-            highlight.setSize(sf::Vector2f(tibia::GuiData::ChatInputWindow::width + 2, tibia::GuiData::ChatInputWindow::height + 2));
-            highlight.setPosition(sf::Vector2f(tibia::GuiData::ChatInputWindow::x - 1, tibia::GuiData::ChatInputWindow::y - 1));
-            highlight.setOutlineColor(sf::Color::Red);
-            highlight.setOutlineThickness(1.0f);
-            highlight.setFillColor(sf::Color::Transparent);
-
-            mainWindow->draw(highlight);
-
             sf::Time timeElapsed = m_chatInputWindowTextCaretClock.getElapsedTime();
 
             if (timeElapsed.asSeconds() > 0.5f)
@@ -6523,12 +6739,32 @@ public:
             {
                 m_chatInputWindowTextCaret.setPosition
                 (
-                    tibia::GuiData::ChatInputWindow::x + tibia::GuiData::ChatInputWindow::Text::offsetX + m_chatInputWindowText.getLocalBounds().width + 1,
-                    tibia::GuiData::ChatInputWindow::y + 1
+                    tibia::GuiData::ChatInputWindow::Text::offsetX + m_chatInputWindowText.getLocalBounds().width + 1,
+                    1
                 );
 
-                mainWindow->draw(m_chatInputWindowTextCaret);
+                m_chatInputWindow.draw(m_chatInputWindowTextCaret);
             }
+        }
+
+        m_chatInputWindow.display();
+
+        m_chatInputWindowSprite.setTexture(m_chatInputWindow.getTexture());
+        m_chatInputWindowSprite.setTextureRect(sf::IntRect(0, 0, tibia::GuiData::ChatInputWindow::width, tibia::GuiData::ChatInputWindow::height));
+        m_chatInputWindowSprite.setPosition(tibia::GuiData::ChatInputWindow::position);
+
+        mainWindow->draw(m_chatInputWindowSprite);
+
+        if (this->gui.isChatInputWindowActive == true)
+        {
+            sf::RectangleShape highlight;
+            highlight.setSize(sf::Vector2f(tibia::GuiData::ChatInputWindow::width + 2, tibia::GuiData::ChatInputWindow::height + 2));
+            highlight.setPosition(sf::Vector2f(tibia::GuiData::ChatInputWindow::x - 1, tibia::GuiData::ChatInputWindow::y - 1));
+            highlight.setOutlineColor(sf::Color::Red);
+            highlight.setOutlineThickness(1.0f);
+            highlight.setFillColor(sf::Color::Transparent);
+
+            mainWindow->draw(highlight);
         }
     }
 
@@ -6589,7 +6825,7 @@ public:
         mainWindow->draw(statusText);
 
         // CAP
-        int cap = m_player->getCap() - m_player->getInventoryItemList()->size();
+        int cap = m_player->getCap() - m_player->getInventoryObjectList()->size();
 
         statusText.setText(&m_bitmapFontTiny, std::to_string(cap), tibia::Colors::white);
         statusText.setPosition
@@ -6678,9 +6914,9 @@ public:
         mainWindow->draw(inventoryWindow);
         mainWindow->draw(inventoryIconContainer);
 
-        tibia::Creature::InventoryItemList* inventoryList = m_player->getInventoryItemList();
+        tibia::Object::List* inventoryObjectList = m_player->getInventoryObjectList();
 
-        if (inventoryList->size() > tibia::GuiData::InventoryWindow::Slots::numSlotsVisible)
+        if (inventoryObjectList->size() > tibia::GuiData::InventoryWindow::Slots::numSlotsVisible)
         {
             if (tibia::Utility::getViewPosition(m_inventorySlotsWindowView).y < getInventoryWindowSlotsViewMaxScrollY())
             {
@@ -6717,12 +6953,10 @@ public:
             this->gui.inventoryWindowButtonScrollUp = false;
         }
 
-        tibia::Creature::InventoryItemList* inventoryItemList = m_player->getInventoryItemList();
-
-        if (inventoryItemList->size() != 0)
+        if (inventoryObjectList->size() != 0)
         {
             m_inventorySlotsWindow.setView(m_inventorySlotsWindowView);
-            m_inventorySlotsWindow.clear(tibia::Colors::transparent);
+            m_inventorySlotsWindow.clear(sf::Color::Transparent);
 
             tibia::BitmapFontText inventoryItemCountText;
 
@@ -6730,17 +6964,17 @@ public:
 
             sf::Vector2f inventoryItemPosition(0, 0);
 
-            for (auto& inventoryItem : *inventoryItemList)
+            for (auto& inventoryObject : *inventoryObjectList)
             {
                 tibia::Sprite sprInventoryItem;
-                sprInventoryItem.setId(inventoryItem.id);
+                sprInventoryItem.setId(inventoryObject->getId());
                 sprInventoryItem.setPosition(inventoryItemPosition);
 
                 m_inventorySlotsWindow.draw(sprInventoryItem);
 
-                if (inventoryItem.count > 1)
+                if (inventoryObject->getCount() > 1)
                 {
-                    inventoryItemCountText.setText(&m_bitmapFontTiny, std::to_string(inventoryItem.count), tibia::Colors::white);
+                    inventoryItemCountText.setText(&m_bitmapFontTiny, std::to_string(inventoryObject->getCount()), tibia::Colors::white);
 
                     inventoryItemCountText.setPosition
                     (
@@ -6968,7 +7202,7 @@ public:
         if (creatureList->size() != 0)
         {
             m_combatCreaturesWindow.setView(m_combatCreaturesWindowView);
-            m_combatCreaturesWindow.clear(tibia::Colors::transparent);
+            m_combatCreaturesWindow.clear(sf::Color::Transparent);
 
             sf::Vector2f creaturePosition(tibia::GuiData::CombatWindow::Creatures::creatureIconLeftOffset, 0);
 
@@ -7409,6 +7643,9 @@ public:
 
             doAnimateObjectList(&m_tileMapObjects[i]);
         }
+
+        doAnimateObjectList(m_player->getInventoryObjectList());
+        doAnimateObjectList(m_player->getInventoryDepotObjectList());
     }
 
     void doAnimateObjectList(tibia::Object::List* objectList)
@@ -7418,9 +7655,9 @@ public:
             return;
         }
 
-        int numAnimatedObjects = 0;
+        //int numAnimatedObjects = 0;
 
-        for (auto object : *objectList)
+        for (auto& object : *objectList)
         {
             if (object->getFlags().test(tibia::SpriteFlags::animated))
             {
@@ -7429,7 +7666,7 @@ public:
                 //std::cout << "animated object id: "    << object->getId()    << std::endl;
                 //std::cout << "animated object flags: " << object->getFlags() << std::endl;
 
-                numAnimatedObjects++;
+                //numAnimatedObjects++;
             }
         }
 
@@ -7576,6 +7813,9 @@ private:
     sf::View m_chatLogWindowView;
     sf::Sprite m_chatLogWindowSprite;
 
+    sf::RenderTexture m_chatInputWindow;
+    sf::View m_chatInputWindowView;
+    sf::Sprite m_chatInputWindowSprite;
     std::vector<sf::Text> m_chatLogWindowTextList;
 
     sf::Text m_chatInputWindowText;

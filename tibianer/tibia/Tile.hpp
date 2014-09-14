@@ -33,6 +33,7 @@ public:
         bool hasMoveBelowObject         = false;
         bool hasModifyHpOnTouchObject   = false;
         bool hasTeleporterObject        = false;
+        bool hasBearTrapOpenObject      = false;
         bool hasMountainRampLeftObject  = false;
         bool hasMountainRampRightObject = false;
     };
@@ -129,6 +130,16 @@ public:
         }
     }
 
+    void removeObject(tibia::Object::Ptr object)
+    {
+        auto objectIt = std::find(m_objectList.begin(), m_objectList.end(), object);
+
+        if (objectIt != m_objectList.end())
+        {
+            m_objectList.erase(objectIt);
+        }
+    }
+
     void addCreature(tibia::Creature::Ptr creature)
     {
         if (creature->isDead() == true)
@@ -206,11 +217,6 @@ public:
                 tileProperties.hasModifyHpOnTouchObject = true;
             }
 
-            if (object->getType() == tibia::ObjectTypes::teleporter)
-            {
-                tileProperties.hasTeleporterObject = true;
-            }
-
             int objectId = object->getId();
 
             if (objectId == tibia::SpriteData::mountainRampLeft)
@@ -220,6 +226,15 @@ public:
             else if (objectId == tibia::SpriteData::mountainRampRight)
             {
                 tileProperties.hasMountainRampRightObject = true;
+            }
+            else if (objectId == tibia::SpriteData::bearTrap[1])
+            {
+                tileProperties.hasBearTrapOpenObject = true;
+            }
+
+            if (object->getType() == tibia::ObjectTypes::teleporter)
+            {
+                tileProperties.hasTeleporterObject = true;
             }
         }
 

@@ -22,6 +22,22 @@ public:
     typedef std::shared_ptr<tibia::Object> Ptr;
     typedef std::vector<tibia::Object::Ptr> List;
 
+    struct SortById_t
+    {
+        bool operator()(tibia::Object::Ptr a, tibia::Object::Ptr b) const
+        {
+            return a->getId() < b->getId();
+        }
+    };
+
+    struct SortByCount_t
+    {
+        bool operator()(tibia::Object::Ptr a, tibia::Object::Ptr b) const
+        {
+            return a->getCount() > b->getCount();
+        }
+    };
+
     struct Properties_t
     {
         std::string onInteractScriptFilename;
@@ -55,6 +71,11 @@ public:
 
     Properties_t properties;
 
+    Object::Object()
+    {
+        //
+    }
+
     Object::Object(sf::Vector2u tileCoords, int z, int id)
     {
         setTileCoords(tileCoords.x, tileCoords.y);
@@ -62,6 +83,11 @@ public:
         setZ(z);
 
         setId(id);
+
+        if (m_flags.test(tibia::SpriteFlags::groupable))
+        {
+            setCountById();
+        }
     }
 
     void setOffset()
@@ -1218,8 +1244,6 @@ public:
     {
         m_id = id;
 
-        m_count = 1;
-
         m_sprite[0].setId(m_id);
 
         m_flags = tibia::UMaps::spriteFlags[m_id];
@@ -1236,13 +1260,13 @@ public:
 
         if (m_flags.test(tibia::SpriteFlags::transparent))
         {
-            m_sprite[0].setColor(tibia::Colors::transparent);
+            m_sprite[0].setColor(sf::Color::Transparent);
         }
 
-        if (m_flags.test(tibia::SpriteFlags::groupable))
-        {
-            setCountById();
-        }
+        //if (m_flags.test(tibia::SpriteFlags::groupable))
+        //
+            //setCountById();
+        //}
 
         setOffset();
         setExtraSprites();
@@ -1339,7 +1363,7 @@ private:
 
     int m_type;
 
-    int m_count;
+    int m_count = 1;
 
     tibia::Sprite m_sprite[tibia::NUM_OBJECT_SPRITES];
 

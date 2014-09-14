@@ -38,21 +38,42 @@ namespace LuaFunctions
         return 0;
     }
 
-    int doPlayerAddInventoryItem(lua_State* L)
+    int doPlayerAddInventoryObject(lua_State* L)
     {
         const int id    = luaL_checkinteger(L, 1);
         const int count = luaL_checkinteger(L, 2);
 
-        g_game.doPlayerAddInventoryItem(id, count);
+        g_game.doPlayerAddInventoryObject(id, count, false);
 
         return 0;
     }
 
-    int doesPlayerHaveInventoryItem(lua_State* L)
+    int doPlayerAddInventoryDepotObject(lua_State* L)
+    {
+        const int id    = luaL_checkinteger(L, 1);
+        const int count = luaL_checkinteger(L, 2);
+
+        g_game.doPlayerAddInventoryObject(id, count, true);
+
+        return 0;
+    }
+
+    int doesPlayerHaveInventoryObject(lua_State* L)
     {
         const int id = luaL_checkinteger(L, 1);
 
-        bool result = g_game.getPlayer()->hasInventoryItem(id);
+        bool result = g_game.doesPlayerHaveInventoryObject(id, false);
+
+        lua_pushinteger(L, result);
+
+        return 1;
+    }
+
+    int doesPlayerHaveInventoryDepotObject(lua_State* L)
+    {
+        const int id = luaL_checkinteger(L, 1);
+
+        bool result = g_game.doesPlayerHaveInventoryObject(id, true);
 
         lua_pushinteger(L, result);
 
@@ -81,8 +102,10 @@ namespace LuaFunctions
     {
         lua_register(g_luaState, "setTileId", setTileId);
         lua_register(g_luaState, "setTileObjectId", setTileObjectId);
-        lua_register(g_luaState, "doPlayerAddInventoryItem", doPlayerAddInventoryItem);
-        lua_register(g_luaState, "doesPlayerHaveInventoryItem", doesPlayerHaveInventoryItem);
+        lua_register(g_luaState, "doPlayerAddInventoryObject", doPlayerAddInventoryObject);
+        lua_register(g_luaState, "doPlayerAddInventoryDepotObject", doPlayerAddInventoryDepotObject);
+        lua_register(g_luaState, "doesPlayerHaveInventoryObject", doesPlayerHaveInventoryObject);
+        lua_register(g_luaState, "doesPlayerHaveInventoryDepotObject", doesPlayerHaveInventoryDepotObject);
         lua_register(g_luaState, "showStatusBarText", showStatusBarText);
         lua_register(g_luaState, "doChatLogWindowAddText", doChatLogWindowAddText);
     }

@@ -383,7 +383,7 @@ int main(int argc, char* argv[])
 
         g_game.drawChatLogWindow(&g_mainWindow);
 
-        g_game.drawChatInputText(&g_mainWindow);
+        g_game.drawChatInputWindow(&g_mainWindow);
 
         g_game.drawTabButtons(&g_mainWindow);
 
