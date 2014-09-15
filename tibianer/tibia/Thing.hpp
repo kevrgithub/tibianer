@@ -20,7 +20,7 @@ public:
     typedef std::shared_ptr<tibia::Thing> Ptr;
     typedef std::vector<tibia::Thing::Ptr> List;
 
-    struct SortByTileNumber
+    struct SortByTileNumber_t
     {
         bool operator()(tibia::Thing::Ptr a, tibia::Thing::Ptr b) const
         {
@@ -28,7 +28,7 @@ public:
         }
     };
 
-    struct SortByTileCoords
+    struct SortByTileCoords_t
     {
         bool operator()(tibia::Thing::Ptr a, tibia::Thing::Ptr b) const
         {
@@ -191,6 +191,26 @@ public:
         return m_isReadyForErase;
     }
 
+    void setIsObject(bool b)
+    {
+        m_isObject = b;
+    }
+
+    bool isObject()
+    {
+        return m_isObject;
+    }
+
+    bool isCreature()
+    {
+        return m_isCreature;
+    }
+
+    void setIsCreature(bool b)
+    {
+        m_isCreature = b;
+    }
+
 private:
 
     int m_tileX;
@@ -207,6 +227,9 @@ private:
     int m_drawOffset;
 
     bool m_isReadyForErase;
+
+    bool m_isObject;
+    bool m_isCreature;
 
 }; // class Thing
 

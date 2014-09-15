@@ -42,6 +42,9 @@
 #include "tibia/Light.hpp"
 #include "tibia/Projectile.hpp"
 #include "tibia/Bar.hpp"
+#include "tibia/Container.hpp"
+#include "tibia/Script.hpp"
+#include "tibia/RayCast.hpp"
 
 namespace tibia
 {
@@ -241,7 +244,7 @@ public:
 
         tibia::Creature::Ptr player = std::make_shared<tibia::Creature>(*creature);
 
-        player->getInventoryObjectList()->clear();
+        player->getInventory()->getObjectList()->clear();
         player->setIsDead(false);
         player->setIsPlayer(true);
         player->setHp(player->getHpMax());
@@ -296,8 +299,38 @@ public:
         showMapNameAndAuthor();
     }
 
-    bool doScript(const std::string& filename)
+    bool doScript(tibia::Script* script, tibia::Thing::Ptr thing = nullptr)
     {
+        if (thing != nullptr)
+        {
+            if (script->getFlags().test(tibia::ScriptFlags::objectsOnly) && thing->isCreature() == true)
+            {
+                return false;
+            }
+
+            if (script->getFlags().test(tibia::ScriptFlags::creaturesOnly) && thing->isObject() == true)
+            {
+                return false;
+            }
+
+            if (thing->isCreature() == true)
+            {
+                tibia::Creature::Ptr thingCreature = std::dynamic_pointer_cast<tibia::Creature>(thing);
+
+                if (script->getFlags().test(tibia::ScriptFlags::playerOnly) && thingCreature->isPlayer() != true)
+                {
+                    return false;
+                }
+            }
+        }
+
+        if (script->getFlags().test(tibia::ScriptFlags::onceOnly) && script->isDone() == true)
+        {
+            return false;
+        }
+
+        std::string filename = script->getFilename();
+
         if (filename.size() == 0)
         {
             return false;
@@ -324,6 +357,69 @@ public:
             lua_pop(m_luaState, 1);
 
             return false;
+        }
+
+        script->getClock()->restart();
+
+        script->setIsDone(true);
+
+        return true;
+    }
+
+    bool doRayCast
+    (
+        sf::Vector2u origin,
+        sf::Vector2u destination,
+        int z,
+
+        bool collideWithSolidObjects            = true,
+        bool collideWithBlockProjectilesObjects = true,
+        bool collideWithTileHeight              = true
+    )
+    {
+        tibia::RayCast rc;
+        rc.doLine(origin.x, origin.y, destination.x, destination.y);
+
+        tibia::Sprite blueSquare;
+        blueSquare.setId(3748);
+
+        std::vector<sf::Vector2u>* points = rc.getPoints();
+
+        if (points->size() == 0)
+        {
+            return false;
+        }
+
+        for (auto& point : *points)
+        {
+            //std::cout << "point: " << point.x << "," << point.x << std::endl;
+
+            blueSquare.setPosition(point.x, point.y);
+            m_gameWindow.draw(blueSquare);
+
+            tibia::Tile::Ptr tile = getTile(point, z);
+
+            if (tile == nullptr)
+            {
+                return false;
+            }
+
+            if (tile->getHeight() > 1 && collideWithTileHeight == true)
+            {
+                return false;
+            }
+
+            tibia::Tile::Properties_t tileProperties = tile->getProperties();
+
+            if (tileProperties.hasSolidObject == true && collideWithSolidObjects == true)
+            {
+                return false;
+            }
+
+            if (tileProperties.hasBlockProjectilesObject == true && collideWithBlockProjectilesObjects == true)
+            {
+                return false;
+            }
         }
 
         return true;
@@ -608,16 +704,65 @@ public:
                 spawnAnimation(m_player->getTilePosition(), m_player->getZ(), tibia::Animations::spellBlue);
                 break;
 
+            case sf::Keyboard::Key::C:
+            {
+                spawnProjectile
+                (
+                    m_player,
+                    tibia::ProjectileTypes::spear,
+                    m_player->getDirection(),
+                    sf::Vector2f(m_player->getTileX(), m_player->getTileY()),
+                    sf::Vector2f
+                    (
+                        m_player->getTileX() + (tibia::Utility::getVectorByDirection(m_player->getDirection()).x * tibia::TILE_SIZE),
+                        m_player->getTileY() + (tibia::Utility::getVectorByDirection(m_player->getDirection()).y * tibia::TILE_SIZE)
+                    ),
+                    m_player->getZ()
+                );
+                break;
+            }
+
             case sf::Keyboard::Key::F:
                 spawnFloatingText(m_player->getTilePosition(), m_player->getZ(), "Floating Text", tibia::Colors::Text::white);
                 break;
+
+            case sf::Keyboard::Key::G:
+            {
+                handleCreatureModifyHp(nullptr, m_player, -(m_player->getHp()), tibia::ModifyHpTypes::blood);
+                break;
+            }
 
             case sf::Keyboard::Key::H:
                 doCreatureSpeech(m_player, "Hello!");
                 break;
 
+            case sf::Keyboard::Key::I:
+            {
+                std::cout << "Player HP,MP: " << m_player->getHp() << "," << m_player->getMp() << std::endl;
+                std::cout << "Player X,Y,Z: " << m_player->getX()  << "," << m_player->getY()  << "," << m_player->getZ() <<std::endl;
+
+                tibia::Tile::Ptr playerTile = getThingTile(m_player);
+
+                std::cout << "Tile X,Y: "    << playerTile->getPosition().x << "," << playerTile->getPosition().y << std::endl;
+                std::cout << "Tile Height: " << playerTile->getHeight() << std::endl;
+                break;
+            }
+
             case sf::Keyboard::Key::M:
                 spawnDecayObject(m_player->getTilePosition(), m_player->getZ(), tibia::SpriteData::magicWall);
+                break;
+
+            case sf::Keyboard::Key::N:
+                toggleTimeOfDay();
+                break;
+
+            case sf::Keyboard::Key::O:
+                m_player->setOutfitRandom();
+
+                std::cout << "Player Head: " << m_player->getOutfitHead() << std::endl;
+                std::cout << "Player Body: " << m_player->getOutfitBody() << std::endl;
+                std::cout << "Player Legs: " << m_player->getOutfitLegs() << std::endl;
+                std::cout << "Player Feet: " << m_player->getOutfitFeet() << std::endl;
                 break;
 
             case sf::Keyboard::Key::P:
@@ -661,43 +806,6 @@ public:
                 break;
             }
 
-            case sf::Keyboard::Key::N:
-                toggleTimeOfDay();
-                break;
-
-            case sf::Keyboard::Key::O:
-                m_player->setOutfitRandom();
-
-                std::cout << "Player Head: " << m_player->getOutfitHead() << std::endl;
-                std::cout << "Player Body: " << m_player->getOutfitBody() << std::endl;
-                std::cout << "Player Legs: " << m_player->getOutfitLegs() << std::endl;
-                std::cout << "Player Feet: " << m_player->getOutfitFeet() << std::endl;
-                break;
-
-            case sf::Keyboard::Key::I:
-            {
-                std::cout << "Player HP,MP: " << m_player->getHp() << "," << m_player->getMp() << std::endl;
-                std::cout << "Player X,Y,Z: " << m_player->getX()  << "," << m_player->getY()  << "," << m_player->getZ() <<std::endl;
-
-                tibia::Tile::Ptr playerTile = getThingTile(m_player);
-
-                std::cout << "Tile X,Y: "    << playerTile->getPosition().x << "," << playerTile->getPosition().y << std::endl;
-                std::cout << "Tile Height: " << playerTile->getHeight() << std::endl;
-                break;
-            }
-
-            case sf::Keyboard::Key::Z:
-                m_player->setZ(utility::getRandomNumber(tibia::ZAxis::min, tibia::ZAxis::max));
-
-                std::cout << "Player Z: " << m_player->getZ() << std::endl;
-                break;
-
-            case sf::Keyboard::Key::G:
-            {
-                handleCreatureModifyHp(nullptr, m_player, -(m_player->getHp()), tibia::ModifyHpTypes::blood);
-                break;
-            }
-
             case sf::Keyboard::Key::X:
             {
                 spawnProjectile
@@ -716,23 +824,11 @@ public:
                 break;
             }
 
-            case sf::Keyboard::Key::C:
-            {
-                spawnProjectile
-                (
-                    m_player,
-                    tibia::ProjectileTypes::spear,
-                    m_player->getDirection(),
-                    sf::Vector2f(m_player->getTileX(), m_player->getTileY()),
-                    sf::Vector2f
-                    (
-                        m_player->getTileX() + (tibia::Utility::getVectorByDirection(m_player->getDirection()).x * tibia::TILE_SIZE),
-                        m_player->getTileY() + (tibia::Utility::getVectorByDirection(m_player->getDirection()).y * tibia::TILE_SIZE)
-                    ),
-                    m_player->getZ()
-                );
+            case sf::Keyboard::Key::Z:
+                m_player->setZ(utility::getRandomNumber(tibia::ZAxis::min, tibia::ZAxis::max));
+
+                std::cout << "Player Z: " << m_player->getZ() << std::endl;
                 break;
-            }
         }
     }
 
@@ -880,25 +976,27 @@ public:
                 }
                 else if (tibia::GuiData::InventoryWindow::Icons::Container::rect.contains(getMouseWindowPosition()) == true)
                 {
-                    m_player->sortInventoryObjectsById(m_player->getInventoryObjectList());
+                    m_player->getInventory()->sortById();
                 }
                 else if (tibia::GuiData::InventoryWindow::Slots::Window::rect.contains(getMouseWindowPosition()) == true)
                 {
-                    // move inventory item to front of inventory list
+                    // move inventory object to front of inventory list
 
                     int inventoryWindowSlotIndex = getMouseInventoryWindowSlotIndex();
 
                     //std::cout << "inventoryWindowSlotIndex: " << inventoryWindowSlotIndex << std::endl;
 
-                    tibia::Object::List* inventoryObjectList = m_player->getInventoryObjectList();
+                    tibia::Object::List* inventoryObjectList = m_player->getInventory()->getObjectList();
 
-                    if (inventoryObjectList->size() != 0 && (inventoryWindowSlotIndex < inventoryObjectList->size()))
+                    if (inventoryObjectList->size() != 0 && (inventoryWindowSlotIndex < inventoryObjectList->size()) && (inventoryWindowSlotIndex != 0))
                     {
                         auto inventoryObjectIt = inventoryObjectList->begin() + inventoryWindowSlotIndex;
 
-                        inventoryObjectList->insert(inventoryObjectList->begin(), *inventoryObjectIt);
+                        tibia::Object::Ptr copyObject = std::make_shared<tibia::Object>(**inventoryObjectIt);
 
-                        m_player->removeInventoryObject(inventoryObjectList, inventoryWindowSlotIndex + 1);
+                        m_player->getInventory()->removeObject(*inventoryObjectIt);
+
+                        m_player->getInventory()->addObject(copyObject);
                     }
                 }
             }
@@ -998,8 +1096,13 @@ public:
             {
                 if (m_mouseTile != nullptr)
                 {
+                    if (m_mouseTile->getFlags().test(tibia::SpriteFlags::water) == true)
+                    {
+                        doCreatureFishing(m_player, m_mouseTile);
+                    }
+
                     // rope up things
-                    if (m_player->getZ() > tibia::ZAxis::min && m_player->hasInventoryObject(m_player->getInventoryObjectList(), tibia::SpriteData::rope))
+                    if (m_player->getZ() > tibia::ZAxis::min && m_player->getInventory()->hasObject(tibia::SpriteData::rope))
                     {
                         if (m_mouseTile->getFlags().test(tibia::SpriteFlags::moveBelow))
                         {
@@ -1120,7 +1223,7 @@ public:
                 }
                 else if (tibia::GuiData::InventoryWindow::Icons::Container::rect.contains(getMouseWindowPosition()) == true)
                 {
-                    m_player->sortInventoryObjectsByCount(m_player->getInventoryObjectList());
+                    m_player->getInventory()->sortByCount();
                 }
                 else if (tibia::GuiData::InventoryWindow::Slots::Window::rect.contains(getMouseWindowPosition()) == true)
                 {
@@ -1128,7 +1231,7 @@ public:
 
                     int inventoryWindowSlotIndex = getMouseInventoryWindowSlotIndex();
 
-                    tibia::Object::List* inventoryObjectList = m_player->getInventoryObjectList();
+                    tibia::Object::List* inventoryObjectList = m_player->getInventory()->getObjectList();
 
                     if (inventoryObjectList->size() != 0 && inventoryWindowSlotIndex < inventoryObjectList->size())
                     {
@@ -1241,7 +1344,7 @@ public:
             {
                 if (tibia::GuiData::InventoryWindow::Icons::Container::rect.contains(getMouseWindowPosition()) == true)
                 {
-                    m_player->sortInventoryObjectsReverse(m_player->getInventoryObjectList());
+                    m_player->getInventory()->sortReverse();
                 }
                 else if (tibia::GuiData::InventoryWindow::Slots::Window::rect.contains(getMouseWindowPosition()) == true)
                 {
@@ -1251,7 +1354,7 @@ public:
 
                     //std::cout << "inventoryWindowSlotIndex: " << inventoryWindowSlotIndex << std::endl;
 
-                    tibia::Object::List* inventoryObjectList = m_player->getInventoryObjectList();
+                    tibia::Object::List* inventoryObjectList = m_player->getInventory()->getObjectList();
 
                     if (inventoryObjectList->size() != 0 && inventoryWindowSlotIndex < inventoryObjectList->size())
                     {
@@ -1563,7 +1666,7 @@ public:
 
     int getInventoryWindowSlotsViewMaxScrollY()
     {
-        int maxScrollY = (m_player->getInventoryObjectList()->size() / tibia::GuiData::InventoryWindow::Slots::numSlotsHorizontal) * tibia::GuiData::InventoryWindow::Slots::size;
+        int maxScrollY = (m_player->getInventory()->getObjectList()->size() / tibia::GuiData::InventoryWindow::Slots::numSlotsHorizontal) * tibia::GuiData::InventoryWindow::Slots::size;
 
         maxScrollY -= (tibia::GuiData::InventoryWindow::height - (tibia::GuiData::InventoryWindow::Slots::size * 3));
 
@@ -2458,12 +2561,7 @@ public:
         {
             if (entity->getType() == tibia::ObjectTypes::doScript)
             {
-                std::string scriptFilename = entity->properties.doScriptFilename;
-
-                if (scriptFilename.size())
-                {
-                    doScript(scriptFilename);
-                }
+                doScript(&entity->properties.doScript, thing);
             }
         }
 
@@ -2730,12 +2828,12 @@ public:
         }
 
         // key ring opens all doors
-        if (creature->hasInventoryObject(creature->getInventoryObjectList(), tibia::SpriteData::keyRing) == true)
+        if (creature->getInventory()->hasObject(tibia::SpriteData::keyRing) == true)
         {
             return true;
         }
 
-        if (creature->hasInventoryObject(creature->getInventoryObjectList(), tibia::UMaps::keyIds[keyId]) == false)
+        if (creature->getInventory()->hasObject(tibia::UMaps::keyIds[keyId]) == false)
         {
             std::stringstream ssKeyText;
 
@@ -2786,9 +2884,9 @@ public:
 
         bool objectOnInteractScript = false;
 
-        if (object->properties.onInteractScriptFilename.size())
+        if (object->properties.onInteractScript.getFilename().size() != 0)
         {
-            doScript(object->properties.onInteractScriptFilename);
+            doScript(&object->properties.onInteractScript);
 
             objectOnInteractScript = true;
         }
@@ -2932,7 +3030,7 @@ public:
             (
                 object->getId() == tibia::SpriteData::ropeUp &&
 
-                creature->hasInventoryObject(creature->getInventoryObjectList(), tibia::SpriteData::rope) == false
+                creature->getInventory()->hasObject(tibia::SpriteData::rope) == false
             )
             {
                 showStatusBarText("You need a rope to climb up.");
@@ -2961,8 +3059,8 @@ public:
         {
             if
             (
-                creature->hasInventoryObject(creature->getInventoryObjectList(), tibia::SpriteData::shovel) == false &&
-                creature->hasInventoryObject(creature->getInventoryObjectList(), tibia::SpriteData::pick)   == false
+                creature->getInventory()->hasObject(tibia::SpriteData::shovel) == false &&
+                creature->getInventory()->hasObject(tibia::SpriteData::pick)   == false
             )
             {
                 showStatusBarText("You need a shovel or pick to dig.");
@@ -3629,7 +3727,7 @@ public:
             blueBerriesObject->setId(tibia::SpriteData::blueBerry[2]);
             blueBerriesObject->setCountById();
 
-            creature->addInventoryObject(creature->getInventoryObjectList(), blueBerriesObject);
+            creature->getInventory()->addObject(blueBerriesObject);
 
             object->getClockRegenerate()->restart();
             object->setId(tibia::SpriteData::bushBlueBerryEmpty);
@@ -3643,7 +3741,7 @@ public:
             tibia::Object::Ptr snowBallObject = std::make_shared<tibia::Object>();
             snowBallObject->setId(tibia::SpriteData::snowBall[0]);
 
-            creature->addInventoryObject(creature->getInventoryObjectList(), snowBallObject);
+            creature->getInventory()->addObject(snowBallObject);
 
             object->getClockRegenerate()->restart();
             object->setId(tibia::SpriteData::snowBallMoundEmpty);
@@ -3658,13 +3756,13 @@ public:
             {
                 object->setId(tibia::SpriteData::lever[1]);
 
-                doScript(object->properties.leverOnScriptFilename);
+                doScript(&object->properties.leverScriptOn);
             }
             else if (object->getId() == tibia::SpriteData::lever[1])
             {
                 object->setId(tibia::SpriteData::lever[0]);
 
-                doScript(object->properties.leverOffScriptFilename);
+                doScript(&object->properties.leverScriptOff);
             }
 
             return true;
@@ -3958,7 +4056,7 @@ public:
         // jungle grass
         if (object->getId() == tibia::SpriteData::grassJungle)
         {
-            if (creature->hasInventoryObject(creature->getInventoryObjectList(), tibia::SpriteData::machete) == false)
+            if (creature->getInventory()->hasObject(tibia::SpriteData::machete) == false)
             {
                 showStatusBarText("You need a machete to cut the grass.");
                 return false;
@@ -3973,7 +4071,7 @@ public:
         // wheat
         if (object->getId() == tibia::SpriteData::wheatGreen || object->getId() == tibia::SpriteData::wheatYellow)
         {
-            if (creature->hasInventoryObject(creature->getInventoryObjectList(), tibia::SpriteData::scythe) == false)
+            if (creature->getInventory()->hasObject(tibia::SpriteData::scythe) == false)
             {
                 showStatusBarText("You need a scythe to cut the wheat.");
                 return false;
@@ -4024,20 +4122,22 @@ public:
         }
         else
         {
-            int creatureAddInventoryItemResult = creature->addInventoryObject(creature->getInventoryObjectList(), object);
+            int creatureAddInventoryItemResult = creature->getInventory()->addObject(object);
 
-            if (creatureAddInventoryItemResult == tibia::CreatureAddInventoryObjectResult::success)
+            if (creatureAddInventoryItemResult == tibia::ContainerAddObjectResult::success)
             {
                 tile->removeObject(object);
+
+                updateStepTile(tile);
             }
-            else if (creatureAddInventoryItemResult == tibia::CreatureAddInventoryObjectResult::inventoryObjectCountMax)
+            else if (creatureAddInventoryItemResult == tibia::ContainerAddObjectResult::objectCountMax)
             {
                 if (creature->isPlayer() == true)
                 {
                     showStatusBarText("You cannot pick up any more of that object.");
                 }
             }
-            else if (creatureAddInventoryItemResult == tibia::CreatureAddInventoryObjectResult::inventoryObjectsMax)
+            else if (creatureAddInventoryItemResult == tibia::ContainerAddObjectResult::objectsMax)
             {
                 if (creature->isPlayer() == true)
                 {
@@ -4061,7 +4161,7 @@ public:
 
                 spawnObject(creature->getTilePosition(), creature->getZ(), dropObject);
 
-                creature->removeInventoryObject(creature->getInventoryObjectList(), inventoryObjectIt);
+                creature->getInventory()->removeObject(inventoryObjectIt);
             }
             else
             {
@@ -4072,7 +4172,7 @@ public:
         {
             spawnObject(creature->getTilePosition(), creature->getZ(), dropObject);
 
-            creature->removeInventoryObject(creature->getInventoryObjectList(), inventoryObjectIt);
+            creature->getInventory()->removeObject(inventoryObjectIt);
         }
 
         updateStepTile(getTile(creature->getTilePosition(), creature->getZ()));
@@ -4080,7 +4180,7 @@ public:
 
     void doCreatureDropAllInventoryObjects(tibia::Creature::Ptr creature)
     {
-        tibia::Object::List* inventoryObjectList = creature->getInventoryObjectList();
+        tibia::Object::List* inventoryObjectList = creature->getInventory()->getObjectList();
 
         if (inventoryObjectList->size() == 0)
         {
@@ -4101,34 +4201,26 @@ public:
         object->setId(id);
         object->setCount(count);
 
-        tibia::Object::List* inventoryObjectList;
-
         if (depot == false)
         {
-            inventoryObjectList = m_player->getInventoryObjectList();
+            m_player->getInventory()->addObject(object);
         }
         else
         {
-            inventoryObjectList = m_player->getInventoryDepotObjectList();
+            m_player->getInventoryDepot()->addObject(object);
         }
-
-        m_player->addInventoryObject(inventoryObjectList, object);
     }
 
     bool doesPlayerHaveInventoryObject(int id, bool depot = false)
     {
-        tibia::Object::List* inventoryObjectList;
-
         if (depot == false)
         {
-            inventoryObjectList = m_player->getInventoryObjectList();
+            return (m_player->getInventory()->hasObject(id));
         }
         else
         {
-            inventoryObjectList = m_player->getInventoryDepotObjectList();
+            return (m_player->getInventoryDepot()->hasObject(id));
         }
-
-        return (m_player->hasInventoryObject(inventoryObjectList, id));
     }
 
     bool doPlayerReadBook(tibia::Object::Ptr object)
@@ -4165,6 +4257,59 @@ public:
         std::cout << bookText.str() << std::endl;
 
         IupGetText(bookName.c_str(), (char*)object->properties.bookText.c_str());
+
+        return true;
+    }
+
+    bool doCreatureFishing(tibia::Creature::Ptr creature, tibia::Tile::Ptr tile)
+    {
+        if (creature->getInventory()->hasObject(tibia::SpriteData::fishingRod) == false)
+        {
+            if (creature->isPlayer() == true)
+            {
+                showStatusBarText("You need a fishing rod to do that.");
+            }
+
+            return false;
+        }
+
+        if (tile->getFlags().test(tibia::SpriteFlags::water) == false)
+        {
+            return false;
+        }
+
+        if (doRayCast(m_player->getTilePosition(), tile->getPosition(), creature->getZ(), false, true, true) == false)
+        {
+            if (creature->isPlayer() == true)
+            {
+                showStatusBarText("Your attempt to fish was blocked by line of sight.");
+            }
+
+            return false;
+        }
+
+        spawnAnimation
+        (
+            tile->getPosition(),
+            tile->getZ(),
+            tibia::Animations::waterSplash
+        );
+
+        int random = utility::getRandomNumber(1, 100);
+
+        if (random > 90)
+        {
+            tibia::Object::Ptr fishObject = std::make_shared<tibia::Object>();
+            fishObject->setId(tibia::SpriteData::fish);
+
+            //spawnObject(sf::Vector2u(creature->getTilePosition().x, creature->getTilePosition().y), creature->getZ(), fishObject);
+            creature->getInventory()->addObject(fishObject);
+
+            if (creature->isPlayer() == true)
+            {
+                showStatusBarText("You caught a fish!");
+            }
+        }
 
         return true;
     }
@@ -4206,7 +4351,7 @@ public:
         text = textLinesStream.str();
 
         // split sets of words to separate lines
-        std::size_t wordsPerLine = 4;
+        std::size_t wordsPerLine = 5;
 
         if (textWords.size() > wordsPerLine)
         {
@@ -4715,13 +4860,7 @@ public:
             {
                 if (entity->getType() == tibia::ObjectTypes::stepTile)
                 {
-                    std::string scriptFilename = entity->properties.stepTileOnStartTouchScriptFilename;
-
-                    if (scriptFilename.size())
-                    {
-                        doScript(scriptFilename);
-                    }
-
+                    doScript(&entity->properties.stepTileScriptOnStartTouch);
                     break;
                 }
             }
@@ -4746,13 +4885,7 @@ public:
             {
                 if (entity->getType() == tibia::ObjectTypes::stepTile)
                 {
-                    std::string scriptFilename = entity->properties.stepTileOnStopTouchScriptFilename;
-
-                    if (scriptFilename.size())
-                    {
-                        doScript(scriptFilename);
-                    }
-
+                    doScript(&entity->properties.stepTileScriptOnStopTouch);
                     break;
                 }
             }
@@ -5841,7 +5974,7 @@ public:
 
     void drawThingList(tibia::Thing::List* thingList)
     {
-        std::stable_sort(thingList->begin(), thingList->end(), tibia::Thing::SortByTileCoords());
+        std::stable_sort(thingList->begin(), thingList->end(), tibia::Thing::SortByTileCoords_t());
 
         for (auto& thing : *thingList)
         {
@@ -6825,7 +6958,7 @@ public:
         mainWindow->draw(statusText);
 
         // CAP
-        int cap = m_player->getCap() - m_player->getInventoryObjectList()->size();
+        int cap = m_player->getCap() - m_player->getInventory()->getObjectList()->size();
 
         statusText.setText(&m_bitmapFontTiny, std::to_string(cap), tibia::Colors::white);
         statusText.setPosition
@@ -6914,7 +7047,7 @@ public:
         mainWindow->draw(inventoryWindow);
         mainWindow->draw(inventoryIconContainer);
 
-        tibia::Object::List* inventoryObjectList = m_player->getInventoryObjectList();
+        tibia::Object::List* inventoryObjectList = m_player->getInventory()->getObjectList();
 
         if (inventoryObjectList->size() > tibia::GuiData::InventoryWindow::Slots::numSlotsVisible)
         {
@@ -7644,8 +7777,8 @@ public:
             doAnimateObjectList(&m_tileMapObjects[i]);
         }
 
-        doAnimateObjectList(m_player->getInventoryObjectList());
-        doAnimateObjectList(m_player->getInventoryDepotObjectList());
+        doAnimateObjectList(m_player->getInventory()->getObjectList());
+        doAnimateObjectList(m_player->getInventoryDepot()->getObjectList());
     }
 
     void doAnimateObjectList(tibia::Object::List* objectList)

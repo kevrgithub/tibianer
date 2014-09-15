@@ -2377,6 +2377,22 @@ namespace tibia
         const float default = 10.0f;
     }
 
+    namespace ScriptFlags
+    {
+        enum Flags : std::uint8_t
+        {
+            objectsOnly,
+            creaturesOnly,
+            playerOnly,
+
+            onceOnly,
+
+            numFlags,
+        };
+    }
+
+    typedef std::bitset<tibia::ScriptFlags::numFlags> ScriptFlags_t;
+
     namespace SpriteFlags
     {
         enum Flags : std::uint8_t
@@ -2571,6 +2587,9 @@ namespace tibia
         const int spellBook = 511;
 
         const int watch = 498;
+
+        const int fish      = 1471;
+        const int fishBones = 1250;
 
         const int broom      = 41;
         const int scythe     = 73;
@@ -3063,6 +3082,7 @@ namespace tibia
         {
             964, // spear
             1016, // blue arrow
+            1471, // fish
             2874, // throwing knife
 
             // groupables
@@ -3653,14 +3673,14 @@ namespace tibia
         };
     }
 
-    namespace CreatureAddInventoryObjectResult
+    namespace ContainerAddObjectResult
     {
         enum
         {
             fail,
             success,
-            inventoryObjectCountMax,
-            inventoryObjectsMax,
+            objectCountMax,
+            objectsMax,
         };
     }
 

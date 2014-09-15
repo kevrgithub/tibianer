@@ -11,9 +11,9 @@
 #include "utility.hpp"
 
 #include "tibia/Tibia.hpp"
-#include "tibia/Thing.hpp"
-#include "tibia/Object.hpp"
 #include "tibia/Sprite.hpp"
+#include "tibia/Thing.hpp"
+#include "tibia/Container.hpp"
 
 namespace tibia
 {
@@ -55,6 +55,8 @@ public:
 
     Creature::Creature(int tileX, int tileY, int z)
     {
+        setIsCreature(true);
+
         setTileCoords(tileX, tileY);
         setPosition(sf::Vector2f(tileX, tileY));
 
@@ -520,203 +522,6 @@ public:
         m_statusEffectList.push_back(statusEffect);
     }
 
-    tibia::Object::List::iterator findInventoryObject(tibia::Object::List* inventoryObjectList, int id)
-    {
-        return std::find_if
-        (
-            inventoryObjectList->begin(),
-            inventoryObjectList->end(),
-            [&id](tibia::Object::Ptr const& inventoryObject)
-            { 
-                return inventoryObject->getId() == id;
-            }
-        );
-    }
-
-    bool hasInventoryObject(tibia::Object::List* inventoryObjectList, int id)
-    {
-        auto findInventoryObjectIt = findInventoryObject(inventoryObjectList, id);
-
-        return findInventoryObjectIt != inventoryObjectList->end();
-    }
-
-    int addInventoryObject(tibia::Object::List* inventoryObjectList, tibia::Object::Ptr addObject)
-    {
-        bool foundGroupableObject = false;
-
-        int groupableObjectsIndex = 0;
-
-        std::size_t groupableObjectsSize = 1;
-
-        tibia::Object::List::iterator groupableInventoryObjectIt;
-
-        if (addObject->getFlags().test(tibia::SpriteFlags::groupable))
-        {
-            for (auto& inventoryObjectIt = inventoryObjectList->begin(); inventoryObjectIt != inventoryObjectList->end(); inventoryObjectIt++)
-            {
-                if (foundGroupableObject == true)
-                {
-                    break;
-                }
-
-                if (inventoryObjectIt->get()->getFlags().test(tibia::SpriteFlags::groupable))
-                {
-                    groupableObjectsIndex = 0;
-
-                    for (auto& groupableObjects : tibia::groupedObjectsList)
-                    {
-                        if (foundGroupableObject == true)
-                        {
-                            break;
-                        }
-
-                        for (auto groupableObject : groupableObjects)
-                        {
-                            if (foundGroupableObject == true)
-                            {
-                                break;
-                            }
-
-                            if (groupableObject == inventoryObjectIt->get()->getId())
-                            {
-                                for (auto groupableObject : groupableObjects)
-                                {
-                                    if (groupableObject == addObject->getId())
-                                    {
-                                        groupableInventoryObjectIt = inventoryObjectIt;
-
-                                        groupableObjectsSize = groupableObjects.size();
-
-                                        foundGroupableObject = true;
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-
-                        if (foundGroupableObject == false)
-                        {
-                            groupableObjectsIndex++;
-                        }
-                    }
-                }
-            }
-        }
-
-        if (addObject->getFlags().test(tibia::SpriteFlags::stackable))
-        {
-            if (foundGroupableObject == true)
-            {
-                if ((groupableInventoryObjectIt->get()->getCount() + addObject->getCount()) > tibia::OBJECT_COUNT_MAX)
-                {
-                    std::size_t inventoryObjectsMax = tibia::INVENTORY_OBJECTS_MAX;
-
-                    if (*inventoryObjectList == m_inventoryDepotObjectList)
-                    {
-                        inventoryObjectsMax = tibia::INVENTORY_DEPOT_OBJECTS_MAX;
-                    }
-
-                    if ((inventoryObjectList->size() + 1) == inventoryObjectsMax)
-                    {
-                        return tibia::CreatureAddInventoryObjectResult::inventoryObjectsMax;
-                    }
-
-                    int remainderCount = (groupableInventoryObjectIt->get()->getCount() + addObject->getCount()) - tibia::OBJECT_COUNT_MAX;
-
-                    groupableInventoryObjectIt->get()->setCount(tibia::OBJECT_COUNT_MAX);
-
-                    groupableInventoryObjectIt->get()->setId
-                    (
-                        tibia::groupedObjectsList
-                            .at(groupableObjectsIndex)
-                            .at(tibia::Utility::getGroupableObjectIndexByCount(groupableInventoryObjectIt->get()->getCount(), groupableObjectsSize))
-                    );
-
-                    tibia::Object::Ptr inventoryObject = std::make_shared<tibia::Object>(*addObject);
-                    inventoryObject->setId
-                    (
-                        tibia::groupedObjectsList
-                            .at(groupableObjectsIndex)
-                            .at(tibia::Utility::getGroupableObjectIndexByCount(remainderCount, groupableObjectsSize))
-                    );
-                    inventoryObject->setCount(remainderCount);
-                    inventoryObject->setFlags(groupableInventoryObjectIt->get()->getFlags());
-
-                    inventoryObjectList->insert(inventoryObjectList->begin(), inventoryObject);
-
-                    return tibia::CreatureAddInventoryObjectResult::success;
-                }
-
-                groupableInventoryObjectIt->get()->setCount(groupableInventoryObjectIt->get()->getCount() + addObject->getCount());
-
-                groupableInventoryObjectIt->get()->setId
-                (
-                    tibia::groupedObjectsList
-                        .at(groupableObjectsIndex)
-                        .at(tibia::Utility::getGroupableObjectIndexByCount(groupableInventoryObjectIt->get()->getCount(), groupableObjectsSize))
-                );
-
-                return tibia::CreatureAddInventoryObjectResult::success;
-            }
-
-            auto findInventoryObjectIt = findInventoryObject(inventoryObjectList, addObject->getId());
-
-            if (findInventoryObjectIt != inventoryObjectList->end())
-            {
-                if ((findInventoryObjectIt->get()->getCount() + addObject->getCount()) > tibia::OBJECT_COUNT_MAX)
-                {
-                    return tibia::CreatureAddInventoryObjectResult::inventoryObjectCountMax;
-                }
-
-                findInventoryObjectIt->get()->setCount(findInventoryObjectIt->get()->getCount() + addObject->getCount());
-
-                return tibia::CreatureAddInventoryObjectResult::success;
-            }
-        }
-
-        std::size_t inventoryObjectsMax = tibia::INVENTORY_OBJECTS_MAX;
-
-        if (*inventoryObjectList == m_inventoryDepotObjectList)
-        {
-            inventoryObjectsMax = tibia::INVENTORY_DEPOT_OBJECTS_MAX;
-        }
-
-        if (inventoryObjectList->size() == inventoryObjectsMax)
-        {
-            return tibia::CreatureAddInventoryObjectResult::inventoryObjectsMax;
-        }
-
-        inventoryObjectList->insert(inventoryObjectList->begin(), addObject);
-
-        return tibia::CreatureAddInventoryObjectResult::success;
-    }
-
-    void removeInventoryObject(tibia::Object::List* inventoryObjectList, int index)
-    {
-        inventoryObjectList->erase(inventoryObjectList->begin() + index);
-    }
-
-    void removeInventoryObject(tibia::Object::List* inventoryObjectList, tibia::Object::List::iterator inventoryObjectIt)
-    {
-        inventoryObjectList->erase(inventoryObjectIt);
-    }
-
-    void sortInventoryObjectsReverse(tibia::Object::List* inventoryObjectList)
-    {
-        std::reverse(inventoryObjectList->begin(), inventoryObjectList->end());
-    }
-
-    void sortInventoryObjectsById(tibia::Object::List* inventoryObjectList)
-    {
-        std::sort(inventoryObjectList->begin(), inventoryObjectList->end(), tibia::Object::SortById_t());
-    }
-
-    void sortInventoryObjectsByCount(tibia::Object::List* inventoryObjectList)
-    {
-        sortInventoryObjectsById(inventoryObjectList);
-        std::stable_sort(inventoryObjectList->begin(), inventoryObjectList->end(), tibia::Object::SortByCount_t());
-    }
-
     int getHealthState()
     {
         if (m_hp <= 0 || m_hpMax <= 0)
@@ -1103,14 +908,14 @@ public:
         return &m_statusEffectList;
     }
 
-    tibia::Object::List* getInventoryObjectList()
+    tibia::Container* getInventory()
     {
-        return &m_inventoryObjectList;
+        return &m_inventory;
     }
 
-    tibia::Object::List* getInventoryDepotObjectList()
+    tibia::Container* getInventoryDepot()
     {
-        return &m_inventoryDepotObjectList;
+        return &m_inventoryDepot;
     }
 
     std::vector<int>* getSpritesList()
@@ -1197,8 +1002,8 @@ private:
 
     tibia::Creature::StatusEffectList m_statusEffectList;
 
-    tibia::Object::List m_inventoryObjectList;
-    tibia::Object::List m_inventoryDepotObjectList;
+    tibia::Container m_inventory;
+    tibia::Container m_inventoryDepot;
 
     virtual void draw(sf::RenderTarget& target, sf::RenderStates states) const
     {

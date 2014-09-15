@@ -80,6 +80,13 @@ namespace LuaFunctions
         return 1;
     }
 
+    int setPlayerOutfitRandom(lua_State* L)
+    {
+        g_game.getPlayer()->setOutfitRandom();
+
+        return 0;
+    }
+
     int showStatusBarText(lua_State* L)
     {
         const char* text = luaL_checkstring(L, 1);
@@ -106,6 +113,7 @@ namespace LuaFunctions
         lua_register(g_luaState, "doPlayerAddInventoryDepotObject", doPlayerAddInventoryDepotObject);
         lua_register(g_luaState, "doesPlayerHaveInventoryObject", doesPlayerHaveInventoryObject);
         lua_register(g_luaState, "doesPlayerHaveInventoryDepotObject", doesPlayerHaveInventoryDepotObject);
+        lua_register(g_luaState, "setPlayerOutfitRandom", setPlayerOutfitRandom);
         lua_register(g_luaState, "showStatusBarText", showStatusBarText);
         lua_register(g_luaState, "doChatLogWindowAddText", doChatLogWindowAddText);
     }

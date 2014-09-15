@@ -17,6 +17,7 @@
 
 #include "tibia/Tibia.hpp"
 #include "tibia/Utility.hpp"
+#include "tibia/Script.hpp"
 #include "tibia/TileMap.hpp"
 #include "tibia/Object.hpp"
 #include "tibia/Creature.hpp"
@@ -345,11 +346,18 @@ public:
 
                             if (docMapObjectPropertyName == "script_on_interact")
                             {
-                                std::string objectOnInteractScript = docMapObjectProperty.attribute("value").value();
+                                std::string objectScriptOnInteract = docMapObjectProperty.attribute("value").value();
 
-                                object->properties.onInteractScriptFilename = objectOnInteractScript;
+                                tibia::Script script;
 
-                                m_scriptFilenames.push_back(objectOnInteractScript);
+                                bool result = script.parseText(objectScriptOnInteract);
+
+                                if (result == true)
+                                {
+                                    object->properties.onInteractScript = script;
+
+                                    m_scriptFilenames.push_back(script.getFilename());
+                                }
                             }
 
                             if (objectType == tibia::ObjectTypes::sign)
@@ -392,17 +400,31 @@ public:
                                 {
                                     std::string objectLeverScriptOn = docMapObjectProperty.attribute("value").value();
 
-                                    object->properties.leverOnScriptFilename = objectLeverScriptOn;
+                                    tibia::Script script;
 
-                                    m_scriptFilenames.push_back(objectLeverScriptOn);
+                                    bool result = script.parseText(objectLeverScriptOn);
+
+                                    if (result == true)
+                                    {
+                                        object->properties.leverScriptOn = script;
+
+                                        m_scriptFilenames.push_back(script.getFilename());
+                                    }
                                 }
                                 if (docMapObjectPropertyName == "script_off")
                                 {
                                     std::string objectLeverScriptOff = docMapObjectProperty.attribute("value").value();
 
-                                    object->properties.leverOffScriptFilename = objectLeverScriptOff;
+                                    tibia::Script script;
 
-                                    m_scriptFilenames.push_back(objectLeverScriptOff);
+                                    bool result = script.parseText(objectLeverScriptOff);
+
+                                    if (result == true)
+                                    {
+                                        object->properties.leverScriptOff = script;
+
+                                        m_scriptFilenames.push_back(script.getFilename());
+                                    }
                                 }
                             }
                             else if (objectType == tibia::ObjectTypes::door)
@@ -524,28 +546,49 @@ public:
                                 {
                                     std::string objectDoScript = docMapObjectProperty.attribute("value").value();
 
-                                    object->properties.doScriptFilename = objectDoScript;
+                                    tibia::Script script;
 
-                                    m_scriptFilenames.push_back(objectDoScript);
+                                    bool result = script.parseText(objectDoScript);
+
+                                    if (result == true)
+                                    {
+                                        object->properties.doScript = script;
+
+                                        m_scriptFilenames.push_back(script.getFilename());
+                                    }
                                 }
                             }
                             else if (objectType == tibia::ObjectTypes::stepTile)
                             {
                                 if (docMapObjectPropertyName == "script_on_start_touch")
                                 {
-                                    std::string objectStepTileOnStartTouchScript = docMapObjectProperty.attribute("value").value();
+                                    std::string objectStepTileScriptOnStartTouch = docMapObjectProperty.attribute("value").value();
 
-                                    object->properties.stepTileOnStartTouchScriptFilename = objectStepTileOnStartTouchScript;
+                                    tibia::Script script;
 
-                                    m_scriptFilenames.push_back(objectStepTileOnStartTouchScript);
+                                    bool result = script.parseText(objectStepTileScriptOnStartTouch);
+
+                                    if (result == true)
+                                    {
+                                        object->properties.stepTileScriptOnStartTouch = script;
+
+                                        m_scriptFilenames.push_back(script.getFilename());
+                                    }
                                 }
                                 else if (docMapObjectPropertyName == "script_on_stop_touch")
                                 {
-                                    std::string objectStepTileOnStopTouchScript = docMapObjectProperty.attribute("value").value();
+                                    std::string objectStepTileScriptOnStopTouch = docMapObjectProperty.attribute("value").value();
 
-                                    object->properties.stepTileOnStopTouchScriptFilename = objectStepTileOnStopTouchScript;
+                                    tibia::Script script;
 
-                                    m_scriptFilenames.push_back(objectStepTileOnStopTouchScript);
+                                    bool result = script.parseText(objectStepTileScriptOnStopTouch);
+
+                                    if (result == true)
+                                    {
+                                        object->properties.stepTileScriptOnStopTouch = script;
+
+                                        m_scriptFilenames.push_back(script.getFilename());
+                                    }
                                 }
                             }
                         }

@@ -10,6 +10,7 @@
 #include "tibia/Utility.hpp"
 #include "tibia/Thing.hpp"
 #include "tibia/Sprite.hpp"
+#include "tibia/Script.hpp"
 
 namespace tibia
 {
@@ -40,16 +41,12 @@ public:
 
     struct Properties_t
     {
-        std::string onInteractScriptFilename;
-
+       
         std::string signName;
         std::string signText;
 
         std::string bookName;
         std::string bookText;
-
-        std::string leverOnScriptFilename;
-        std::string leverOffScriptFilename;
 
         int doorKey = tibia::KeyTypes::none;
 
@@ -63,21 +60,27 @@ public:
 
         std::string changeMapName;
 
-        std::string doScriptFilename;
+        tibia::Script doScript;
+        tibia::Script onInteractScript;
 
-        std::string stepTileOnStartTouchScriptFilename;
-        std::string stepTileOnStopTouchScriptFilename;
+        tibia::Script leverScriptOn;
+        tibia::Script leverScriptOff;
+
+        tibia::Script stepTileScriptOnStartTouch;
+        tibia::Script stepTileScriptOnStopTouch;
     };
 
     Properties_t properties;
 
     Object::Object()
     {
-        //
+        setIsObject(true);
     }
 
     Object::Object(sf::Vector2u tileCoords, int z, int id)
     {
+        setIsObject(true);
+
         setTileCoords(tileCoords.x, tileCoords.y);
 
         setZ(z);
