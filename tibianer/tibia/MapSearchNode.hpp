@@ -12,7 +12,7 @@
 namespace tibia
 {
 
-tibia::TileMap* MapSearchNode_tileMap;
+tibia::Tile::List MapSearchNode_tileList;
 
 class MapSearchNode
 {
@@ -73,21 +73,34 @@ public:
             return nullptr;
         }
 
-        tibia::Tile::List* tileList = tibia::MapSearchNode_tileMap->getTileList();
-
-        if (tileList->size() == 0)
+        if (tibia::MapSearchNode_tileList.size() == 0)
         {
             return nullptr;
         }
 
-        int tileNumber = px + (py * tibia::mapWidth);
+        //int tileNumber = px + (py * tibia::mapWidth);
 
-        if (tileNumber < 0 || tileNumber > tibia::mapSize - 1)
+        //if (tileNumber < 0 || tileNumber > tibia::mapSize - 1)
+        //{
+            //return nullptr;
+        //}
+
+        //tibia::Tile::Ptr tile = tibia::MapSearchNode_tileList.at(tileNumber);
+
+        tibia::Tile::Ptr tile = nullptr;
+
+        for (auto& findTile : tibia::MapSearchNode_tileList)
         {
-            return nullptr;
+            if
+            (
+                (findTile->getPosition().x / tibia::TILE_SIZE) == px &&
+                (findTile->getPosition().y / tibia::TILE_SIZE) == py
+            )
+            {
+                tile = findTile;
+                break;
+            }
         }
-
-        tibia::Tile::Ptr tile = tileList->at(tileNumber);
 
         if (tile != nullptr)
         {

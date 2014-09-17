@@ -110,7 +110,9 @@ public:
 
         m_gameWindowLayer.create(tibia::GuiData::GameWindow::width, tibia::GuiData::GameWindow::height);
 
-        m_lightLayer.create(tibia::LIGHT_WIDTH, tibia::LIGHT_HEIGHT);
+        m_lightLayerView.reset(sf::FloatRect(0, 0, tibia::Lights::size.x, tibia::Lights::size.y));
+
+        m_lightLayer.create(tibia::Lights::size.x, tibia::Lights::size.y);
 
         m_lightBrightness = tibia::LightBrightness::day;
 
@@ -1837,7 +1839,15 @@ public:
 
         bool result = false;
 
-        tibia::MapSearchNode_tileMap = &m_map.tileMapTiles[creature->getZ()];
+        tibia::Tile::List tileList = getAStarTileList(creature);
+
+        if (tileList.size() == 0)
+        {
+            return false;
+        }
+
+        tibia::MapSearchNode_tileList = tileList;
+
 
         AStarSearch<tibia::MapSearchNode> aStarSearch;
 
@@ -1878,7 +1888,7 @@ public:
 
         if (searchState == AStarSearch<MapSearchNode>::SEARCH_STATE_SUCCEEDED)
         {
-            //std::cout << "astar search succeeded in " << searchSteps << " steps" << std::endl;
+            std::cout << "astar search succeeded in " << searchSteps << " steps" << std::endl;
 
             MapSearchNode* startNode = aStarSearch.GetSolutionStart();
 
@@ -1936,7 +1946,7 @@ public:
         {
             result = false;
 
-            //std::cout << "astar search FAILED in " << searchSteps << " steps" << std::endl;
+            std::cout << "astar search FAILED in " << searchSteps << " steps" << std::endl;
         }
 
         aStarSearch.EnsureMemoryFreed();
@@ -4166,6 +4176,8 @@ public:
             else
             {
                 inventoryObject->setCount(inventoryObject->getCount() - 1);
+
+                spawnObject(creature->getTilePosition(), creature->getZ(), dropObject);
             }
         }
         else
@@ -5982,20 +5994,26 @@ public:
         }
     }
 
-    void drawLightAtTilePosition(tibia::Light& light, sf::Vector2u tilePosition)
+    void drawLightAtTilePosition(tibia::Light* light, sf::Vector2u tilePosition)
     {
-        light.setPosition
+        light->setPosition
         (
             tilePosition.x + (tibia::TILE_SIZE / 2),
             tilePosition.y + (tibia::TILE_SIZE / 2)
         );
 
-        m_lightLayer.draw(light, sf::BlendAdd);
+        m_lightLayer.draw(*light, sf::BlendAdd);
     }
 
     void drawTileMapLights(int z)
     {
-        m_lightLayer.setView(m_gameWindowView);
+        m_lightLayerView.setCenter
+        (
+            m_player->getTileX() + (tibia::TILE_SIZE / 2),
+            m_player->getTileY() + (tibia::TILE_SIZE / 2)
+        );
+
+        m_lightLayer.setView(m_lightLayerView);
 
         if (z < tibia::ZAxis::ground)
         {
@@ -6015,7 +6033,7 @@ public:
                 continue;
             }
 
-            drawLightAtTilePosition(m_light, creature->getTilePosition());
+            drawLightAtTilePosition(&m_light, creature->getTilePosition());
         }
 
         m_light.setSize(tibia::LightSizes::medium);
@@ -6026,7 +6044,7 @@ public:
             {
                 //light.setColorbyId(object->getId());
 
-                drawLightAtTilePosition(m_light, object->getTilePosition());
+                drawLightAtTilePosition(&m_light, object->getTilePosition());
             }
 
             if (z == tibia::ZAxis::ground - 1)
@@ -6035,7 +6053,7 @@ public:
                 {
                     //light.setColor(tibia::Colors::light);
 
-                    drawLightAtTilePosition(m_light, object->getTilePosition());
+                    drawLightAtTilePosition(&m_light, object->getTilePosition());
                 }
             }
         }
@@ -6046,7 +6064,7 @@ public:
         {
             if (animation->getFlags().test(tibia::SpriteFlags::lightSource))
             {
-                drawLightAtTilePosition(m_light, animation->getTilePosition());
+                drawLightAtTilePosition(&m_light, animation->getTilePosition());
             }
         }
 
@@ -6054,7 +6072,7 @@ public:
         {
             if (projectile->getFlags().test(tibia::SpriteFlags::lightSource))
             {
-                drawLightAtTilePosition(m_light, projectile->getTilePosition());
+                drawLightAtTilePosition(&m_light, projectile->getTilePosition());
             }
         }
 
@@ -7592,6 +7610,52 @@ public:
         mainWindow->draw(combatButtonFullDefense);
     }
 
+    tibia::Tile::List getAStarTileList(tibia::Creature::Ptr creature)
+    {
+        tibia::Tile::List aStarTileList;
+
+        tibia::Tile::List* tileList = m_map.tileMapTiles[creature->getZ()].getTileList();
+
+        if (tileList->size() == 0)
+        {
+            return aStarTileList;
+        }
+
+        int x1 = getGameWindowViewDrawRect().left;
+        int y1 = getGameWindowViewDrawRect().top;
+
+        int x2 = getGameWindowViewDrawRect().width;
+        int y2 = getGameWindowViewDrawRect().height;
+
+        for (int i = x1; i < x1 + x2; i++)
+        {
+            for (int j = y1; j < y1 + y2; j++)
+            {
+                if (i < 0) continue;
+                if (j < 0) continue;
+
+                if (i > m_map.getWidth()  - 1) continue;
+                if (j > m_map.getHeight() - 1) continue;
+
+                int tileNumber = i + j * m_map.getWidth();
+
+                if (m_map.isTileNumberOutOfBounds(tileNumber) == true)
+                {
+                    continue;
+                }
+
+                tibia::Tile::Ptr tile = tileList->at(tileNumber);
+
+                if (tile != nullptr)
+                {
+                    aStarTileList.push_back(tile);
+                }
+            }
+        }
+
+        return aStarTileList;
+    }
+
     bool isTileMapVisible(tibia::TileMap* tileMap)
     {
         tibia::Tile::List* tileList = tileMap->getTileList();
@@ -7966,6 +8030,7 @@ private:
     int m_combatCreaturesWindowNumCreatures;
 
     sf::RenderTexture m_lightLayer;
+    sf::View m_lightLayerView;
     sf::Sprite m_lightLayerSprite;
 
     tibia::Light m_light;
@@ -7982,6 +8047,7 @@ private:
 
     sf::VertexArray m_tileMapTileVertices;
 
+    tibia::Tile::List m_tileMapTiles[tibia::NUM_Z_LEVELS];
     tibia::Object::List m_tileMapObjects[tibia::NUM_Z_LEVELS];
     tibia::Creature::List m_tileMapCreatures[tibia::NUM_Z_LEVELS];
     tibia::Animation::List m_tileMapAnimations[tibia::NUM_Z_LEVELS];

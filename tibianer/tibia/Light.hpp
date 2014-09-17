@@ -21,8 +21,6 @@ public:
         setSize(0);
 
         setColor(tibia::Colors::light);
-
-        setOrigin(tibia::Lights::size.x / 2, tibia::Lights::size.y / 2);
     }
 
     void setSize(unsigned int size)
@@ -35,6 +33,8 @@ public:
         m_size = size;
 
         setTextureRect(sf::IntRect(0, size * tibia::Lights::size.y, tibia::Lights::size.x, tibia::Lights::size.y));
+
+        setOrigin(tibia::Lights::size.x / 2, tibia::Lights::size.y / 2);
     }
 
     unsigned int getSize()

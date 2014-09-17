@@ -81,7 +81,7 @@ namespace tibia
 
     const int CREATURE_NUM_ANIMATIONS_DEFAULT = 1;
 
-    const int ASTAR_SEARCH_STEPS_MAX = 4096;
+    const int ASTAR_SEARCH_STEPS_MAX = 1024;
 
     namespace Textures
     {
