@@ -27,6 +27,7 @@ public:
 
         bool hasSolidObject             = false;
         bool hasSolidCreature           = false;
+        bool hasPlayer                  = false;
         bool hasBlockProjectilesObject  = false;
         bool hasHasHeightObject         = false;
         bool hasMoveAboveObject         = false;
@@ -245,7 +246,13 @@ public:
             if (creature->isDead() == false && creature->isSleeping() == false)
             {
                 tileProperties.hasSolidCreature = true;
-                break; // break for now since only checking for one thing with creatures
+
+                if (creature->isPlayer() == true)
+                {
+                    tileProperties.hasPlayer = true;
+                }
+
+                break;
             }
         }
 

@@ -114,7 +114,10 @@ public:
                 (tileProperties.hasSolidObject == true)
             )
             {
-                return nullptr;
+                if (tileProperties.hasPlayer == false)
+                {
+                    return nullptr;
+                }
             }
         }
 

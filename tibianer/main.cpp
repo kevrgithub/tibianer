@@ -456,6 +456,8 @@ int main(int argc, char* argv[])
 
             else if (event.type == sf::Event::KeyPressed)
             {
+                //std::cout << "KeyPressed: " << event.key.code << std::endl;
+
                 // quit
                 if (event.key.code == sf::Keyboard::Escape)
                 {

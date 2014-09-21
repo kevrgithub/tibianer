@@ -583,6 +583,8 @@ public:
             {
                 if (inputText.getSize() != 0)
                 {
+                    m_chatInputWindowPreviousText = inputText;
+
                     int speechType = tibia::SpeechTypes::say;
 
                     std::string text = inputText.toAnsiString();
@@ -685,6 +687,14 @@ public:
                     m_chatInputWindowText.setString(inputText);
 
                     IupDestroy(clipboard);
+                }
+            }
+
+            if (event.key.shift == true && event.key.code == sf::Keyboard::Key::Up)
+            {
+                if (m_chatInputWindowPreviousText.getSize() != 0)
+                {
+                    m_chatInputWindowText.setString(m_chatInputWindowPreviousText);
                 }
             }
 
@@ -1576,6 +1586,51 @@ public:
         chatLogWindowText.setCharacterSize(tibia::Fonts::System::characterSize);
         chatLogWindowText.setString(text);
         chatLogWindowText.setColor(color);
+
+        unsigned int textViewWidth =
+            tibia::GuiData::ChatLogWindow::width - (tibia::GuiData::ChatLogWindow::Buttons::ScrollDown::width + chatLogWindowText.getCharacterSize());
+
+        if (chatLogWindowText.getLocalBounds().width > textViewWidth)
+        {
+            std::string temp = chatLogWindowText.getString();
+
+            for (std::size_t i = 0; i < temp.size(); i++)
+            {
+                if (chatLogWindowText.findCharacterPos(i).x > textViewWidth)
+                {
+                    std::size_t lastSpacePosition = temp.find_last_of(' ');
+
+                    if (lastSpacePosition != std::string::npos)
+                    {
+                        for (std::size_t j = i; j > 0; j--)
+                        {
+                            if (temp.at(j) == ' ')
+                            {
+                                if (chatLogWindowText.findCharacterPos(j).x > (tibia::GuiData::ChatLogWindow::Buttons::ScrollDown::width / 2))
+                                {
+                                    i = j + 1;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    std::string newLine = temp.substr(i);
+
+                    newLine.insert(0, "    ");
+
+                    temp = temp.substr(0, i);
+
+                    chatLogWindowText.setString(temp);
+
+                    m_chatLogWindowTextList.push_back(chatLogWindowText);
+
+                    doChatLogWindowAddText(newLine);
+
+                    return;
+                }
+            }
+        }
 
         m_chatLogWindowTextList.push_back(chatLogWindowText);
     }
@@ -8014,6 +8069,7 @@ private:
     sf::View m_chatInputWindowView;
     sf::Sprite m_chatInputWindowSprite;
     std::vector<sf::Text> m_chatLogWindowTextList;
+    sf::String m_chatInputWindowPreviousText;
 
     sf::Text m_chatInputWindowText;
     sf::RectangleShape m_chatInputWindowTextCaret;
