@@ -38,6 +38,45 @@ namespace LuaFunctions
         return 0;
     }
 
+    int doesTileHaveThing(lua_State* L)
+    {
+        const int x = luaL_checkinteger(L, 1);
+        const int y = luaL_checkinteger(L, 2);
+        const int z = luaL_checkinteger(L, 3);
+
+        bool result = g_game.doesTileHaveThing(x, y, z);
+
+        lua_pushboolean(L, result);
+
+        return 1;
+    }
+
+    int doesTileHaveCreature(lua_State* L)
+    {
+        const int x = luaL_checkinteger(L, 1);
+        const int y = luaL_checkinteger(L, 2);
+        const int z = luaL_checkinteger(L, 3);
+
+        bool result = g_game.doesTileHaveCreature(x, y, z);
+
+        lua_pushboolean(L, result);
+
+        return 1;
+    }
+
+    int doesTileHaveObject(lua_State* L)
+    {
+        const int x = luaL_checkinteger(L, 1);
+        const int y = luaL_checkinteger(L, 2);
+        const int z = luaL_checkinteger(L, 3);
+
+        bool result = g_game.doesTileHaveObject(x, y, z);
+
+        lua_pushboolean(L, result);
+
+        return 1;
+    }
+
     int doPlayerAddInventoryObject(lua_State* L)
     {
         const int id    = luaL_checkinteger(L, 1);
@@ -64,7 +103,7 @@ namespace LuaFunctions
 
         bool result = g_game.doesPlayerHaveInventoryObject(id, false);
 
-        lua_pushinteger(L, result);
+        lua_pushboolean(L, result);
 
         return 1;
     }
@@ -75,7 +114,7 @@ namespace LuaFunctions
 
         bool result = g_game.doesPlayerHaveInventoryObject(id, true);
 
-        lua_pushinteger(L, result);
+        lua_pushboolean(L, result);
 
         return 1;
     }
@@ -109,6 +148,9 @@ namespace LuaFunctions
     {
         lua_register(g_luaState, "setTileId", setTileId);
         lua_register(g_luaState, "setTileObjectId", setTileObjectId);
+        lua_register(g_luaState, "doesTileHaveThing", doesTileHaveThing);
+        lua_register(g_luaState, "doesTileHaveCreature", doesTileHaveCreature);
+        lua_register(g_luaState, "doesTileHaveObject", doesTileHaveObject);
         lua_register(g_luaState, "doPlayerAddInventoryObject", doPlayerAddInventoryObject);
         lua_register(g_luaState, "doPlayerAddInventoryDepotObject", doPlayerAddInventoryDepotObject);
         lua_register(g_luaState, "doesPlayerHaveInventoryObject", doesPlayerHaveInventoryObject);

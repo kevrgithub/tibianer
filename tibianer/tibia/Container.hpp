@@ -13,6 +13,23 @@ class Container
 
 public:
 
+    bool isFull()
+    {
+        std::size_t objectsMax = tibia::INVENTORY_OBJECTS_MAX;
+
+        if (m_isDepot == true)
+        {
+            objectsMax = tibia::INVENTORY_DEPOT_OBJECTS_MAX;
+        }
+
+        if (m_objectList.size() >= objectsMax)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
     tibia::Object::List::iterator findObject(int id)
     {
         return std::find_if
@@ -109,7 +126,7 @@ public:
                         objectsMax = tibia::INVENTORY_DEPOT_OBJECTS_MAX;
                     }
 
-                    if ((m_objectList.size() + 1) == objectsMax)
+                    if ((m_objectList.size() + 1) >= objectsMax)
                     {
                         return tibia::ContainerAddObjectResult::objectsMax;
                     }

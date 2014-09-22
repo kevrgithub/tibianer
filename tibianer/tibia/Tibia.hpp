@@ -83,6 +83,8 @@ namespace tibia
 
     const int ASTAR_SEARCH_STEPS_MAX = 1024;
 
+    const int HOTKEY_TEXT_SIZE = 128;
+
     namespace Textures
     {
         sf::Texture loading;
@@ -276,6 +278,8 @@ namespace tibia
         const float respawnTime = 5.0f;
 
         const float corpseDecayTime = 30.0f;
+
+        const float speechTime = 0.25f;
     }
 
     namespace GameTextData
@@ -683,6 +687,19 @@ namespace tibia
         {
             int x = 13;
             int y = 19;
+
+            int width  = 24;
+            int height = 24;
+
+            sf::Vector2f position(x, y);
+
+            sf::IntRect rect(x, y, width, height);
+        }
+
+        namespace HotkeysButton
+        {
+            int x = 13;
+            int y = 48;
 
             int width  = 24;
             int height = 24;

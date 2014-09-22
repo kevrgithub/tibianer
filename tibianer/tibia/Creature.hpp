@@ -693,6 +693,16 @@ public:
         m_isLogicReady = b;
     }
 
+    bool getIsSpeechReady()
+    {
+        return m_isSpeechReady;
+    }
+
+    void setIsSpeechReady(bool b)
+    {
+        m_isSpeechReady = b;
+    }
+
     float getMovementSpeed()
     {
         return m_movementSpeed;
@@ -888,6 +898,11 @@ public:
         return &m_clockLogic;
     }
 
+    sf::Clock* getClockSpeech()
+    {
+        return &m_clockSpeech;
+    }
+
     sf::Clock* getClockCorpse()
     {
         return &m_clockCorpse;
@@ -948,6 +963,7 @@ private:
 
     bool m_isMovementReady;
     bool m_isLogicReady;
+    bool m_isSpeechReady;
 
     float m_movementSpeed;
 
@@ -997,6 +1013,7 @@ private:
 
     sf::Clock m_clockMovement;
     sf::Clock m_clockLogic;
+    sf::Clock m_clockSpeech;
 
     tibia::Creature::Ptr m_lastAttacker;
 

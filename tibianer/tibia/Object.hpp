@@ -93,18 +93,6 @@ public:
         }
     }
 
-    void setOffset()
-    {
-        if (m_flags.test(tibia::SpriteFlags::offset))
-        {
-            m_sprite[0].setPosition
-            (
-                -tibia::THING_DRAW_OFFSET,
-                -tibia::THING_DRAW_OFFSET
-            );
-        }
-    }
-
     void setExtraSprites()
     {
         for (unsigned int i = 1; i < tibia::NUM_OBJECT_SPRITES - 1; ++i)
@@ -1261,17 +1249,29 @@ public:
             setDrawIndex(tibia::DRAW_INDEX_LAST);
         }
 
+        if (m_flags.test(tibia::SpriteFlags::decal) == false && m_flags.test(tibia::SpriteFlags::drawLast) == false)
+        {
+            setDrawIndex(tibia::DRAW_INDEX_DEFAULT);
+        }
+
         if (m_flags.test(tibia::SpriteFlags::transparent))
         {
             m_sprite[0].setColor(sf::Color::Transparent);
         }
+        else
+        {
+            m_sprite[0].setColor(sf::Color::White);
+        }
 
-        //if (m_flags.test(tibia::SpriteFlags::groupable))
-        //
-            //setCountById();
-        //}
+        if (m_flags.test(tibia::SpriteFlags::offset))
+        {
+            m_sprite[0].setPosition
+            (
+                -tibia::THING_DRAW_OFFSET,
+                -tibia::THING_DRAW_OFFSET
+            );
+        }
 
-        setOffset();
         setExtraSprites();
     }
 

@@ -10,6 +10,9 @@
 #include <algorithm>
 #include <locale>
 
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/ini_parser.hpp>
+
 #include <boost/algorithm/string.hpp>
 #include <boost/range/algorithm/replace_if.hpp>
 #include <boost/range/algorithm/remove_if.hpp>
@@ -70,6 +73,34 @@ public:
     };
 
     Options_t options;
+
+    struct Hotkeys_t
+    {
+        std::string hotkey1;
+        std::string hotkey2;
+        std::string hotkey3;
+        std::string hotkey4;
+        std::string hotkey5;
+        std::string hotkey6;
+        std::string hotkey7;
+        std::string hotkey8;
+        std::string hotkey9;
+        std::string hotkey0;
+
+        std::string hotkeyF1;
+        std::string hotkeyF2;
+        std::string hotkeyF3;
+        std::string hotkeyF4;
+        std::string hotkeyF5;
+        std::string hotkeyF6;
+        std::string hotkeyF7;
+        std::string hotkeyF8;
+        std::string hotkeyF9;
+        std::string hotkeyF10;
+        std::string hotkeyF11;
+    };
+
+    Hotkeys_t hotkeys;
 
     struct Gui_t
     {
@@ -215,6 +246,187 @@ public:
         updateLightingStyle();
     }
 
+    void showHotkeysWindow()
+    {
+        char hotkey1[tibia::HOTKEY_TEXT_SIZE];
+        char hotkey2[tibia::HOTKEY_TEXT_SIZE];
+        char hotkey3[tibia::HOTKEY_TEXT_SIZE];
+        char hotkey4[tibia::HOTKEY_TEXT_SIZE];
+        char hotkey5[tibia::HOTKEY_TEXT_SIZE];
+        char hotkey6[tibia::HOTKEY_TEXT_SIZE];
+        char hotkey7[tibia::HOTKEY_TEXT_SIZE];
+        char hotkey8[tibia::HOTKEY_TEXT_SIZE];
+        char hotkey9[tibia::HOTKEY_TEXT_SIZE];
+        char hotkey0[tibia::HOTKEY_TEXT_SIZE];
+
+        char hotkeyF1[tibia::HOTKEY_TEXT_SIZE];
+        char hotkeyF2[tibia::HOTKEY_TEXT_SIZE];
+        char hotkeyF3[tibia::HOTKEY_TEXT_SIZE];
+        char hotkeyF4[tibia::HOTKEY_TEXT_SIZE];
+        char hotkeyF5[tibia::HOTKEY_TEXT_SIZE];
+        char hotkeyF6[tibia::HOTKEY_TEXT_SIZE];
+        char hotkeyF7[tibia::HOTKEY_TEXT_SIZE];
+        char hotkeyF8[tibia::HOTKEY_TEXT_SIZE];
+        char hotkeyF9[tibia::HOTKEY_TEXT_SIZE];
+        char hotkeyF10[tibia::HOTKEY_TEXT_SIZE];
+        char hotkeyF11[tibia::HOTKEY_TEXT_SIZE];
+        char hotkeyF12[tibia::HOTKEY_TEXT_SIZE];
+
+        strncpy(hotkey1, this->hotkeys.hotkey1.c_str(), sizeof(hotkey1));
+        strncpy(hotkey2, this->hotkeys.hotkey2.c_str(), sizeof(hotkey2));
+        strncpy(hotkey3, this->hotkeys.hotkey3.c_str(), sizeof(hotkey3));
+        strncpy(hotkey4, this->hotkeys.hotkey4.c_str(), sizeof(hotkey4));
+        strncpy(hotkey5, this->hotkeys.hotkey5.c_str(), sizeof(hotkey5));
+        strncpy(hotkey6, this->hotkeys.hotkey6.c_str(), sizeof(hotkey6));
+        strncpy(hotkey7, this->hotkeys.hotkey7.c_str(), sizeof(hotkey7));
+        strncpy(hotkey8, this->hotkeys.hotkey8.c_str(), sizeof(hotkey8));
+        strncpy(hotkey9, this->hotkeys.hotkey9.c_str(), sizeof(hotkey9));
+        strncpy(hotkey0, this->hotkeys.hotkey0.c_str(), sizeof(hotkey0));
+
+        strncpy(hotkeyF1, this->hotkeys.hotkeyF1.c_str(), sizeof(hotkeyF1));
+        strncpy(hotkeyF2, this->hotkeys.hotkeyF2.c_str(), sizeof(hotkeyF2));
+        strncpy(hotkeyF3, this->hotkeys.hotkeyF3.c_str(), sizeof(hotkeyF3));
+        strncpy(hotkeyF4, this->hotkeys.hotkeyF4.c_str(), sizeof(hotkeyF4));
+        strncpy(hotkeyF5, this->hotkeys.hotkeyF5.c_str(), sizeof(hotkeyF5));
+        strncpy(hotkeyF6, this->hotkeys.hotkeyF6.c_str(), sizeof(hotkeyF6));
+        strncpy(hotkeyF7, this->hotkeys.hotkeyF7.c_str(), sizeof(hotkeyF7));
+        strncpy(hotkeyF8, this->hotkeys.hotkeyF8.c_str(), sizeof(hotkeyF8));
+        strncpy(hotkeyF9, this->hotkeys.hotkeyF9.c_str(), sizeof(hotkeyF9));
+        strncpy(hotkeyF10, this->hotkeys.hotkeyF10.c_str(), sizeof(hotkeyF10));
+        strncpy(hotkeyF11, this->hotkeys.hotkeyF11.c_str(), sizeof(hotkeyF11));
+
+        hotkey1[sizeof(hotkey1) - 1] = 0;
+        hotkey2[sizeof(hotkey2) - 1] = 0;
+        hotkey3[sizeof(hotkey3) - 1] = 0;
+        hotkey4[sizeof(hotkey4) - 1] = 0;
+        hotkey5[sizeof(hotkey5) - 1] = 0;
+        hotkey6[sizeof(hotkey6) - 1] = 0;
+        hotkey7[sizeof(hotkey7) - 1] = 0;
+        hotkey8[sizeof(hotkey8) - 1] = 0;
+        hotkey9[sizeof(hotkey9) - 1] = 0;
+        hotkey0[sizeof(hotkey0) - 1] = 0;
+
+        hotkeyF1[sizeof(hotkeyF1) - 1] = 0;
+        hotkeyF2[sizeof(hotkeyF2) - 1] = 0;
+        hotkeyF3[sizeof(hotkeyF3) - 1] = 0;
+        hotkeyF4[sizeof(hotkeyF4) - 1] = 0;
+        hotkeyF5[sizeof(hotkeyF5) - 1] = 0;
+        hotkeyF6[sizeof(hotkeyF6) - 1] = 0;
+        hotkeyF7[sizeof(hotkeyF7) - 1] = 0;
+        hotkeyF8[sizeof(hotkeyF8) - 1] = 0;
+        hotkeyF9[sizeof(hotkeyF9) - 1] = 0;
+        hotkeyF10[sizeof(hotkeyF10) - 1] = 0;
+        hotkeyF11[sizeof(hotkeyF11) - 1] = 0;
+
+        IupGetParam
+        (
+            "Hotkeys", NULL, 0,
+
+            "1: %s\n"
+            "2: %s\n"
+            "3: %s\n"
+            "4: %s\n"
+            "5: %s\n"
+            "6: %s\n"
+            "7: %s\n"
+            "8: %s\n"
+            "9: %s\n"
+            "0: %s\n"
+
+            "%t\n"
+
+            "F1: %s\n"
+            "F2: %s\n"
+            "F3: %s\n"
+            "F4: %s\n"
+            "F5: %s\n"
+            "F6: %s\n"
+            "F7: %s\n"
+            "F8: %s\n"
+            "F9: %s\n"
+            "F10: %s\n"
+            "F11: %s\n"
+
+            ,
+
+            hotkey1,
+            hotkey2,
+            hotkey3,
+            hotkey4,
+            hotkey5,
+            hotkey6,
+            hotkey7,
+            hotkey8,
+            hotkey9,
+            hotkey0,
+
+            hotkeyF1,
+            hotkeyF2,
+            hotkeyF3,
+            hotkeyF4,
+            hotkeyF5,
+            hotkeyF6,
+            hotkeyF7,
+            hotkeyF8,
+            hotkeyF9,
+            hotkeyF10,
+            hotkeyF11,
+
+            NULL
+        );
+
+        this->hotkeys.hotkey1 = hotkey1;
+        this->hotkeys.hotkey2 = hotkey2;
+        this->hotkeys.hotkey3 = hotkey3;
+        this->hotkeys.hotkey4 = hotkey4;
+        this->hotkeys.hotkey5 = hotkey5;
+        this->hotkeys.hotkey6 = hotkey6;
+        this->hotkeys.hotkey7 = hotkey7;
+        this->hotkeys.hotkey8 = hotkey8;
+        this->hotkeys.hotkey9 = hotkey9;
+        this->hotkeys.hotkey0 = hotkey0;
+
+        this->hotkeys.hotkeyF1 = hotkeyF1;
+        this->hotkeys.hotkeyF2 = hotkeyF2;
+        this->hotkeys.hotkeyF3 = hotkeyF3;
+        this->hotkeys.hotkeyF4 = hotkeyF4;
+        this->hotkeys.hotkeyF5 = hotkeyF5;
+        this->hotkeys.hotkeyF6 = hotkeyF6;
+        this->hotkeys.hotkeyF7 = hotkeyF7;
+        this->hotkeys.hotkeyF8 = hotkeyF8;
+        this->hotkeys.hotkeyF9 = hotkeyF9;
+        this->hotkeys.hotkeyF10 = hotkeyF10;
+        this->hotkeys.hotkeyF11 = hotkeyF11;
+
+        boost::property_tree::ptree pt;
+        boost::property_tree::ini_parser::read_ini(m_hotkeysFile, pt);
+
+        pt.put<std::string>("Hotkeys.1", this->hotkeys.hotkey1);
+        pt.put<std::string>("Hotkeys.2", this->hotkeys.hotkey2);
+        pt.put<std::string>("Hotkeys.3", this->hotkeys.hotkey3);
+        pt.put<std::string>("Hotkeys.4", this->hotkeys.hotkey4);
+        pt.put<std::string>("Hotkeys.5", this->hotkeys.hotkey5);
+        pt.put<std::string>("Hotkeys.6", this->hotkeys.hotkey6);
+        pt.put<std::string>("Hotkeys.7", this->hotkeys.hotkey7);
+        pt.put<std::string>("Hotkeys.8", this->hotkeys.hotkey8);
+        pt.put<std::string>("Hotkeys.9", this->hotkeys.hotkey9);
+        pt.put<std::string>("Hotkeys.0", this->hotkeys.hotkey0);
+
+        pt.put<std::string>("Hotkeys.F1", this->hotkeys.hotkeyF1);
+        pt.put<std::string>("Hotkeys.F2", this->hotkeys.hotkeyF2);
+        pt.put<std::string>("Hotkeys.F3", this->hotkeys.hotkeyF3);
+        pt.put<std::string>("Hotkeys.F4", this->hotkeys.hotkeyF4);
+        pt.put<std::string>("Hotkeys.F5", this->hotkeys.hotkeyF5);
+        pt.put<std::string>("Hotkeys.F6", this->hotkeys.hotkeyF6);
+        pt.put<std::string>("Hotkeys.F7", this->hotkeys.hotkeyF7);
+        pt.put<std::string>("Hotkeys.F8", this->hotkeys.hotkeyF8);
+        pt.put<std::string>("Hotkeys.F9", this->hotkeys.hotkeyF9);
+        pt.put<std::string>("Hotkeys.F10", this->hotkeys.hotkeyF10);
+        pt.put<std::string>("Hotkeys.F11", this->hotkeys.hotkeyF11);
+
+        boost::property_tree::ini_parser::write_ini(m_hotkeysFile, pt);
+    }
+
     void createPlayer()
     {
         tibia::Creature::Ptr player = std::make_shared<tibia::Creature>
@@ -275,13 +487,9 @@ public:
 
     void showMapNameAndAuthor()
     {
+        showGameWindowText(m_map.properties.name, tibia::Colors::Text::white);
+
         std::stringstream ss;
-        ss << m_map.properties.name << "\nby " << m_map.properties.author;
-
-        showGameWindowText(ss.str(), tibia::Colors::Text::white);
-
-        ss.str("");
-
         ss << m_map.properties.name << " by " << m_map.properties.author;
 
         doChatLogWindowAddText(ss.str(), sf::Color::Red);
@@ -379,11 +587,18 @@ public:
         bool collideWithTileHeight              = true
     )
     {
+        // cast from the center of the tile
+        origin.x += tibia::TILE_SIZE / 2;
+        origin.y += tibia::TILE_SIZE / 2;
+
+        destination.x += tibia::TILE_SIZE / 2;
+        destination.y += tibia::TILE_SIZE / 2;
+
         tibia::RayCast rc;
         rc.doLine(origin.x, origin.y, destination.x, destination.y);
 
-        tibia::Sprite blueSquare;
-        blueSquare.setId(3748);
+        //tibia::Sprite blueSquare;
+        //blueSquare.setId(3748);
 
         std::vector<sf::Vector2u>* points = rc.getPoints();
 
@@ -392,39 +607,58 @@ public:
             return false;
         }
 
+        bool result = true;
+
         for (auto& point : *points)
         {
             //std::cout << "point: " << point.x << "," << point.x << std::endl;
 
-            blueSquare.setPosition(point.x, point.y);
-            m_gameWindow.draw(blueSquare);
+            //blueSquare.setPosition(point.x, point.y);
+            //m_gameWindow.draw(blueSquare);
 
             tibia::Tile::Ptr tile = getTile(point, z);
 
             if (tile == nullptr)
             {
-                return false;
+                result = false;
+                break;
             }
 
             if (tile->getHeight() > 1 && collideWithTileHeight == true)
             {
-                return false;
+                result = false;
+                break;
             }
 
             tibia::Tile::Properties_t tileProperties = tile->getProperties();
 
             if (tileProperties.hasSolidObject == true && collideWithSolidObjects == true)
             {
-                return false;
+                result = false;
+                break;
             }
 
             if (tileProperties.hasBlockProjectilesObject == true && collideWithBlockProjectilesObjects == true)
             {
-                return false;
+                result = false;
+                break;
             }
         }
 
-        return true;
+/*
+        sf::Vertex line[] =
+        {
+            sf::Vertex(sf::Vector2f(origin)),
+            sf::Vertex(sf::Vector2f(destination))
+        };
+
+        line[0].color = sf::Color::Red;
+        line[1].color = sf::Color::Red;
+
+        m_gameWindow.draw(line, 2, sf::Lines);
+*/
+
+        return result;
     }
 
     void updateLightingStyle()
@@ -841,6 +1075,92 @@ public:
 
                 std::cout << "Player Z: " << m_player->getZ() << std::endl;
                 break;
+
+            // hotkeys
+
+            case sf::Keyboard::Key::Num1:
+                doCreatureSpeech(m_player, this->hotkeys.hotkey1);
+                break;
+
+            case sf::Keyboard::Key::Num2:
+                doCreatureSpeech(m_player, this->hotkeys.hotkey2);
+                break;
+
+            case sf::Keyboard::Key::Num3:
+                doCreatureSpeech(m_player, this->hotkeys.hotkey3);
+                break;
+
+            case sf::Keyboard::Key::Num4:
+                doCreatureSpeech(m_player, this->hotkeys.hotkey4);
+                break;
+
+            case sf::Keyboard::Key::Num5:
+                doCreatureSpeech(m_player, this->hotkeys.hotkey5);
+                break;
+
+            case sf::Keyboard::Key::Num6:
+                doCreatureSpeech(m_player, this->hotkeys.hotkey6);
+                break;
+
+            case sf::Keyboard::Key::Num7:
+                doCreatureSpeech(m_player, this->hotkeys.hotkey7);
+                break;
+
+            case sf::Keyboard::Key::Num8:
+                doCreatureSpeech(m_player, this->hotkeys.hotkey8);
+                break;
+
+            case sf::Keyboard::Key::Num9:
+                doCreatureSpeech(m_player, this->hotkeys.hotkey9);
+                break;
+
+            case sf::Keyboard::Key::Num0:
+                doCreatureSpeech(m_player, this->hotkeys.hotkey0);
+                break;
+
+            case sf::Keyboard::Key::F1:
+                doCreatureSpeech(m_player, this->hotkeys.hotkeyF1);
+                break;
+
+            case sf::Keyboard::Key::F2:
+                doCreatureSpeech(m_player, this->hotkeys.hotkeyF2);
+                break;
+
+            case sf::Keyboard::Key::F3:
+                doCreatureSpeech(m_player, this->hotkeys.hotkeyF3);
+                break;
+
+            case sf::Keyboard::Key::F4:
+                doCreatureSpeech(m_player, this->hotkeys.hotkeyF4);
+                break;
+
+            case sf::Keyboard::Key::F5:
+                doCreatureSpeech(m_player, this->hotkeys.hotkeyF5);
+                break;
+
+            case sf::Keyboard::Key::F6:
+                doCreatureSpeech(m_player, this->hotkeys.hotkeyF6);
+                break;
+
+            case sf::Keyboard::Key::F7:
+                doCreatureSpeech(m_player, this->hotkeys.hotkeyF7);
+                break;
+
+            case sf::Keyboard::Key::F8:
+                doCreatureSpeech(m_player, this->hotkeys.hotkeyF8);
+                break;
+
+            case sf::Keyboard::Key::F9:
+                doCreatureSpeech(m_player, this->hotkeys.hotkeyF9);
+                break;
+
+            case sf::Keyboard::Key::F10:
+                doCreatureSpeech(m_player, this->hotkeys.hotkeyF10);
+                break;
+
+            case sf::Keyboard::Key::F11:
+                doCreatureSpeech(m_player, this->hotkeys.hotkeyF11);
+                break;
         }
     }
 
@@ -914,6 +1234,10 @@ public:
             else if (tibia::GuiData::OptionsButton::rect.contains(getMouseWindowPosition()) == true)
             {
                 showOptionsWindow();
+            }
+            else if (tibia::GuiData::HotkeysButton::rect.contains(getMouseWindowPosition()) == true)
+            {
+                showHotkeysWindow();
             }
             else if (tibia::GuiData::TabButtons::Inventory::rect.contains(getMouseWindowPosition()) == true)
             {
@@ -1801,8 +2125,6 @@ public:
 
     void doCreatureLogic(int z)
     {
-        //return
-
         for (auto& creature : m_tileMapCreatures[z])
         {
             if (creature->isPlayer() == true || creature->isDead() == true || creature->isSleeping() == true)
@@ -1943,7 +2265,7 @@ public:
 
         if (searchState == AStarSearch<MapSearchNode>::SEARCH_STATE_SUCCEEDED)
         {
-            std::cout << "astar search succeeded in " << searchSteps << " steps" << std::endl;
+            //std::cout << "astar search succeeded in " << searchSteps << " steps" << std::endl;
 
             MapSearchNode* startNode = aStarSearch.GetSolutionStart();
 
@@ -2001,7 +2323,7 @@ public:
         {
             result = false;
 
-            std::cout << "astar search FAILED in " << searchSteps << " steps" << std::endl;
+            //std::cout << "astar search FAILED in " << searchSteps << " steps" << std::endl;
         }
 
         aStarSearch.EnsureMemoryFreed();
@@ -2059,7 +2381,7 @@ public:
         handleCreatureMovement(m_player, playerMovementDirection);
     }
 
-    void setTileId(int x, int y, int z, int id)
+    bool doesTileHaveThing(int x, int y, int z)
     {
         tibia::Tile::Ptr tile = getTile
         (
@@ -2071,11 +2393,78 @@ public:
             z
         );
 
-        tile->setId(id);
+        if (tile->getCreatureList()->size())
+        {
+            return true;
+        }
 
-        tibia::SpriteFlags_t tileFlags = tibia::UMaps::spriteFlags[id];
+        if (tile->getObjectList()->size())
+        {
+            return true;
+        }
 
-        tile->setFlags(tileFlags);
+        return false;
+    }
+
+    bool doesTileHaveCreature(int x, int y, int z)
+    {
+        tibia::Tile::Ptr tile = getTile
+        (
+            sf::Vector2u
+            (
+                x * tibia::TILE_SIZE,
+                y * tibia::TILE_SIZE
+            ),
+            z
+        );
+
+        return tile->getCreatureList()->size();
+    }
+
+    bool doesTileHaveObject(int x, int y, int z)
+    {
+        tibia::Tile::Ptr tile = getTile
+        (
+            sf::Vector2u
+            (
+                x * tibia::TILE_SIZE,
+                y * tibia::TILE_SIZE
+            ),
+            z
+        );
+
+        return tile->getObjectList()->size();
+    }
+
+    void setTileId(int x, int y, int z, int id)
+    {
+        //tibia::Tile::Ptr tile = getTile
+        //(
+            //sf::Vector2u
+            //(
+                //x * tibia::TILE_SIZE,
+                //y * tibia::TILE_SIZE
+            //),
+            //z
+        //);
+
+        //tile->setId(id);
+
+        //tibia::SpriteFlags_t tileFlags = tibia::UMaps::spriteFlags[id];
+
+        //tile->setFlags(tileFlags);
+
+        int tileNumber = m_map.getTileNumberByTileCoords
+        (
+            sf::Vector2u
+            (
+                x * tibia::TILE_SIZE,
+                y * tibia::TILE_SIZE
+            )
+        );
+
+        m_map.tileMapTiles[z].updateTileId(tileNumber, id);
+        m_map.tileMapTiles[z].updateTileFlags(tileNumber, id);
     }
 
     void setTileObjectId(int x, int y, int z, int oldId, int newId)
@@ -3792,7 +4181,7 @@ public:
             blueBerriesObject->setId(tibia::SpriteData::blueBerry[2]);
             blueBerriesObject->setCountById();
 
-            creature->getInventory()->addObject(blueBerriesObject);
+            doCreatureAddInventoryObject(creature, blueBerriesObject);
 
             object->getClockRegenerate()->restart();
             object->setId(tibia::SpriteData::bushBlueBerryEmpty);
@@ -3806,7 +4195,7 @@ public:
             tibia::Object::Ptr snowBallObject = std::make_shared<tibia::Object>();
             snowBallObject->setId(tibia::SpriteData::snowBall[0]);
 
-            creature->getInventory()->addObject(snowBallObject);
+            doCreatureAddInventoryObject(creature, snowBallObject);
 
             object->getClockRegenerate()->restart();
             object->setId(tibia::SpriteData::snowBallMoundEmpty);
@@ -4187,22 +4576,22 @@ public:
         }
         else
         {
-            int creatureAddInventoryItemResult = creature->getInventory()->addObject(object);
+            int containerAddObjectResult = creature->getInventory()->addObject(object);
 
-            if (creatureAddInventoryItemResult == tibia::ContainerAddObjectResult::success)
+            if (containerAddObjectResult == tibia::ContainerAddObjectResult::success)
             {
                 tile->removeObject(object);
 
                 updateStepTile(tile);
             }
-            else if (creatureAddInventoryItemResult == tibia::ContainerAddObjectResult::objectCountMax)
+            else if (containerAddObjectResult == tibia::ContainerAddObjectResult::objectCountMax)
             {
                 if (creature->isPlayer() == true)
                 {
                     showStatusBarText("You cannot pick up any more of that object.");
                 }
             }
-            else if (creatureAddInventoryItemResult == tibia::ContainerAddObjectResult::objectsMax)
+            else if (containerAddObjectResult == tibia::ContainerAddObjectResult::objectsMax)
             {
                 if (creature->isPlayer() == true)
                 {
@@ -4262,20 +4651,44 @@ public:
         }
     }
 
+    void doCreatureAddInventoryObject(tibia::Creature::Ptr creature, tibia::Object::Ptr object, bool depot = false)
+    {
+        tibia::Container* inventory;
+
+        if (depot == false)
+        {
+            inventory = creature->getInventory();
+        }
+        else
+        {
+            inventory = creature->getInventoryDepot();
+        }
+
+        int containerAddObjectResult = inventory->addObject(object);
+
+        if (containerAddObjectResult != tibia::ContainerAddObjectResult::success)
+        {
+            spawnObject(sf::Vector2u(creature->getTilePosition().x, creature->getTilePosition().y), creature->getZ(), object);
+
+            updateStepTile(getThingTile(creature));
+
+            if (creature->isPlayer() == true)
+            {
+                if (containerAddObjectResult == tibia::ContainerAddObjectResult::objectsMax)
+                {
+                    showStatusBarText("Your inventory was full. The object fell on the floor.");
+                }
+            }
+        }
+    }
+
     void doPlayerAddInventoryObject(int id, int count, bool depot = false)
     {
         tibia::Object::Ptr object = std::make_shared<tibia::Object>();
         object->setId(id);
         object->setCount(count);
 
-        if (depot == false)
-        {
-            m_player->getInventory()->addObject(object);
-        }
-        else
-        {
-            m_player->getInventoryDepot()->addObject(object);
-        }
+        doCreatureAddInventoryObject(m_player, object, depot);
     }
 
     bool doesPlayerHaveInventoryObject(int id, bool depot = false)
@@ -4345,7 +4758,7 @@ public:
             return false;
         }
 
-        if (doRayCast(m_player->getTilePosition(), tile->getPosition(), creature->getZ(), false, true, true) == false)
+        if (doRayCast(creature->getTilePosition(), tile->getPosition(), creature->getZ(), false, true, true) == false)
         {
             if (creature->isPlayer() == true)
             {
@@ -4369,8 +4782,14 @@ public:
             tibia::Object::Ptr fishObject = std::make_shared<tibia::Object>();
             fishObject->setId(tibia::SpriteData::fish);
 
-            //spawnObject(sf::Vector2u(creature->getTilePosition().x, creature->getTilePosition().y), creature->getZ(), fishObject);
-            creature->getInventory()->addObject(fishObject);
+            if (creature->getInventory()->isFull() == true)
+            {
+                spawnObject(sf::Vector2u(creature->getTilePosition().x, creature->getTilePosition().y), creature->getZ(), fishObject);
+            }
+            else
+            {
+                creature->getInventory()->addObject(fishObject);
+            }
 
             if (creature->isPlayer() == true)
             {
@@ -4383,6 +4802,23 @@ public:
 
     void doCreatureSpeech(tibia::Creature::Ptr creature, std::string text, int speechType = tibia::SpeechTypes::say)
     {
+        if (text.size() == 0)
+        {
+            return;
+        }
+
+        sf::Time timeSpeech = creature->getClockSpeech()->getElapsedTime();
+
+        if (timeSpeech.asSeconds() > tibia::CreatureData::speechTime)
+        {
+            creature->setIsSpeechReady(true);
+        }
+
+        if (creature->getIsSpeechReady() == false)
+        {
+            return;
+        }
+
         std::vector<std::string> textWords;
         boost::split(textWords, text, boost::is_any_of(" "));
 
@@ -4498,6 +4934,10 @@ public:
         boost::replace_all(chatLogWindowText, "\n", " ");
 
         doChatLogWindowAddText(chatLogWindowText);
+
+        creature->setIsSpeechReady(false);
+
+        creature->getClockSpeech()->restart();
     }
 
     void updateMouseCursor(sf::RenderWindow* mainWindow)
@@ -6258,6 +6698,8 @@ public:
 
         //std::cout << "drawGameLayer STOP -------------------" << std::endl;
 
+        //doRayCast(m_player->getTilePosition(), sf::Vector2u(0, 0), m_player->getZ());
+
         drawFloatingTextList();
         drawGameTextList();
 
@@ -6271,16 +6713,16 @@ public:
         mainWindow->draw(m_gameWindowSprite);
     }
 
-    void addMiniMapWindowTiles(tibia::TileMap& tileMap, std::vector<sf::Vertex>& vertexList, int x1, int y1, int x2, int y2)
+    void addMiniMapWindowTiles(tibia::TileMap* tileMap, std::vector<sf::Vertex>* vertexList, int x1, int y1, int x2, int y2)
     {
-        tibia::Tile::List* tileList = tileMap.getTileList();
-
-        if (tileList->size() == 0)
+        if (tileMap->getType() != tibia::TileMapTypes::tiles)
         {
             return;
         }
 
-        if (tileMap.getType() != tibia::TileMapTypes::tiles)
+        tibia::Tile::List* tileList = tileMap->getTileList();
+
+        if (tileList->size() == 0)
         {
             return;
         }
@@ -6313,13 +6755,6 @@ public:
 
                 tibia::SpriteFlags_t tileFlags = tile->getFlags();
 
-                sf::Vertex quad[4];
-
-                quad[0].position = sf::Vector2f(i       * tibia::TILE_SIZE, j       * tibia::TILE_SIZE);
-                quad[1].position = sf::Vector2f((i + 1) * tibia::TILE_SIZE, j       * tibia::TILE_SIZE);
-                quad[2].position = sf::Vector2f((i + 1) * tibia::TILE_SIZE, (j + 1) * tibia::TILE_SIZE);
-                quad[3].position = sf::Vector2f(i       * tibia::TILE_SIZE, (j + 1) * tibia::TILE_SIZE);
-
                 sf::Color tileColor = tibia::Colors::MiniMap::default;
 
                 if (tileFlags.test(tibia::SpriteFlags::solid))
@@ -6349,15 +6784,22 @@ public:
                     tileColor = miniMapColorIt->second;
                 }
 
+                sf::Vertex quad[4];
+
+                quad[0].position = sf::Vector2f(i       * tibia::TILE_SIZE, j       * tibia::TILE_SIZE);
+                quad[1].position = sf::Vector2f((i + 1) * tibia::TILE_SIZE, j       * tibia::TILE_SIZE);
+                quad[2].position = sf::Vector2f((i + 1) * tibia::TILE_SIZE, (j + 1) * tibia::TILE_SIZE);
+                quad[3].position = sf::Vector2f(i       * tibia::TILE_SIZE, (j + 1) * tibia::TILE_SIZE);
+
                 quad[0].color = tileColor;
                 quad[1].color = tileColor;
                 quad[2].color = tileColor;
                 quad[3].color = tileColor;
 
-                vertexList.push_back(quad[0]);
-                vertexList.push_back(quad[1]);
-                vertexList.push_back(quad[2]);
-                vertexList.push_back(quad[3]);
+                vertexList->push_back(quad[0]);
+                vertexList->push_back(quad[1]);
+                vertexList->push_back(quad[2]);
+                vertexList->push_back(quad[3]);
 
                 tibia::Object::List* tileObjects = tile->getObjectList();
 
@@ -6366,13 +6808,6 @@ public:
                     for (auto& object : *tileObjects)
                     {
                         tibia::SpriteFlags_t objectFlags = object->getFlags();
-
-                        sf::Vertex quad[4];
-
-                        quad[0].position = sf::Vector2f(i       * tibia::TILE_SIZE, j       * tibia::TILE_SIZE);
-                        quad[1].position = sf::Vector2f((i + 1) * tibia::TILE_SIZE, j       * tibia::TILE_SIZE);
-                        quad[2].position = sf::Vector2f((i + 1) * tibia::TILE_SIZE, (j + 1) * tibia::TILE_SIZE);
-                        quad[3].position = sf::Vector2f(i       * tibia::TILE_SIZE, (j + 1) * tibia::TILE_SIZE);
 
                         sf::Color objectColor = sf::Color::Transparent;
 
@@ -6383,10 +6818,12 @@ public:
 
                         if
                         (
-                            objectFlags.test(tibia::SpriteFlags::moveAbove)     ||
-                            objectFlags.test(tibia::SpriteFlags::moveBelow)     ||
+                            objectFlags.test(tibia::SpriteFlags::moveAbove) ||
+                            objectFlags.test(tibia::SpriteFlags::moveBelow) ||
+
                             object->getType() == tibia::ObjectTypes::teleporter ||
-                            object->getId()   == tibia::SpriteData::ladder      ||
+
+                            object->getId()   == tibia::SpriteData::ladder ||
                             object->getId()   == tibia::SpriteData::ropeUp
                         )
                         {
@@ -6400,15 +6837,22 @@ public:
                             objectColor = miniMapColorIt->second;
                         }
 
+                        sf::Vertex quad[4];
+
+                        quad[0].position = sf::Vector2f(i       * tibia::TILE_SIZE, j       * tibia::TILE_SIZE);
+                        quad[1].position = sf::Vector2f((i + 1) * tibia::TILE_SIZE, j       * tibia::TILE_SIZE);
+                        quad[2].position = sf::Vector2f((i + 1) * tibia::TILE_SIZE, (j + 1) * tibia::TILE_SIZE);
+                        quad[3].position = sf::Vector2f(i       * tibia::TILE_SIZE, (j + 1) * tibia::TILE_SIZE);
+
                         quad[0].color = objectColor;
                         quad[1].color = objectColor;
                         quad[2].color = objectColor;
                         quad[3].color = objectColor;
 
-                        vertexList.push_back(quad[0]);
-                        vertexList.push_back(quad[1]);
-                        vertexList.push_back(quad[2]);
-                        vertexList.push_back(quad[3]);
+                        vertexList->push_back(quad[0]);
+                        vertexList->push_back(quad[1]);
+                        vertexList->push_back(quad[2]);
+                        vertexList->push_back(quad[3]);
                     }
                 }
             }
@@ -6437,7 +6881,7 @@ public:
         int x2 = (16 * m_miniMapWindowZoom);
         int y2 = (16 * m_miniMapWindowZoom);
 
-        addMiniMapWindowTiles(m_map.tileMapTiles[m_player->getZ()], m_miniMapVertices, x1, y1, x2, y2);
+        addMiniMapWindowTiles(&m_map.tileMapTiles[m_player->getZ()], &m_miniMapVertices, x1, y1, x2, y2);
 
         sf::Vertex playerSquare[4];
 
@@ -6527,6 +6971,16 @@ public:
         if (z != m_player->getZ())
         {
             return;
+        }
+
+        for (auto& gameTextIt = m_gameTextList.begin(); gameTextIt != m_gameTextList.end(); gameTextIt++)
+        {
+            if (gameTextIt->getTilePosition() == tilePosition && gameTextIt->getZ() == z)
+            {
+                gameTextIt = m_gameTextList.erase(gameTextIt);
+                gameTextIt--;
+                continue;
+            }
         }
 
         tibia::GameText gt;
@@ -7957,6 +8411,11 @@ public:
         return &m_clockAnimatedWaterAndObjects;
     }
 
+    sf::Clock* getClockMiniMap()
+    {
+        return &m_clockMiniMap;
+    }
+
     sf::Font* getFontDefault()
     {
         return &m_fontDefault;
@@ -8012,9 +8471,22 @@ public:
         m_luaState = L;
     }
 
+    void setConfigFile(const std::string& filename)
+    {
+        m_configFile = filename;
+    }
+
+    void setHotkeysFile(const std::string& filename)
+    {
+        m_hotkeysFile = filename;
+    }
+
 private:
 
     lua_State* m_luaState;
+
+    std::string m_configFile;
+    std::string m_hotkeysFile;
 
     sf::RenderWindow* m_mainWindow;
 
@@ -8060,6 +8532,8 @@ private:
     sf::Sprite m_miniMapWindowSprite;
 
     int m_miniMapWindowZoom;
+
+    sf::Clock m_clockMiniMap;
 
     sf::RenderTexture m_chatLogWindow;
     sf::View m_chatLogWindowView;

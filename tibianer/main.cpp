@@ -44,7 +44,8 @@ tibia::Game g_game;
 
 std::string g_gameTitle = "Tibianer (WORK IN PROGRESS)";
 
-std::string g_configFile = "cfg/config.cfg";
+std::string g_configFile  = "cfg/config.cfg";
+std::string g_hotkeysFile = "cfg/hotkeys.cfg";
 
 sf::RenderWindow g_mainWindow;
 
@@ -90,6 +91,42 @@ bool loadConfig()
 
     g_game.options.isCheatInfiniteHealthEnabled  = pt.get<bool>("Cheats.InfiniteHealth", g_game.options.isCheatInfiniteHealthEnabled);
     g_game.options.isCheatInfiniteManaEnabled    = pt.get<bool>("Cheats.InfiniteMana",   g_game.options.isCheatInfiniteManaEnabled);
+
+    return true;
+}
+
+bool loadHotkeys()
+{
+    if (utility::fileExists(g_hotkeysFile) == false)
+    {
+        return false;
+    }
+
+    boost::property_tree::ptree pt;
+    boost::property_tree::ini_parser::read_ini(g_hotkeysFile, pt);
+
+    g_game.hotkeys.hotkey1 = pt.get<std::string>("Hotkeys.1", g_game.hotkeys.hotkey1);
+    g_game.hotkeys.hotkey2 = pt.get<std::string>("Hotkeys.2", g_game.hotkeys.hotkey2);
+    g_game.hotkeys.hotkey3 = pt.get<std::string>("Hotkeys.3", g_game.hotkeys.hotkey3);
+    g_game.hotkeys.hotkey4 = pt.get<std::string>("Hotkeys.4", g_game.hotkeys.hotkey4);
+    g_game.hotkeys.hotkey5 = pt.get<std::string>("Hotkeys.5", g_game.hotkeys.hotkey5);
+    g_game.hotkeys.hotkey6 = pt.get<std::string>("Hotkeys.6", g_game.hotkeys.hotkey6);
+    g_game.hotkeys.hotkey7 = pt.get<std::string>("Hotkeys.7", g_game.hotkeys.hotkey7);
+    g_game.hotkeys.hotkey8 = pt.get<std::string>("Hotkeys.8", g_game.hotkeys.hotkey8);
+    g_game.hotkeys.hotkey9 = pt.get<std::string>("Hotkeys.9", g_game.hotkeys.hotkey9);
+    g_game.hotkeys.hotkey0 = pt.get<std::string>("Hotkeys.0", g_game.hotkeys.hotkey0);
+
+    g_game.hotkeys.hotkeyF1 = pt.get<std::string>("Hotkeys.F1", g_game.hotkeys.hotkeyF1);
+    g_game.hotkeys.hotkeyF2 = pt.get<std::string>("Hotkeys.F2", g_game.hotkeys.hotkeyF2);
+    g_game.hotkeys.hotkeyF3 = pt.get<std::string>("Hotkeys.F3", g_game.hotkeys.hotkeyF3);
+    g_game.hotkeys.hotkeyF4 = pt.get<std::string>("Hotkeys.F4", g_game.hotkeys.hotkeyF4);
+    g_game.hotkeys.hotkeyF5 = pt.get<std::string>("Hotkeys.F5", g_game.hotkeys.hotkeyF5);
+    g_game.hotkeys.hotkeyF6 = pt.get<std::string>("Hotkeys.F6", g_game.hotkeys.hotkeyF6);
+    g_game.hotkeys.hotkeyF7 = pt.get<std::string>("Hotkeys.F7", g_game.hotkeys.hotkeyF7);
+    g_game.hotkeys.hotkeyF8 = pt.get<std::string>("Hotkeys.F8", g_game.hotkeys.hotkeyF8);
+    g_game.hotkeys.hotkeyF9 = pt.get<std::string>("Hotkeys.F9", g_game.hotkeys.hotkeyF9);
+    g_game.hotkeys.hotkeyF10 = pt.get<std::string>("Hotkeys.F10", g_game.hotkeys.hotkeyF10);
+    g_game.hotkeys.hotkeyF11 = pt.get<std::string>("Hotkeys.F11", g_game.hotkeys.hotkeyF11);
 
     return true;
 }
@@ -195,6 +232,9 @@ int main(int argc, char* argv[])
 
     g_game.setLuaState(g_luaState);
 
+    g_game.setConfigFile(g_configFile);
+    g_game.setHotkeysFile(g_hotkeysFile);
+
     IupOpen(&argc, &argv);
 
     std::cout << g_gameTitle << std::endl;
@@ -218,6 +258,12 @@ int main(int argc, char* argv[])
     if (loadConfig() == false)
     {
         std::cout << "Error: Failed to load config" << std::endl;
+    }
+
+    std::cout << "Loading hotkeys" << std::endl;
+    if (loadHotkeys() == false)
+    {
+        std::cout << "Error: Failed to load hotkeys" << std::endl;
     }
 
     std::cout << "Initializing random number seed" << std::endl;
@@ -331,6 +377,7 @@ int main(int argc, char* argv[])
     sf::Clock* clockDelta                   = g_game.getClockDelta();
     sf::Clock* clockGame                    = g_game.getClockGame();
     sf::Clock* clockAnimatedWaterAndObjects = g_game.getClockAnimatedWaterAndObjects();
+    sf::Clock* clockMiniMap                 = g_game.getClockMiniMap();
 
     bool doEnterGame = true;
 
@@ -342,7 +389,7 @@ int main(int argc, char* argv[])
 
         sf::Time timeAnimatedWaterAndObjects = clockAnimatedWaterAndObjects->getElapsedTime();
 
-        if (timeAnimatedWaterAndObjects.asSeconds() >= tibia::AnimatedObjects::time)
+        if (timeAnimatedWaterAndObjects.asSeconds() > tibia::AnimatedObjects::time)
         {
             g_game.doAnimatedWater();
             g_game.doAnimatedObjects();
@@ -398,7 +445,15 @@ int main(int argc, char* argv[])
         else if (g_game.gui.topMiniMap == true)
         {
             g_game.drawMiniMapWindow(&g_mainWindow);
-            g_game.updateMiniMapWindow();
+
+            sf::Time timeMiniMap = clockMiniMap->getElapsedTime();
+
+            if (timeMiniMap.asSeconds() > 0.1f)
+            {
+                g_game.updateMiniMapWindow();
+
+                clockMiniMap->restart();
+            }
         }
 
         if (g_game.gui.bottomInventory == true)

@@ -122,8 +122,8 @@ public:
         {
             int tileId = m_tiles.at(waterTileNumber);
 
-            //if (tileId >= tibia::SpriteData::waterBegin && tileId <= tibia::SpriteData::waterEnd)
-            //{
+            if (tileId >= tibia::SpriteData::waterBegin && tileId <= tibia::SpriteData::waterEnd)
+            {
                 if (tileId == tibia::SpriteData::water[3])
                 {
                     tileId = tibia::SpriteData::water[0];
@@ -138,7 +138,7 @@ public:
                 }
 
                 updateTileId(waterTileNumber, tileId);
-            //}
+            }
         }
     }
 

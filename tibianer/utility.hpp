@@ -40,6 +40,11 @@ float getRandomNumberFloat(float low, float high)
     return low + static_cast<float>(std::rand()) / (static_cast<float>(RAND_MAX / (high - low)));
 }
 
+void eraseNullTerminator(std::string& text)
+{
+    text.erase(std::remove(text.begin(), text.end(), '\0'), text.end());
+}
+
 } // namespace utility
 
 #endif // UTILITY_HPP
