@@ -3328,7 +3328,7 @@ public:
             > 1
         )
         {
-            if (creature == m_player)
+            if (creature->isPlayer() == true)
             {
                 showStatusBarText("Object is too far away.");
             }
@@ -4406,7 +4406,7 @@ public:
             // do not open the counter if there are objects on the tile the counter is moving to
             if (toTile->getObjectList()->size() > 1)
             {
-                if (creature == m_player)
+                if (creature->isPlayer() == true)
                 {
                     showStatusBarText("The counter top is blocked by an object.");
                 }
@@ -4444,7 +4444,7 @@ public:
             // do not open the counter if there are objects on the tile the counter is moving to
             if (toTile->getObjectList()->size() > 1)
             {
-                if (creature == m_player)
+                if (creature->isPlayer() == true)
                 {
                     showStatusBarText("The counter top is blocked by an object.");
                 }
@@ -4494,15 +4494,18 @@ public:
         }
 
         // chair throne (rotates)
-        if (object->getId() == tibia::SpriteData::chairThrone[0])
-        {
-            object->setId(tibia::SpriteData::chairThrone[1]);
+        auto chairThroneIt = std::find(tibia::SpriteData::chairThrone.begin(), tibia::SpriteData::chairThrone.end(), object->getId());
 
-            return true;
-        }
-        else if (object->getId() == tibia::SpriteData::chairThrone[1])
+        if (chairThroneIt != tibia::SpriteData::chairThrone.end())
         {
-            object->setId(tibia::SpriteData::chairThrone[0]);
+            chairThroneIt++;
+
+            if (chairThroneIt == tibia::SpriteData::chairThrone.end())
+            {
+                chairThroneIt = tibia::SpriteData::chairThrone.begin();
+            }
+
+            object->setId(tibia::SpriteData::chairThrone[chairThroneIt - tibia::SpriteData::chairThrone.begin()]);
 
             return true;
         }
@@ -5169,7 +5172,7 @@ public:
             }
         }
 
-        if (defender == m_player && this->options.isCheatInfiniteHealthEnabled == true)
+        if (defender->isPlayer() == true && this->options.isCheatInfiniteHealthEnabled == true)
         {
             hpChange = 0;
 
@@ -5220,7 +5223,7 @@ public:
         {
             if (attacker != nullptr)
             {
-                if (attacker == m_player)
+                if (attacker->isPlayer() == true)
                 {
                     std::cout << "You";
                 }
@@ -8324,7 +8327,7 @@ public:
             return;
         }
 
-        m_map.tileMapTiles[tibia::ZAxis::ground].doAnimatedWater();
+        m_map.tileMapTiles[tibia::ZAxis::ground].doAnimatedWaterEx();
     }
 
     void doAnimatedObjects()

@@ -23,6 +23,12 @@ public:
 
     void load(unsigned int width, unsigned int height, std::vector<int> tiles, const std::string& name, int type, int z)
     {
+        m_tiles.clear();
+
+        m_tileList.clear();
+
+        m_waterTileNumbers.clear();
+
         //m_tiles = tiles;
         //m_tiles.swap(tiles);
         m_tiles = std::move(tiles);
@@ -32,6 +38,8 @@ public:
         m_type = type;
 
         m_z = z;
+
+        m_waterOffset = 0;
 
         for (unsigned int i = 0; i < width; ++i)
         {
@@ -70,6 +78,8 @@ public:
         }
 
         std::sort(m_tileList.begin(), m_tileList.end(), tibia::TileSort::sortTilesByTileNumber());
+
+        applyTilePatterns();
     }
 
     void updateTileId(int tileNumber, int tileId)
@@ -116,11 +126,9 @@ public:
 
     void doAnimatedWater()
     {
-        //std::cout << "m_waterTileNumbers size: " << m_waterTileNumbers.size() << std::endl;
-
-        for (auto waterTileNumber : m_waterTileNumbers)
+        for (auto tileNumber : m_waterTileNumbers)
         {
-            int tileId = m_tiles.at(waterTileNumber);
+            int tileId = m_tiles.at(tileNumber);
 
             if (tileId >= tibia::SpriteData::waterBegin && tileId <= tibia::SpriteData::waterEnd)
             {
@@ -137,21 +145,372 @@ public:
                     tileId++;
                 }
 
-                updateTileId(waterTileNumber, tileId);
+                updateTileId(tileNumber, tileId);
+            }
+        }
+    }
+
+    void doAnimatedWaterEx()
+    {
+        if (m_waterOffset > 3)
+        {
+            m_waterOffset = 0;
+        }
+
+        for (auto tileNumber : m_waterTileNumbers)
+        {
+            int tileId = m_tiles.at(tileNumber);
+
+            if (tileId >= tibia::SpriteData::waterBegin && tileId <= tibia::SpriteData::waterEnd)
+            {
+                sf::Vector2u tileCoords = getTileCoordsByTileNumber(tileNumber);
+
+                int waterIndex = tibia::mapWidth - (tileNumber % tibia::mapWidth);
+
+                waterIndex = tibia::mapWidth - waterIndex;
+
+                while (waterIndex > 3)
+                {
+                    waterIndex = waterIndex - 4;
+                }
+
+                // odd row
+                if (tileCoords.y & 1)
+                {
+                    waterIndex += 4;
+                }
+
+                if (waterIndex < 4)
+                {
+                    waterIndex += m_waterOffset;
+
+                    while (waterIndex > 3)
+                    {
+                        waterIndex = waterIndex - 4;
+                    }
+                }
+                else
+                {
+                    waterIndex += m_waterOffset;
+
+                    while (waterIndex > 7)
+                    {
+                        waterIndex = waterIndex - 4;
+                    }
+                }
+
+                updateTileId(tileNumber, tibia::SpriteData::water[waterIndex]);
+            }
+        }
+
+        m_waterOffset++;
+    }
+
+    void applyTilePatterns()
+    {
+        for (auto& tile : m_tileList)
+        {
+            int tileId = tile->getId();
+
+            // water
+            if (tileId >= tibia::SpriteData::waterBegin && tileId <= tibia::SpriteData::waterEnd)
+            {
+                int tileNumber = tile->getNumber();
+
+                sf::Vector2u tileCoords = getTileCoordsByTileNumber(tileNumber);
+
+                int spriteIndex = tibia::mapWidth - (tileNumber % tibia::mapWidth);
+
+                spriteIndex = tibia::mapWidth - spriteIndex;
+
+                while (spriteIndex > 3)
+                {
+                    spriteIndex = spriteIndex - 4;
+                }
+
+                // odd row
+                if (tileCoords.y & 1)
+                {
+                    spriteIndex += 4;
+                }
+
+                updateTileId(tileNumber, tibia::SpriteData::water[spriteIndex]);
+            }
+
+            // lava
+            if (tileId >= tibia::SpriteData::lavaBegin && tileId <= tibia::SpriteData::lavaEnd)
+            {
+                int tileNumber = tile->getNumber();
+
+                sf::Vector2u tileCoords = getTileCoordsByTileNumber(tileNumber);
+
+                int spriteIndex = tibia::mapWidth - (tileNumber % tibia::mapWidth);
+
+                spriteIndex = tibia::mapWidth - spriteIndex;
+
+                while (spriteIndex > 3)
+                {
+                    spriteIndex = spriteIndex - 4;
+                }
+
+                // odd row
+                if (tileCoords.y & 1)
+                {
+                    spriteIndex += 4;
+                }
+
+                updateTileId(tileNumber, tibia::SpriteData::lava[spriteIndex]);
+            }
+
+            // grey tiles
+            if (tileId >= tibia::SpriteData::greyTilesBegin && tileId <= tibia::SpriteData::greyTilesEnd)
+            {
+                int tileNumber = tile->getNumber();
+
+                sf::Vector2u tileCoords = getTileCoordsByTileNumber(tileNumber);
+
+                int spriteIndex = tibia::mapWidth - (tileNumber % tibia::mapWidth);
+
+                spriteIndex = tibia::mapWidth - spriteIndex;
+
+                while (spriteIndex > 3)
+                {
+                    spriteIndex = spriteIndex - 4;
+                }
+
+                int row = tibia::mapHeight - tileCoords.y;
+
+                row = tibia::mapHeight - row;
+
+                while (row > 3)
+                {
+                    row = row - 4;
+                }
+
+                if (row > 0)
+                {
+                    spriteIndex += 4 * row;
+                }
+
+                updateTileId(tileNumber, tibia::SpriteData::greyTiles[spriteIndex]);
+            }
+
+            // brown tiles
+            if (tileId >= tibia::SpriteData::brownTilesBegin && tileId <= tibia::SpriteData::brownTilesEnd)
+            {
+                int tileNumber = tile->getNumber();
+
+                sf::Vector2u tileCoords = getTileCoordsByTileNumber(tileNumber);
+
+                int spriteIndex = tibia::mapWidth - (tileNumber % tibia::mapWidth);
+
+                spriteIndex = tibia::mapWidth - spriteIndex;
+
+                while (spriteIndex > 3)
+                {
+                    spriteIndex = spriteIndex - 4;
+                }
+
+                // odd row
+                if (tileCoords.y & 1)
+                {
+                    spriteIndex += 4;
+                }
+
+                updateTileId(tileNumber, tibia::SpriteData::brownTiles[spriteIndex]);
+            }
+
+            // orange black tiles
+            if (tileId >= tibia::SpriteData::orangeBlackTilesBegin && tileId <= tibia::SpriteData::orangeBlackTilesEnd)
+            {
+                int tileNumber = tile->getNumber();
+
+                sf::Vector2u tileCoords = getTileCoordsByTileNumber(tileNumber);
+
+                int spriteIndex = tibia::mapWidth - (tileNumber % tibia::mapWidth);
+
+                spriteIndex = tibia::mapWidth - spriteIndex;
+
+                while (spriteIndex > 3)
+                {
+                    spriteIndex = spriteIndex - 4;
+                }
+
+                int row = tibia::mapHeight - tileCoords.y;
+
+                row = tibia::mapHeight - row;
+
+                while (row > 3)
+                {
+                    row = row - 4;
+                }
+
+                if (row > 0)
+                {
+                    spriteIndex += 4 * row;
+                }
+
+                updateTileId(tileNumber, tibia::SpriteData::orangeBlackTiles[spriteIndex]);
+            }
+
+            // stone tiles
+            if (tileId == tibia::SpriteData::stoneTilesBegin || tileId == tibia::SpriteData::stoneTilesEnd)
+            {
+                int tileNumber = tile->getNumber();
+
+                sf::Vector2u tileCoords = getTileCoordsByTileNumber(tileNumber);
+
+                int spriteIndex = tibia::mapWidth - (tileNumber % tibia::mapWidth);
+
+                spriteIndex = tibia::mapWidth - spriteIndex;
+
+                while (spriteIndex > 1)
+                {
+                    spriteIndex = spriteIndex - 2;
+                }
+
+                // odd row
+                if (tileCoords.y & 1)
+                {
+                    spriteIndex += 2;
+                }
+
+                updateTileId(tileNumber, tibia::SpriteData::stoneTiles[spriteIndex]);
+            }
+
+            // cobblestone tiles
+            if (tileId >= tibia::SpriteData::cobbleStoneTilesBegin && tileId <= tibia::SpriteData::cobbleStoneTilesEnd)
+            {
+                int tileNumber = tile->getNumber();
+
+                sf::Vector2u tileCoords = getTileCoordsByTileNumber(tileNumber);
+
+                int spriteIndex = tibia::mapWidth - (tileNumber % tibia::mapWidth);
+
+                spriteIndex = tibia::mapWidth - spriteIndex;
+
+                while (spriteIndex > 3)
+                {
+                    spriteIndex = spriteIndex - 4;
+                }
+
+                // odd row
+                if (tileCoords.y & 1)
+                {
+                    spriteIndex += 4;
+                }
+
+                updateTileId(tileNumber, tibia::SpriteData::cobbleStoneTiles[spriteIndex]);
+            }
+
+            // yellow tiles
+            if (tileId >= tibia::SpriteData::yellowTilesBegin && tileId <= tibia::SpriteData::yellowTilesEnd)
+            {
+                int tileNumber = tile->getNumber();
+
+                sf::Vector2u tileCoords = getTileCoordsByTileNumber(tileNumber);
+
+                int spriteIndex = tibia::mapWidth - (tileNumber % tibia::mapWidth);
+
+                spriteIndex = tibia::mapWidth - spriteIndex;
+
+                while (spriteIndex > 1)
+                {
+                    spriteIndex = spriteIndex - 2;
+                }
+
+                // odd row
+                if (tileCoords.y & 1)
+                {
+                    spriteIndex += 2;
+                }
+
+                updateTileId(tileNumber, tibia::SpriteData::yellowTiles[spriteIndex]);
+            }
+
+            // sand tiles
+            if (tileId >= tibia::SpriteData::sandTilesBegin && tileId <= tibia::SpriteData::sandTilesEnd)
+            {
+                int tileNumber = tile->getNumber();
+
+                sf::Vector2u tileCoords = getTileCoordsByTileNumber(tileNumber);
+
+                int spriteIndex = tibia::mapWidth - (tileNumber % tibia::mapWidth);
+
+                spriteIndex = tibia::mapWidth - spriteIndex;
+
+                while (spriteIndex > 1)
+                {
+                    spriteIndex = spriteIndex - 2;
+                }
+
+                // odd row
+                if (tileCoords.y & 1)
+                {
+                    spriteIndex += 2;
+                }
+
+                updateTileId(tileNumber, tibia::SpriteData::sandTiles[spriteIndex]);
+            }
+
+            // brick tiles
+            if (tileId >= tibia::SpriteData::brickTilesBegin && tileId <= tibia::SpriteData::brickTilesEnd)
+            {
+                int tileNumber = tile->getNumber();
+
+                sf::Vector2u tileCoords = getTileCoordsByTileNumber(tileNumber);
+
+                int spriteIndex = tibia::mapWidth - (tileNumber % tibia::mapWidth);
+
+                spriteIndex = tibia::mapWidth - spriteIndex;
+
+                while (spriteIndex > 1)
+                {
+                    spriteIndex = spriteIndex - 2;
+                }
+
+                // odd row
+                if (tileCoords.y & 1)
+                {
+                    spriteIndex += 2;
+                }
+
+                updateTileId(tileNumber, tibia::SpriteData::brickTiles[spriteIndex]);
+            }
+
+            // mountain tiles
+            if (tileId >= tibia::SpriteData::mountainTilesBegin && tileId <= tibia::SpriteData::mountainTilesEnd)
+            {
+                int tileNumber = tile->getNumber();
+
+                sf::Vector2u tileCoords = getTileCoordsByTileNumber(tileNumber);
+
+                int spriteIndex = tibia::mapWidth - (tileNumber % tibia::mapWidth);
+
+                spriteIndex = tibia::mapWidth - spriteIndex;
+
+                while (spriteIndex > 1)
+                {
+                    spriteIndex = spriteIndex - 2;
+                }
+
+                // odd row
+                if (tileCoords.y & 1)
+                {
+                    spriteIndex += 2;
+                }
+
+                updateTileId(tileNumber, tibia::SpriteData::mountainTiles[spriteIndex]);
             }
         }
     }
 
     sf::Vector2u getTileCoordsByTileNumber(int tileNumber)
     {
-        int tileId = m_tiles.at(tileNumber) - 1;
-
-        //tileId = tileId - 1;
-
         return sf::Vector2u
         (
-            tileId % (tibia::Textures::sprites.getSize().x / tibia::TILE_SIZE),
-            tileId / (tibia::Textures::sprites.getSize().x / tibia::TILE_SIZE)
+            tileNumber % tibia::mapWidth,
+            tileNumber / tibia::mapHeight
         );
     }
 
@@ -198,6 +557,8 @@ private:
     tibia::Tile::List m_tileList;
 
     std::vector<int> m_waterTileNumbers;
+
+    int m_waterOffset;
 
 }; // class TileMap
 

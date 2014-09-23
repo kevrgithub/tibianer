@@ -2293,7 +2293,8 @@ namespace tibia
         std::vector<int> bubbleGreen = {1570, 5};
         std::vector<int> bubbleRed   = {1582, 5};
 
-        std::vector<int> music = {3362, 5};
+        std::vector<int> musicGreen = {3362, 5};
+        std::vector<int> musicRed   = {3775, 5};
 
         std::vector<int> sparkle = {3376, 4};
     }
@@ -2462,7 +2463,7 @@ namespace tibia
 
         std::vector<int> chair = {522, 1054, 521, 1055}; // up, right, down, left
 
-        std::vector<int> chairThrone = {3239, 3240}; // down, right
+        std::vector<int> chairThrone = {3749, 3240, 3239, 3750}; // up, right, down, left
 
         std::vector<int> counterVertical   = {1043, 1046}; // closed, open
         std::vector<int> counterHorizontal = {1044, 1048};
@@ -2708,6 +2709,91 @@ namespace tibia
         const int lavaBegin = lava.front();
         const int lavaEnd   = lava.back();
 
+        std::vector<int> greyTiles =
+        {
+            90, 91, 92, 93,
+            94, 95, 96, 97,
+            98, 99, 100, 101,
+            102, 103, 104, 105
+        };
+
+        const int greyTilesBegin = greyTiles.front();
+        const int greyTilesEnd   = greyTiles.back();
+
+        std::vector<int> brownTiles =
+        {
+            118, 119, 120, 121,
+            122, 123, 124, 125
+        };
+
+        const int brownTilesBegin = brownTiles.front();
+        const int brownTilesEnd   = brownTiles.back();
+
+        std::vector<int> orangeBlackTiles =
+        {
+            136, 137, 138, 139,
+            140, 141, 142, 143,
+            144, 145, 146, 147,
+            148, 149, 150, 151,
+        };
+
+        const int orangeBlackTilesBegin = orangeBlackTiles.front();
+        const int orangeBlackTilesEnd   = orangeBlackTiles.back();
+
+        std::vector<int> stoneTiles =
+        {
+            571, 572,
+            572, 571,
+        };
+
+        const int stoneTilesBegin = 571;
+        const int stoneTilesEnd   = 572;
+
+        std::vector<int> cobbleStoneTiles =
+        {
+            589, 590, 591, 592,
+            593, 594, 595, 596,
+        };
+
+        const int cobbleStoneTilesBegin = cobbleStoneTiles.front();
+        const int cobbleStoneTilesEnd   = cobbleStoneTiles.back();
+
+        std::vector<int> yellowTiles =
+        {
+            2185, 2186,
+            2187, 2188,
+        };
+
+        const int yellowTilesBegin = yellowTiles.front();
+        const int yellowTilesEnd   = yellowTiles.back();
+
+        std::vector<int> sandTiles =
+        {
+            2191, 2192,
+            2193, 2194,
+        };
+
+        const int sandTilesBegin = sandTiles.front();
+        const int sandTilesEnd   = sandTiles.back();
+
+        std::vector<int> brickTiles =
+        {
+            3756, 3757,
+            3758, 3759,
+        };
+
+        const int brickTilesBegin = brickTiles.front();
+        const int brickTilesEnd   = brickTiles.back();
+
+        std::vector<int> mountainTiles =
+        {
+            3254, 3255,
+            3256, 3257,
+        };
+
+        const int mountainTilesBegin = mountainTiles.front();
+        const int mountainTilesEnd   = mountainTiles.back();
+
         std::vector<int> solid =
         {
             1,
@@ -2858,6 +2944,7 @@ namespace tibia
             3694, 3697,
             3700, 3703, 3707,
             3734, 3738, 3742, 3746,
+            3754,
         };
 
         std::vector<int> blockProjectiles =
@@ -2909,6 +2996,7 @@ namespace tibia
             3694, 3697,
             3700, 3703, 3707,
             3734, 3738, 3742, 3746,
+            3754,
         };
 
         std::vector<int> hasHeight =
@@ -2979,6 +3067,7 @@ namespace tibia
             3239, 3240,
             3260, 3261, 3262, 3263, 3264, 3265, 3266, 3267,
             3375,
+            3749, 3750,
         };
 
         std::vector<int> offsetObjects =
@@ -3052,7 +3141,7 @@ namespace tibia
             //
             3592, 3593, 3594, 3595, 3596, 3597, 3598, 3599, 3600, 3601, 3602, 3603, 3604, 3605, 3606, 3607, 3608, 3609, 3610, 3611, 3612, 3613, 3614, 3615, 3616, 3617, 3618, 3619, 3620, 3621, 3622, 3623, 3624, 3625, 3626, 3628, 3629, 3630, 3631, 3632, 3633, 3634, 3635, 3636, 3637, 3638, 3639, 3640, 3641, 3642, 3643, 3644, 3645, 3646, 3647, 3648,
             3649, 3650, 3651, 3652, 3653, 3654, 3655, 3656, 3657, 3658, 3659, 3660, 3661, 3708, 3709, 3710, 3711, 3712,
-            3713, 3714, 3715, 3716, 3717, 3718, 3719, 3720, 3721, 3722, 3723, 3724, 3725, 3726, 3727, 3728, 3729, 3730,
+            3713, 3714, 3715, 3716, 3717, 3718, 3719, 3720, 3721, 3722, 3723, 3724, 3725, 3726, 3727, 3728, 3729, 3730, 3749, 3750, 3760, 3761, 3762, 3763, 3764, 3765, 3766, 3767, 3768, 3769, 3770, 3771, 3772, 3773, 3774,
         };
 
         std::vector<int> groupable =
@@ -3093,6 +3182,8 @@ namespace tibia
             981, 3647, 3648, 3649, 3650, 3651,
             1848, 3652, 3653, 3654, 3655, 3656,
             1856, 3657, 3658, 3659, 3660, 3661,
+            3760, 3761, 3762, 3763, 3764, 3765, 3766, 3767,
+            3768, 3769, 3770, 3771, 3772, 3773, 3774,
         };
 
         std::vector<int> stackable =
@@ -3139,6 +3230,8 @@ namespace tibia
             981, 3647, 3648, 3649, 3650, 3651,
             1848, 3652, 3653, 3654, 3655, 3656,
             1856, 3657, 3658, 3659, 3660, 3661,
+            3760, 3761, 3762, 3763, 3764, 3765, 3766, 3767,
+            3768, 3769, 3770, 3771, 3772, 3773, 3774,
         };
 
         std::vector<int> pickupable =
@@ -3198,6 +3291,8 @@ namespace tibia
             3593, 3594, 3595, 3596, 3597, 3598, 3599, 3600, 3601, 3602, 3603, 3604, 3605, 3606, 3607, 3608, 3609, 3610, 3611, 3612, 3613, 3614, 3615, 3616, 3617, 3618, 3619, 3620, 3621, 3622, 3623, 3624, 3625, 3626,
             3628, 3629, 3630, 3631, 3632, 3633, 3634, 3635, 3636, 3637, 3638, 3639, 3640, 3641, 3642, 3643, 3644, 3645, 3646, 3647, 3648, 3649, 3650, 3651, 3652, 3653, 3654, 3655, 3656, 3657, 3658, 3659, 3660, 3661,
             3708, 3709, 3710, 3711, 3712, 3713, 3714, 3715, 3716, 3717, 3718, 3719, 3720, 3721, 3722, 3723, 3724, 3725, 3726, 3727, 3728, 3729, 3730,
+            3760, 3761, 3762, 3763, 3764, 3765, 3766, 3767,
+            3768, 3769, 3770, 3771, 3772, 3773, 3774,
         };
 
         std::vector<int> moveAbove =
@@ -3300,6 +3395,7 @@ namespace tibia
             3685,
             3707,
             3734, 3738, 3742, 3746,
+            3754,
         };
 
         // right to left
@@ -3604,6 +3700,8 @@ namespace tibia
         {981, 3647, 3648, 3649, 3650, 3651},
         {1848, 3652, 3653, 3654, 3655, 3656},
         {1856, 3657, 3658, 3659, 3660, 3661},
+        {3760, 3761, 3762, 3763, 3764, 3765, 3766, 3767},
+        {3768, 3769, 3770, 3771, 3772, 3773, 3774},
     };
 
     namespace UMaps
