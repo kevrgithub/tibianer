@@ -24,7 +24,7 @@ namespace tibia
 
     unsigned int mapSize = 16384;
 
-    const unsigned int TEXTURE_SIZE_MAX = 2048; // video card maximum supported texture size
+    const unsigned int TEXTURE_SIZE_MAX = 2048; // minimum required supported texture size
 
     const int SPRITES_TOTAL = 4096;
 
@@ -61,10 +61,11 @@ namespace tibia
     const int NUM_CREATURE_SPRITES = 4;
     const int NUM_OBJECT_SPRITES   = 8;
 
-    const int DRAW_INDEX_FIRST   = 0;
-    const int DRAW_INDEX_DECAL   = 32;
-    const int DRAW_INDEX_DEFAULT = 128;
-    const int DRAW_INDEX_LAST    = 256;
+    const int DRAW_INDEX_FIRST     = 0;
+    const int DRAW_INDEX_TILE_EDGE = 16;
+    const int DRAW_INDEX_DECAL     = 32;
+    const int DRAW_INDEX_DEFAULT   = 128;
+    const int DRAW_INDEX_LAST      = 256;
 
     const float VOLUME_MULTIPLIER = 12.0f;
 
@@ -226,7 +227,7 @@ namespace tibia
             // 16x6
             std::vector<int> glyphWidths =
             {
-                4, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 3, 6, 3, 7,
+                4, 3, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 3, 6, 3, 7,
                 6, 5, 6, 6, 6, 6, 6, 6, 6, 6, 3, 3, 7, 7, 7, 7,
                 7, 6, 6, 6, 6, 6, 6, 6, 6, 3, 6, 7, 6, 7, 7, 6,
                 6, 7, 6, 6, 7, 6, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
@@ -446,9 +447,11 @@ namespace tibia
             sf::Color white(255, 255, 255);
             sf::Color red(255, 64, 64);
             sf::Color green(64, 255, 64);
+            sf::Color blue(0, 128, 255);
             sf::Color yellow(255, 255, 64);
             sf::Color orange(255, 128, 64);
             sf::Color teal(64, 255, 255);
+            sf::Color pink(255, 64, 255);
         }
 
         namespace MiniMap
@@ -1565,6 +1568,7 @@ namespace tibia
             playSound,
             doScript,
             stepTile,
+            key,
         };
     }
 
@@ -1585,6 +1589,7 @@ namespace tibia
             {"play_sound",  tibia::ObjectTypes::playSound},
             {"do_script",   tibia::ObjectTypes::doScript},
             {"step_tile",   tibia::ObjectTypes::stepTile},
+            {"key",         tibia::ObjectTypes::key},
         };
     }
 
@@ -1692,6 +1697,8 @@ namespace tibia
     {
         std::unordered_map<int, sf::Color> modifyHpTextColors =
         {
+            {tibia::ModifyHpTypes::blood,       tibia::Colors::Text::red},
+            {tibia::ModifyHpTypes::heal,        tibia::Colors::Text::red},
             {tibia::ModifyHpTypes::fire,        tibia::Colors::Text::orange},
             {tibia::ModifyHpTypes::electricity, tibia::Colors::Text::teal},
             {tibia::ModifyHpTypes::poison,      tibia::Colors::Text::green},
@@ -2440,6 +2447,7 @@ namespace tibia
             instrument,
             currency,
             decal,
+            tileEdge,
 
             numFlags,
         };
@@ -2722,12 +2730,24 @@ namespace tibia
 
         std::vector<int> brownTiles =
         {
-            118, 119, 120, 121,
-            122, 123, 124, 125
+            118, 119, 120,
+            121, 122, 123,
+            124, 125, 126,
         };
 
         const int brownTilesBegin = brownTiles.front();
         const int brownTilesEnd   = brownTiles.back();
+
+        std::vector<int> brownLadderTiles =
+        {
+            691, 692, 693,
+            694, 695, 696,
+            697, 698, 699,
+        };
+
+        const int brownLadderTilesBegin = brownLadderTiles.front();
+        const int brownLadderTilesEnd   = brownLadderTiles.back();
+
 
         std::vector<int> orangeBlackTiles =
         {
@@ -2767,14 +2787,14 @@ namespace tibia
         const int yellowTilesBegin = yellowTiles.front();
         const int yellowTilesEnd   = yellowTiles.back();
 
-        std::vector<int> sandTiles =
+        std::vector<int> crackedSandTiles =
         {
             2191, 2192,
             2193, 2194,
         };
 
-        const int sandTilesBegin = sandTiles.front();
-        const int sandTilesEnd   = sandTiles.back();
+        const int crackedSandTilesBegin = crackedSandTiles.front();
+        const int crackedSandTilesEnd   = crackedSandTiles.back();
 
         std::vector<int> brickTiles =
         {
@@ -2793,6 +2813,17 @@ namespace tibia
 
         const int mountainTilesBegin = mountainTiles.front();
         const int mountainTilesEnd   = mountainTiles.back();
+
+        std::vector<int> sandTiles =
+        {
+            3783, 3784, 3785, 3786,
+            3787, 3788, 3789, 3790,
+            3791, 3792, 3793, 3794,
+            3795, 3796, 3797, 3798,
+        };
+
+        const int sandTilesBegin = sandTiles.front();
+        const int sandTilesEnd   = sandTiles.back();
 
         std::vector<int> solid =
         {
@@ -3308,6 +3339,7 @@ namespace tibia
             691, 692, 693, 694, 695, 696, 697, 698, 699,
             1205,
             3241, 3243,
+            3780, 3781, 3782,
         };
 
         std::vector<int> lightSource =
@@ -3360,6 +3392,34 @@ namespace tibia
             763, 764, 765, 766, 767, 768,
             769, 770, 771, 772, 773, 774,
             775, 776, 777, 778, 779, 780,
+        };
+
+        std::vector<int> tileEdges =
+        {
+            30, 31, 32, 33, 34, 35,
+            76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87,
+            165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176,
+            292, 293, 294,
+            512, 513,
+            536, 537, 538, 539, 540, 541, 542, 543, 544, 545, 546, 547,
+            597, 600, 601, 602, 603, 604, 606,
+            612, 613, 614, 615, 616, 617, 618, 619, 620, 621, 622, 623,
+            624, 625, 626, 627, 628, 629, 630, 631,
+            632, 633, 634, 635, 636, 637, 638, 639, 640, 641, 642, 643,
+            644, 645, 646, 647, 648, 649, 650, 651,
+            652, 653, 654, 655, 656, 657, 658, 659,
+            660, 661, 662, 663, 664, 665, 666, 667,
+            1254, 1255, 1258, 1259, 1260, 1261, 1262,
+            1773, 1774, 1775, 1776, 1777, 1778, 1779, 1780, 1781, 1782, 1783, 1784,
+            1947, 1948, 1949, 1950, 1951, 1952, 1953, 1954,
+            1955, 1956, 1957, 1958, 1959, 1960, 1961, 1962,
+            2107, 2108, 2109, 2110, 2111, 2112, 2113, 2114, 2115, 2116, 2117, 2118,
+            2136, 2137, 2138, 2139, 2140,
+            2153, 2154, 2155, 2156, 2157, 2158, 2159,
+            2526, 2527, 2528, 2529, 2531, 2532, 2533, 2534,
+            2778, 2779, 2780, 2782, 2784, 2786, 2787, 2788, 2789, 2790, 2792, 2794, 2796, 2797,
+            3579, 3580,
+            3799, 3800, 3801, 3802, 3803, 3804, 3805, 3806, 3807, 3808, 3809, 3810,
         };
 
         std::vector<int> transparent =
@@ -3775,7 +3835,7 @@ namespace tibia
             {tibia::CreatureTypes::santaClaus, tibia::Sounds::Creatures::Human::death},
         };
 
-        std::unordered_map<int, int> keyIds
+        std::unordered_map<int, int> keyTypeSpriteIds
         {
             {tibia::KeyTypes::silver,  tibia::SpriteData::keySilver},
             {tibia::KeyTypes::blue,    tibia::SpriteData::keyBlue},
@@ -3785,6 +3845,18 @@ namespace tibia
             {tibia::KeyTypes::gold,    tibia::SpriteData::keyGold},
             {tibia::KeyTypes::ring,    tibia::SpriteData::keyRing},
             {tibia::KeyTypes::crowbar, tibia::SpriteData::crowbar},
+        };
+
+        std::unordered_map<int, std::string> keySpriteIdNames
+        {
+            {tibia::SpriteData::keySilver, "silver"},
+            {tibia::SpriteData::keyBlue,   "blue"},
+            {tibia::SpriteData::keyGreen,  "green"},
+            {tibia::SpriteData::keyRed,    "red"},
+            {tibia::SpriteData::keyWhite,  "white"},
+            {tibia::SpriteData::keyGold,   "gold"},
+            {tibia::SpriteData::keyRing,   "key ring"},
+            {tibia::SpriteData::crowbar,   "crowbar"},
         };
     }
 

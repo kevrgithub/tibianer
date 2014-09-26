@@ -96,6 +96,7 @@ namespace tibia
                 {tibia::SpriteFlags::stackable,        tibia::SpriteData::stackable},
                 {tibia::SpriteFlags::pickupable,       tibia::SpriteData::pickupable},
                 {tibia::SpriteFlags::decal,            tibia::SpriteData::decals},
+                {tibia::SpriteFlags::tileEdge,         tibia::SpriteData::tileEdges},
             };
 
             for (auto spriteFlagsMapPair : spriteFlagsMap)

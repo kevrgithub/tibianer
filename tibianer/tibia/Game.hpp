@@ -994,6 +994,14 @@ public:
                 break;
             }
 
+            case sf::Keyboard::Key::K:
+                handleCreatureModifyHp(nullptr, m_player, 100, tibia::ModifyHpTypes::heal);
+                break;
+
+            case sf::Keyboard::Key::L:
+                handleCreatureModifyMp(m_player, 100, true);
+                break;
+
             case sf::Keyboard::Key::M:
                 spawnDecayObject(m_player->getTilePosition(), m_player->getZ(), tibia::SpriteData::magicWall);
                 break;
@@ -3263,21 +3271,22 @@ public:
         return true;
     }
 
-    bool doesCreatureHaveDoorKey(tibia::Creature::Ptr creature, int keyId)
+    bool doesCreatureHaveDoorKey(tibia::Creature::Ptr creature, unsigned int keyId, int keyType)
     {
         // unlocked
-        if (keyId == tibia::KeyTypes::none)
+        if (keyType == tibia::KeyTypes::none)
         {
             return true;
         }
 
         // script activated
-        if (keyId == tibia::KeyTypes::lever || keyId == tibia::KeyTypes::stepTile)
+        else if (keyType == tibia::KeyTypes::lever || keyType == tibia::KeyTypes::stepTile)
         {
-            std::stringstream ssKeyText;
-            ssKeyText << "This door can only be opened by a " << tibia::UMaps::keyTypesStrings[keyId] << "." << std::endl;
+            std::stringstream keyTextStream;
+            keyTextStream << "This door can only be opened by a " << tibia::UMaps::keyTypesStrings[keyType] << "." << std::endl;
 
-            showStatusBarText(ssKeyText.str());
+            showStatusBarText(keyTextStream.str());
+
             return false;
         }
 
@@ -3287,22 +3296,53 @@ public:
             return true;
         }
 
-        if (creature->getInventory()->hasObject(tibia::UMaps::keyIds[keyId]) == false)
+        if (creature->getInventory()->hasObject(tibia::UMaps::keyTypeSpriteIds[keyType]) == false)
         {
-            std::stringstream ssKeyText;
+            std::stringstream keyTextStream;
 
-            ssKeyText << "You need a " << tibia::UMaps::keyTypesStrings[keyId];
+            keyTextStream << "You need a " << tibia::UMaps::keyTypesStrings[keyType];
 
-            if (keyId != tibia::KeyTypes::crowbar)
+            if (keyType != tibia::KeyTypes::crowbar)
             {
-                ssKeyText << " key";
+                keyTextStream << " key";
+
+                if (keyId != 0)
+                {
+                    keyTextStream << " #" << keyId;
+                }
             }
 
-            ssKeyText << " to open this door.";
+            keyTextStream << " to open this door.";
 
-            showStatusBarText(ssKeyText.str());
+            showStatusBarText(keyTextStream.str());
 
             return false;
+        }
+
+        if (keyId != 0 && keyType != tibia::KeyTypes::ring && keyType != tibia::KeyTypes::crowbar)
+        {
+            bool foundKeyId = false;
+
+            tibia::Object::List* objectList = creature->getInventory()->getObjectList();
+
+            for (auto& object : *objectList)
+            {
+                if (object->getType() == tibia::ObjectTypes::key && object->properties.uniqueId == keyId)
+                {
+                    foundKeyId = true;
+                    break;
+                }
+            }
+
+            if (foundKeyId == false)
+            {
+                std::stringstream keyTextStream;
+                keyTextStream << "You need " << tibia::UMaps::keyTypesStrings[keyType] << " key #" << keyId << " to open this door.";
+
+                showStatusBarText(keyTextStream.str());
+
+                return false;
+            }
         }
 
         return true;
@@ -3427,7 +3467,7 @@ public:
             // door locked vertical
             if (object->getId() == tibia::SpriteData::doorLockedVertical[0])
             {
-                if (doesCreatureHaveDoorKey(creature, object->properties.doorKey) == false)
+                if (doesCreatureHaveDoorKey(creature, object->properties.doorKeyId, object->properties.doorKeyType) == false)
                 {
                     return false;
                 }
@@ -3442,7 +3482,7 @@ public:
             // door locked horizontal
             if (object->getId() == tibia::SpriteData::doorLockedHorizontal[0])
             {
-                if (doesCreatureHaveDoorKey(creature, object->properties.doorKey) == false)
+                if (doesCreatureHaveDoorKey(creature, object->properties.doorKeyId, object->properties.doorKeyType) == false)
                 {
                     return false;
                 }
@@ -4583,6 +4623,17 @@ public:
 
             if (containerAddObjectResult == tibia::ContainerAddObjectResult::success)
             {
+                if (creature->isPlayer() == true)
+                {
+                    if (object->getType() == tibia::ObjectTypes::key && object->properties.uniqueId != 0)
+                    {
+                        std::stringstream ss;
+                        ss << "You picked up " << tibia::UMaps::keySpriteIdNames[object->getId()] << " key #" << object->properties.uniqueId << ".";
+
+                        showStatusBarText(ss.str());
+                    }
+                }
+
                 tile->removeObject(object);
 
                 updateStepTile(tile);
@@ -4623,6 +4674,8 @@ public:
             else
             {
                 inventoryObject->setCount(inventoryObject->getCount() - 1);
+
+                dropObject->setCount(1);
 
                 spawnObject(creature->getTilePosition(), creature->getZ(), dropObject);
             }
@@ -5192,11 +5245,28 @@ public:
                 textColor = textColorIt->second;
             }
 
+            if (modifyHpType == tibia::ModifyHpTypes::blood)
+            {
+                if (defender->getBloodType() == tibia::CreatureBloodTypes::green)
+                {
+                    textColor = tibia::Colors::Text::green;
+                }
+            }
+
+            std::string hpChangeString = std::to_string(hpChange);
+
+            //boost::replace_all(hpChangeString, "-", "");
+
+            if (hpChange > 0)
+            {
+                hpChangeString.insert(0, "+");
+            }
+
             spawnFloatingText
             (
                 defender->getTilePosition(),
                 defender->getZ(),
-                std::to_string(hpChange),
+                hpChangeString,
                 textColor
             );
         }
@@ -5332,6 +5402,50 @@ public:
                     std::cout << defender->getName() << " died." << std::endl;
                 }
             }
+        }
+
+        return true;
+    }
+
+    bool handleCreatureModifyMp(tibia::Creature::Ptr creature, int mpChange, bool showFloatingTextAndAnimation = false)
+    {
+        if (mpChange == 0)
+        {
+            return false;
+        }
+
+        if (creature->isPlayer() == true && this->options.isCheatInfiniteManaEnabled == true)
+        {
+            creature->setMp(creature->getMpMax());
+
+            return false;
+        }
+
+        creature->modifyMp(mpChange);
+
+        std::string mpChangeString = std::to_string(mpChange);
+
+        if (mpChange > 0)
+        {
+            mpChangeString.insert(0, "+");
+        }
+
+        if (showFloatingTextAndAnimation == true)
+        {
+            spawnFloatingText
+            (
+                creature->getTilePosition(),
+                creature->getZ(),
+                mpChangeString,
+                tibia::Colors::Text::blue
+            );
+
+            spawnAnimation
+            (
+                creature->getTilePosition(),
+                creature->getZ(),
+                tibia::Animations::particlesBlue
+            );
         }
 
         return true;
@@ -7621,7 +7735,9 @@ public:
             m_inventorySlotsWindow.setView(m_inventorySlotsWindowView);
             m_inventorySlotsWindow.clear(sf::Color::Transparent);
 
-            tibia::BitmapFontText inventoryItemCountText;
+            tibia::BitmapFontText inventoryItemText;
+
+            bool shouldDrawInventoryItemText = false;
 
             int inventoryItemIndex = 0;
 
@@ -7637,15 +7753,31 @@ public:
 
                 if (inventoryObject->getCount() > 1)
                 {
-                    inventoryItemCountText.setText(&m_bitmapFontTiny, std::to_string(inventoryObject->getCount()), tibia::Colors::white);
+                    inventoryItemText.setText(&m_bitmapFontTiny, std::to_string(inventoryObject->getCount()), tibia::Colors::white);
 
-                    inventoryItemCountText.setPosition
+                    shouldDrawInventoryItemText = true;
+                }
+                else if (inventoryObject->getType() == tibia::ObjectTypes::key && inventoryObject->properties.uniqueId != 0)
+                {
+                    std::stringstream ss;
+                    ss << "#" << inventoryObject->properties.uniqueId;
+
+                    inventoryItemText.setText(&m_bitmapFontTiny, ss.str(), tibia::Colors::white);
+
+                    shouldDrawInventoryItemText = true;
+                }
+
+                if (shouldDrawInventoryItemText == true)
+                {
+                    inventoryItemText.setPosition
                     (
-                        inventoryItemPosition.x + tibia::GuiData::InventoryWindow::Slots::width  + 1 - inventoryItemCountText.getVertexArray()->getBounds().width,
+                        inventoryItemPosition.x + tibia::GuiData::InventoryWindow::Slots::width  + 1 - inventoryItemText.getVertexArray()->getBounds().width,
                         inventoryItemPosition.y + tibia::GuiData::InventoryWindow::Slots::height + 1 - tibia::BitmapFonts::Tiny::glyphSize.y
                     );
 
-                    m_inventorySlotsWindow.draw(inventoryItemCountText);
+                    m_inventorySlotsWindow.draw(inventoryItemText);
+
+                    shouldDrawInventoryItemText = false;
                 }
 
                 if (inventoryItemIndex % tibia::GuiData::InventoryWindow::Slots::numSlotsHorizontal == 2)

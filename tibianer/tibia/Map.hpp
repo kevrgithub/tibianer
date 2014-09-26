@@ -323,7 +323,7 @@ public:
 
                 int objectType = tibia::UMaps::objectTypes[docMapObjectType];
 
-                int objectCount = 0;
+                unsigned int objectCount = 0;
 
                 if (docMapObjectLayerType == tibia::ObjectLayerTypes::objects)
                 {
@@ -339,9 +339,14 @@ public:
                         {
                             std::string docMapObjectPropertyName = docMapObjectProperty.attribute("name").value();
 
+                            if (docMapObjectPropertyName == "unique_id")
+                            {
+                                object->properties.uniqueId = docMapObjectProperty.attribute("value").as_uint();
+                            }
+
                             if (docMapObjectPropertyName == "count")
                             {
-                                objectCount = docMapObjectProperty.attribute("value").as_int();
+                                objectCount = docMapObjectProperty.attribute("value").as_uint();
                             }
 
                             if (docMapObjectPropertyName == "script_on_interact")
@@ -429,11 +434,15 @@ public:
                             }
                             else if (objectType == tibia::ObjectTypes::door)
                             {
-                                if (docMapObjectPropertyName == "key")
+                                if (docMapObjectPropertyName == "key_type")
                                 {
-                                    std::string objectDoorKey = docMapObjectProperty.attribute("value").value();
+                                    std::string objectDoorKeyType = docMapObjectProperty.attribute("value").value();
 
-                                    object->properties.doorKey = tibia::UMaps::keyTypes[objectDoorKey];
+                                    object->properties.doorKeyType = tibia::UMaps::keyTypes[objectDoorKeyType];
+                                }
+                                else if (docMapObjectPropertyName == "key_id")
+                                {
+                                    object->properties.doorKeyId = docMapObjectProperty.attribute("value").as_uint();
                                 }
                             }
                             else if (objectType == tibia::ObjectTypes::teleporter)
@@ -597,6 +606,11 @@ public:
                     tile->addEntity(object);
                 }
             }
+        }
+
+        for (unsigned int i = tibia::ZAxis::min; i < tibia::ZAxis::max; i++)
+        {
+            tileMapTiles[i].applyTileObjectPatterns();
         }
 
         return true;

@@ -306,18 +306,59 @@ public:
 
                 spriteIndex = tibia::mapWidth - spriteIndex;
 
-                while (spriteIndex > 3)
+                while (spriteIndex > 2)
                 {
-                    spriteIndex = spriteIndex - 4;
+                    spriteIndex = spriteIndex - 3;
                 }
 
-                // odd row
-                if (tileCoords.y & 1)
+                int row = tibia::mapHeight - tileCoords.y;
+
+                row = tibia::mapHeight - row;
+
+                while (row > 2)
                 {
-                    spriteIndex += 4;
+                    row = row - 3;
+                }
+
+                if (row > 0)
+                {
+                    spriteIndex += 3 * row;
                 }
 
                 updateTileId(tileNumber, tibia::SpriteData::brownTiles[spriteIndex]);
+            }
+
+            // brown ladder tiles
+            if (tileId >= tibia::SpriteData::brownLadderTilesBegin && tileId <= tibia::SpriteData::brownLadderTilesEnd)
+            {
+                int tileNumber = tile->getNumber();
+
+                sf::Vector2u tileCoords = getTileCoordsByTileNumber(tileNumber);
+
+                int spriteIndex = tibia::mapWidth - (tileNumber % tibia::mapWidth);
+
+                spriteIndex = tibia::mapWidth - spriteIndex;
+
+                while (spriteIndex > 2)
+                {
+                    spriteIndex = spriteIndex - 3;
+                }
+
+                int row = tibia::mapHeight - tileCoords.y;
+
+                row = tibia::mapHeight - row;
+
+                while (row > 2)
+                {
+                    row = row - 3;
+                }
+
+                if (row > 0)
+                {
+                    spriteIndex += 3 * row;
+                }
+
+                updateTileId(tileNumber, tibia::SpriteData::brownLadderTiles[spriteIndex]);
             }
 
             // orange black tiles
@@ -428,8 +469,8 @@ public:
                 updateTileId(tileNumber, tibia::SpriteData::yellowTiles[spriteIndex]);
             }
 
-            // sand tiles
-            if (tileId >= tibia::SpriteData::sandTilesBegin && tileId <= tibia::SpriteData::sandTilesEnd)
+            // cracked sand tiles
+            if (tileId >= tibia::SpriteData::crackedSandTilesBegin && tileId <= tibia::SpriteData::crackedSandTilesEnd)
             {
                 int tileNumber = tile->getNumber();
 
@@ -450,7 +491,7 @@ public:
                     spriteIndex += 2;
                 }
 
-                updateTileId(tileNumber, tibia::SpriteData::sandTiles[spriteIndex]);
+                updateTileId(tileNumber, tibia::SpriteData::crackedSandTiles[spriteIndex]);
             }
 
             // brick tiles
@@ -501,6 +542,117 @@ public:
                 }
 
                 updateTileId(tileNumber, tibia::SpriteData::mountainTiles[spriteIndex]);
+            }
+
+            // sand tiles
+            if (tileId >= tibia::SpriteData::sandTilesBegin && tileId <= tibia::SpriteData::sandTilesEnd)
+            {
+                int tileNumber = tile->getNumber();
+
+                sf::Vector2u tileCoords = getTileCoordsByTileNumber(tileNumber);
+
+                int spriteIndex = tibia::mapWidth - (tileNumber % tibia::mapWidth);
+
+                spriteIndex = tibia::mapWidth - spriteIndex;
+
+                while (spriteIndex > 3)
+                {
+                    spriteIndex = spriteIndex - 4;
+                }
+
+                int row = tibia::mapHeight - tileCoords.y;
+
+                row = tibia::mapHeight - row;
+
+                while (row > 3)
+                {
+                    row = row - 4;
+                }
+
+                if (row > 0)
+                {
+                    spriteIndex += 4 * row;
+                }
+
+                updateTileId(tileNumber, tibia::SpriteData::sandTiles[spriteIndex]);
+            }
+        }
+    }
+
+    void applyTileObjectPatterns()
+    {
+        for (auto& tile : m_tileList)
+        {
+            tibia::Object::List* objectList = tile->getObjectList();
+
+            if (objectList->size() == 0)
+            {
+                continue;
+            }
+
+            for (auto& object : *objectList)
+            {
+                int objectId = object->getId();
+
+                // horizontal stone wall
+                if (objectId == 566 || objectId == 570)
+                {
+                    int tileNumber = tile->getNumber();
+
+                    if (m_z & 1)
+                    {
+                        if (tileNumber & 1)
+                        {
+                            object->setId(566);
+                        }
+                        else
+                        {
+                            object->setId(570);
+                        }
+                    }
+                    else
+                    {
+                        if (tileNumber & 1)
+                        {
+                            object->setId(570);
+                        }
+                        else
+                        {
+                            object->setId(566);
+                        }
+                    }
+                }
+
+                // vertical stone wall
+                if (objectId == 584 || objectId == 588)
+                {
+                    int tileNumber = tile->getNumber();
+
+                    sf::Vector2u tileCoords = getTileCoordsByTileNumber(tileNumber);
+
+                    if (m_z & 1)
+                    {
+                        if (tileCoords.y & 1)
+                        {
+                            object->setId(584);
+                        }
+                        else
+                        {
+                            object->setId(588);
+                        }
+                    }
+                    else
+                    {
+                        if (tileCoords.y & 1)
+                        {
+                            object->setId(588);
+                        }
+                        else
+                        {
+                            object->setId(584);
+                        }
+                    }
+                }
             }
         }
     }

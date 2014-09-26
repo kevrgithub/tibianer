@@ -460,11 +460,26 @@ public:
             m_hp = m_hpMax;
         }
 
-        if (m_hp <= 0)
+        if (m_hp < 0)
         {
             m_hp = 0;
 
             setIsDead(true);
+        }
+    }
+
+    void modifyMp(int mpChange)
+    {
+        m_mp = m_mp + mpChange;
+
+        if (m_mp > m_mpMax)
+        {
+            m_mp = m_mpMax;
+        }
+
+        if (m_mp < 0)
+        {
+            m_mp = 0;
         }
     }
 

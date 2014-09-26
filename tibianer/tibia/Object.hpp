@@ -41,14 +41,16 @@ public:
 
     struct Properties_t
     {
-       
+        unsigned int uniqueId = 0;
+
         std::string signName;
         std::string signText;
 
         std::string bookName;
         std::string bookText;
 
-        int doorKey = tibia::KeyTypes::none;
+        int doorKeyType = tibia::KeyTypes::none;
+        unsigned int doorKeyId = 0;
 
         unsigned int teleporterX = 0;
         unsigned int teleporterY = 0;
@@ -1239,6 +1241,11 @@ public:
 
         m_flags = tibia::UMaps::spriteFlags[m_id];
 
+        if (m_flags.test(tibia::SpriteFlags::tileEdge))
+        {
+            setDrawIndex(tibia::DRAW_INDEX_TILE_EDGE);
+        }
+
         if (m_flags.test(tibia::SpriteFlags::decal))
         {
             setDrawIndex(tibia::DRAW_INDEX_DECAL);
@@ -1249,7 +1256,12 @@ public:
             setDrawIndex(tibia::DRAW_INDEX_LAST);
         }
 
-        if (m_flags.test(tibia::SpriteFlags::decal) == false && m_flags.test(tibia::SpriteFlags::drawLast) == false)
+        if
+        (
+            m_flags.test(tibia::SpriteFlags::tileEdge) == false &&
+            m_flags.test(tibia::SpriteFlags::decal)    == false &&
+            m_flags.test(tibia::SpriteFlags::drawLast) == false
+        )
         {
             setDrawIndex(tibia::DRAW_INDEX_DEFAULT);
         }
