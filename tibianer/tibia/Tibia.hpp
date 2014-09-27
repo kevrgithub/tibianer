@@ -668,6 +668,22 @@ namespace tibia
             {3344, tibia::Colors::MiniMap::wood},
             {3375, tibia::Colors::MiniMap::tree},
             {3387, tibia::Colors::MiniMap::tree},
+            {3783, tibia::Colors::MiniMap::sand},
+            {3784, tibia::Colors::MiniMap::sand},
+            {3785, tibia::Colors::MiniMap::sand},
+            {3786, tibia::Colors::MiniMap::sand},
+            {3787, tibia::Colors::MiniMap::sand},
+            {3788, tibia::Colors::MiniMap::sand},
+            {3789, tibia::Colors::MiniMap::sand},
+            {3790, tibia::Colors::MiniMap::sand},
+            {3791, tibia::Colors::MiniMap::sand},
+            {3792, tibia::Colors::MiniMap::sand},
+            {3793, tibia::Colors::MiniMap::sand},
+            {3794, tibia::Colors::MiniMap::sand},
+            {3795, tibia::Colors::MiniMap::sand},
+            {3796, tibia::Colors::MiniMap::sand},
+            {3797, tibia::Colors::MiniMap::sand},
+            {3798, tibia::Colors::MiniMap::sand},
         };
     }
 
@@ -2466,6 +2482,8 @@ namespace tibia
         const int invisibleTile = 1;
         const int entityObject  = 3388;
         const int nullObject    = 3581;
+
+        const int caveWallFiller = 1191; // underground cave backround tile
 
         std::vector<int> corpse = {491, 492, 493, 494, 495, 496, 497}; // decaying
 

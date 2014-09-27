@@ -32,8 +32,8 @@ public:
 
     struct Properties_t
     {
-        std::string name   = "Unknown Map";
-        std::string author = "Unknown Author";
+        std::string name;
+        std::string author;
         std::string description;
 
         unsigned int playerStartX = 0;

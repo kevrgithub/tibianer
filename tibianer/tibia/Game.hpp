@@ -177,8 +177,6 @@ public:
         m_combatCreaturesWindowView.reset(sf::FloatRect(0, 0, tibia::GuiData::CombatWindow::Creatures::Window::width, tibia::GuiData::CombatWindow::Creatures::Window::height));
 
         m_statusBarText.setPosition(tibia::GuiData::StatusBarText::position);
-
-        m_tileMapTileVertices.setPrimitiveType(sf::Quads);
     }
 
     void showOptionsWindow()
@@ -487,10 +485,19 @@ public:
 
     void showMapNameAndAuthor()
     {
-        showGameWindowText(m_map.properties.name, tibia::Colors::Text::white);
-
         std::stringstream ss;
-        ss << m_map.properties.name << " by " << m_map.properties.author;
+
+        if (m_map.properties.name.size() != 0)
+        {
+            showGameWindowText(m_map.properties.name, tibia::Colors::Text::white);
+
+            ss << m_map.properties.name;
+        }
+
+        if (m_map.properties.author.size() != 0)
+        {
+            ss << " by " << m_map.properties.author;
+        }
 
         doChatLogWindowAddText(ss.str(), sf::Color::Red);
 
@@ -2555,6 +2562,21 @@ public:
     {
         tibia::Tile::Ptr tile = getTile(sf::Vector2u(toTileCoords.x - tibia::TILE_SIZE, toTileCoords.y - (tibia::TILE_SIZE * 2)), toZ);
 
+        tibia::Object::List* objectList = tile->getObjectList();
+
+        for (auto& object : *objectList)
+        {
+            if
+            (
+                object->getFlags().test(tibia::SpriteFlags::solid)    == true  &&
+                object->getFlags().test(tibia::SpriteFlags::moveable) == false
+            )
+            {
+                tile = getTile(sf::Vector2u(toTileCoords.x - tibia::TILE_SIZE, toTileCoords.y), toZ);
+                break;
+            }
+        }
+
         return tile;
     }
 
@@ -3016,6 +3038,11 @@ public:
 
         updateStepTile(fromTile);
         updateStepTile(toTile);
+
+        if (thingObject != nullptr)
+        {
+            updateTileMoveBelowObjects(toTile);
+        }
 
         tibia::Object::List* entityList = toTile->getEntityList();
 
@@ -3531,9 +3558,17 @@ public:
                 return false;
             }
 
-            tibia::Tile::Ptr toTile = getTileForMoveAbove(sf::Vector2u(object->getTileX(), object->getTileY()), creature->getZ() + 1);
+            tibia::Tile::Ptr toTile = getTileForMoveAbove(object->getTilePosition(), creature->getZ() + 1);
 
-            doMoveThingToTile(creature, toTile, tibia::Directions::up, true);
+            int direction = tibia::Directions::up;
+
+            // to tile was blocked, new to tile is below the ladder or rope hole
+            if (toTile->getPosition().y == object->getTileY())
+            {
+                direction = tibia::Directions::down;
+            }
+
+            doMoveThingToTile(creature, toTile, direction, true);
 
             return true;
         }
@@ -3541,7 +3576,7 @@ public:
         // sewer grate
         if (object->getId() == tibia::SpriteData::sewerGrate)
         {
-            tibia::Tile::Ptr toTile = getTileForMoveBelow(sf::Vector2u(object->getTileX(), object->getTileY()), creature->getZ() - 1);
+            tibia::Tile::Ptr toTile = getTileForMoveBelow(object->getTilePosition(), creature->getZ() - 1);
 
             doMoveThingToTile(creature, toTile, tibia::Directions::down, true);
 
@@ -3575,7 +3610,7 @@ public:
             // things fall down the hole if it is dug while things are on top of it
             tibia::Tile::Ptr fromTile = getThingTile(object);
 
-            tibia::Tile::Ptr toTile = getTileForMoveBelow(sf::Vector2u(object->getTileX(), object->getTileY()), object->getZ() - 1);
+            tibia::Tile::Ptr toTile = getTileForMoveBelow(object->getTilePosition(), object->getZ() - 1);
 
             if (fromTile != nullptr && toTile != nullptr)
             {
@@ -3583,14 +3618,14 @@ public:
 
                 tibia::Creature::List* fromCreatureList = fromTile->getCreatureList();
 
-                for (auto fromCreature : *fromCreatureList)
+                for (auto& fromCreature : *fromCreatureList)
                 {
                     fallThingList.push_back(fromCreature);
                 }
 
                 tibia::Object::List* fromObjectList = fromTile->getObjectList();
 
-                for (auto fromObject : *fromObjectList)
+                for (auto& fromObject : *fromObjectList)
                 {
                     // do not let the dig hole fall into itself
                     if (fromObject == object)
@@ -3602,7 +3637,7 @@ public:
                 }
 
                 // need to use fall thing list because moving things modifies from thing list
-                for (auto fallThing : fallThingList)
+                for (auto& fallThing : fallThingList)
                 {
                     doMoveThingToTile(fallThing, toTile, tibia::Directions::down, true);
                 }
@@ -4699,7 +4734,7 @@ public:
             return;
         }
 
-        for (auto inventoryObjectIt = inventoryObjectList->begin(); inventoryObjectIt != inventoryObjectList->end(); ++inventoryObjectIt)
+        for (auto& inventoryObjectIt = inventoryObjectList->begin(); inventoryObjectIt != inventoryObjectList->end(); ++inventoryObjectIt)
         {
             doCreatureDropInventoryObject(creature, inventoryObjectIt);
 
@@ -5623,6 +5658,36 @@ public:
         }
     }
 
+    void updateTileMoveBelowObjects(tibia::Tile::Ptr tile)
+    {
+        tibia::Object::List* objectList = tile->getObjectList();
+
+        if (objectList->size() == 0)
+        {
+            return;
+        }
+
+        tibia::Tile::Properties_t tileProperties = tile->getProperties();
+
+        if (tileProperties.isMoveBelow == false && tileProperties.hasMoveBelowObject == false)
+        {
+            return;
+        }
+
+        for (auto& object : *objectList)
+        {
+            if (object->getFlags().test(tibia::SpriteFlags::moveable))
+            {
+                tibia::Tile::Ptr toTile = getTileForMoveBelow(object->getTilePosition(), object->getZ() - 1);
+
+                if (toTile != nullptr)
+                {
+                    doMoveThingToTile(object, toTile, tibia::Directions::down, true);
+                }
+            }
+        }
+    }
+
     void updateTileGroupedObjects(tibia::Tile::Ptr tile)
     {
         tibia::Object::List* objectList = tile->getObjectList();
@@ -5761,7 +5826,7 @@ public:
 
     void updateSounds()
     {
-        for (auto soundList_it = m_soundList.begin(); soundList_it != m_soundList.end(); soundList_it++)
+        for (auto& soundList_it = m_soundList.begin(); soundList_it != m_soundList.end(); soundList_it++)
         {
             sf::Sound* sound = soundList_it->get();
 
@@ -5828,7 +5893,7 @@ public:
     {
         tibia::Projectile::List* projectileList = &m_projectileList[z];
 
-        for (auto projectileList_it = projectileList->begin(); projectileList_it != projectileList->end(); projectileList_it++)
+        for (auto& projectileList_it = projectileList->begin(); projectileList_it != projectileList->end(); projectileList_it++)
         {
             tibia::Projectile::Ptr projectile = *projectileList_it;
 
@@ -6152,6 +6217,8 @@ public:
 
         tile->addObject(object);
 
+        updateTileMoveBelowObjects(tile);
+
         return object;
     }
 
@@ -6173,6 +6240,8 @@ public:
         }
 
         tile->addObject(object);
+
+        updateTileMoveBelowObjects(tile);
 
         return true;
     }
@@ -6222,6 +6291,8 @@ public:
 
         tile->addObject(object);
 
+        updateTileMoveBelowObjects(tile);
+
         return object;
     }
 
@@ -6260,6 +6331,8 @@ public:
         }
 
         m_tileMapTileVertices.clear();
+
+        m_tileMapTileVertices.reserve(4 * tibia::NUM_TILES_TOTAL);
 
         int x1 = getGameWindowViewDrawRect().left;
         int y1 = getGameWindowViewDrawRect().top;
@@ -6318,10 +6391,10 @@ public:
                     quad[3].color = sf::Color::Transparent;
                 }
 
-                m_tileMapTileVertices.append(quad[0]);
-                m_tileMapTileVertices.append(quad[1]);
-                m_tileMapTileVertices.append(quad[2]);
-                m_tileMapTileVertices.append(quad[3]);
+                m_tileMapTileVertices.push_back(quad[0]);
+                m_tileMapTileVertices.push_back(quad[1]);
+                m_tileMapTileVertices.push_back(quad[2]);
+                m_tileMapTileVertices.push_back(quad[3]);
 
                 if (tileMap->getType() == tibia::TileMapTypes::tiles)
                 {
@@ -6368,7 +6441,7 @@ public:
         sf::RenderStates states;
         states.texture = &tibia::Textures::sprites;
 
-        m_gameWindowLayer.draw(m_tileMapTileVertices, states);
+        m_gameWindowLayer.draw(&m_tileMapTileVertices[0], m_tileMapTileVertices.size(), sf::Quads, states);
     }
 
     void updateTileThings(tibia::TileMap* tileMap)
@@ -6416,6 +6489,7 @@ public:
                 updateTileHeight(tile);
                 updateTileGroupedObjects(tile);
                 updateTileTransformObjects(tile);
+                updateTileMoveBelowObjects(tile);
 
                 tibia::Creature::List* tileCreatures = tile->getCreatureList();
 
@@ -6564,11 +6638,16 @@ public:
                         }
 
                         // fix drawing order of special objects
-                        if (object->getFlags().test(tibia::SpriteFlags::fixDrawOrder))
-                        {
-                            object->setTileX(object->getTileX() + tibia::TILE_SIZE);
-                            object->setTileY(object->getTileY() + tibia::TILE_SIZE);
-                        }
+                        //if (object->getFlags().test(tibia::SpriteFlags::fixDrawOrder))
+                        //{
+                            //object->setTileX(object->getTileX() - tibia::TILE_SIZE);
+                            //object->setTileY(object->getTileY() - tibia::TILE_SIZE);
+                        //}
+
+                        //if (object->getId() == 609)
+                        //{
+                            //object->setTileX(object->getTileX() + tibia::TILE_SIZE);
+                        //}
                     }
                 }
 
@@ -6865,7 +6944,7 @@ public:
 
                 int tileId = tile->getId();
 
-                if (tileId == tibia::TILE_NULL)
+                if (tileId == tibia::TILE_NULL || tileId == tibia::SpriteData::caveWallFiller)
                 {
                     continue;
                 }
@@ -6982,6 +7061,8 @@ public:
 
         m_miniMapVertices.clear();
 
+        m_miniMapVertices.reserve(4 * (m_miniMapWindowZoom * tibia::NUM_TILES_TOTAL));
+
         int x1 = ((m_gameWindowView.getCenter().x - (tibia::TILE_SIZE / 2)) / tibia::TILE_SIZE);
         int y1 = ((m_gameWindowView.getCenter().y - (tibia::TILE_SIZE / 2)) / tibia::TILE_SIZE);
 
@@ -7017,7 +7098,7 @@ public:
         {
             sf::Color playerTileMiniMapColor = miniMapColorIt->second;
 
-            if (playerTileMiniMapColor == tibia::Colors::MiniMap::snow)
+            if (playerTileMiniMapColor == tibia::Colors::MiniMap::snow || playerTileMiniMapColor == tibia::Colors::MiniMap::sand)
             {
                 playerColor = tibia::Colors::black;
             }
@@ -7452,7 +7533,7 @@ public:
             tibia::GuiData::ChatLogWindow::height - tibia::Fonts::System::characterSize - 1
         );
 
-        for (auto chatLogWindowTextIt = m_chatLogWindowTextList.rbegin(); chatLogWindowTextIt != m_chatLogWindowTextList.rend(); ++chatLogWindowTextIt)
+        for (auto& chatLogWindowTextIt = m_chatLogWindowTextList.rbegin(); chatLogWindowTextIt != m_chatLogWindowTextList.rend(); ++chatLogWindowTextIt)
         {
             //std::cout << chatLogWindowTextIt->getString().toAnsiString() << std::endl;
 
@@ -8710,7 +8791,7 @@ private:
 
     std::vector<sf::Vertex> m_miniMapVertices;
 
-    sf::VertexArray m_tileMapTileVertices;
+    std::vector<sf::Vertex> m_tileMapTileVertices;
 
     tibia::Tile::List m_tileMapTiles[tibia::NUM_Z_LEVELS];
     tibia::Object::List m_tileMapObjects[tibia::NUM_Z_LEVELS];

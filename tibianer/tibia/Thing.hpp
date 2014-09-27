@@ -34,6 +34,15 @@ public:
         {
             //return (a->getTileX() == b->getTileX() ? a->getTileY() < b->getTileY() : a->getTileX() < b->getTileX());
 
+/*
+            if (a->getTileX() == b->getTileX() && a->getTileY() == b->getTileY())
+            {
+                return a->getDrawIndex() < b->getDrawIndex();
+            }
+
+            return a->getTileNumber() < b->getTileNumber();
+*/
+
             if (a->getTileX() == b->getTileX())
             {
                 if (a->getTileY() == b->getTileY())
@@ -45,12 +54,6 @@ public:
                     return a->getTileY() < b->getTileY();
                 }
             }
-
-            // attempt to fix draw order: fixes trees overlapping trees, breaks walls overlapping objects
-            //if (a->getTileX() != b->getTileX() && a->getTileY() != b->getTileY())
-            //{
-                //return a->getTileY() < b->getTileY();
-            //}
 
             return a->getTileX() < b->getTileX();
         }
