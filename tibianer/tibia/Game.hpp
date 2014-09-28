@@ -1181,17 +1181,22 @@ public:
 
     void handleKeyboardInput()
     {
+        m_isKeyPressedLControl = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl);
+        m_isKeyPressedLAlt     = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LAlt);
+        m_isKeyPressedLShift   = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LShift);
+
+        m_isKeyPressedRControl = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::RControl);
+        m_isKeyPressedRAlt     = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::RAlt);
+        m_isKeyPressedRShift   = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::RShift);
+
         if (this->gui.isChatInputWindowActive == true)
         {
             return;
         }
 
-        bool isKeyLControlPressed = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LControl);
-        bool isKeyLShiftPressed   = sf::Keyboard::isKeyPressed(sf::Keyboard::Key::LShift);
-
         bool turnOnly = false;
 
-        if (isKeyLControlPressed == true || isKeyLShiftPressed == true)
+        if (m_isKeyPressedLControl == true || m_isKeyPressedLShift == true)
         {
             turnOnly = true;
         }
@@ -4700,11 +4705,53 @@ public:
         {
             if (inventoryObject->getFlags().test(tibia::SpriteFlags::groupable))
             {
-                dropObject->setCount(inventoryObject->getCount());
+                if (creature->isPlayer() == true && m_isKeyPressedLShift == true)
+                {
+                    int currentCount = inventoryObject->getCount();
 
-                spawnObject(creature->getTilePosition(), creature->getZ(), dropObject);
+                    int dropCount = currentCount;
 
-                creature->getInventory()->removeObject(inventoryObjectIt);
+                    std::stringstream ss;
+                    ss << "Amount: %i[1," << dropCount << "]\n";
+
+                    IupGetParam
+                    (
+                        "Drop Object", NULL, 0,
+
+                        ss.str().c_str()
+
+                        ,
+
+                        &dropCount,
+
+                        NULL
+                    );
+
+                    dropObject->setCount(dropCount);
+
+                    if (dropCount == currentCount)
+                    {
+                        creature->getInventory()->removeObject(inventoryObjectIt);
+                    }
+                    else
+                    {
+                        inventoryObject->setCount(currentCount - dropCount);
+
+                        inventoryObject->setIdByCount();
+                    }
+
+                    dropObject->setIdByCount();
+
+                    spawnObject(creature->getTilePosition(), creature->getZ(), dropObject);
+                }
+                else
+                {
+                    dropObject->setCount(inventoryObject->getCount());
+
+                    spawnObject(creature->getTilePosition(), creature->getZ(), dropObject);
+
+                    creature->getInventory()->removeObject(inventoryObjectIt);
+                }
             }
             else
             {
@@ -6638,16 +6685,11 @@ public:
                         }
 
                         // fix drawing order of special objects
-                        //if (object->getFlags().test(tibia::SpriteFlags::fixDrawOrder))
-                        //{
-                            //object->setTileX(object->getTileX() - tibia::TILE_SIZE);
-                            //object->setTileY(object->getTileY() - tibia::TILE_SIZE);
-                        //}
-
-                        //if (object->getId() == 609)
-                        //{
-                            //object->setTileX(object->getTileX() + tibia::TILE_SIZE);
-                        //}
+                        if (object->getFlags().test(tibia::SpriteFlags::fixDrawOrder))
+                        {
+                            object->setTileX(object->getTileX() + tibia::TILE_SIZE);
+                            object->setTileY(object->getTileY() + tibia::TILE_SIZE);
+                        }
                     }
                 }
 
@@ -8535,6 +8577,11 @@ public:
 
     void doAnimatedWater()
     {
+        if (m_player->getZ() < tibia::ZAxis::ground)
+        {
+            return;
+        }
+
         if (isWaterVisible() == false)
         {
             return;
@@ -8703,6 +8750,13 @@ private:
 
     std::string m_configFile;
     std::string m_hotkeysFile;
+
+    bool m_isKeyPressedLControl = false;
+    bool m_isKeyPressedLAlt     = false;
+    bool m_isKeyPressedLShift   = false;
+    bool m_isKeyPressedRControl = false;
+    bool m_isKeyPressedRAlt     = false;
+    bool m_isKeyPressedRShift   = false;
 
     sf::RenderWindow* m_mainWindow;
 

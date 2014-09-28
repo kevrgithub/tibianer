@@ -1292,6 +1292,26 @@ public:
         return m_id;
     }
 
+    void setIdByCount()
+    {
+        for (auto groupableObjectsIt = tibia::groupedObjectsList.begin(); groupableObjectsIt != tibia::groupedObjectsList.end(); groupableObjectsIt++)
+        {
+            auto groupableObjectIt = std::find(groupableObjectsIt->begin(), groupableObjectsIt->end(), m_id);
+
+            if (groupableObjectIt != groupableObjectsIt->end())
+            {
+                setId
+                (
+                    tibia::groupedObjectsList
+                        .at(std::distance(tibia::groupedObjectsList.begin(), groupableObjectsIt))
+                        .at(tibia::Utility::getGroupableObjectIndexByCount(m_count, groupableObjectsIt->size()))
+                );
+
+                return;
+            }
+        }
+    }
+
     void setCountById()
     {
         for (auto& groupableObjects : tibia::groupedObjectsList)

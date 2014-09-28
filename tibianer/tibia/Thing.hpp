@@ -34,15 +34,6 @@ public:
         {
             //return (a->getTileX() == b->getTileX() ? a->getTileY() < b->getTileY() : a->getTileX() < b->getTileX());
 
-/*
-            if (a->getTileX() == b->getTileX() && a->getTileY() == b->getTileY())
-            {
-                return a->getDrawIndex() < b->getDrawIndex();
-            }
-
-            return a->getTileNumber() < b->getTileNumber();
-*/
-
             if (a->getTileX() == b->getTileX())
             {
                 if (a->getTileY() == b->getTileY())
