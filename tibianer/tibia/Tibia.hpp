@@ -2315,6 +2315,7 @@ namespace tibia
 
         std::vector<int> bubbleGreen = {1570, 5};
         std::vector<int> bubbleRed   = {1582, 5};
+        std::vector<int> bubbleBlack = {3819, 5};
 
         std::vector<int> musicGreen = {3362, 5};
         std::vector<int> musicRed   = {3775, 5};
@@ -2445,6 +2446,7 @@ namespace tibia
             lightSource,
             water,
             lava,
+            oil,
             hasHeight,
             moveAbove,
             moveBelow,
@@ -2458,10 +2460,19 @@ namespace tibia
             groupable,
             stackable,
             pickupable,
-            equippable,
+            container,
+            slotNeck,
+            slotHead,
+            slotBody,
+            slotLegs,
+            slotFeet,
+            slotLeftHand,
+            slotRightHand,
+            twoHanded,
             food,
             instrument,
             currency,
+            rune,
             decal,
             tileEdge,
 
@@ -2735,12 +2746,21 @@ namespace tibia
         const int lavaBegin = lava.front();
         const int lavaEnd   = lava.back();
 
+        std::vector<int> oil =
+        {
+            3811, 3812, 3813, 3814,
+            3815, 3816, 3817, 3818,
+        };
+
+        const int oilBegin = oil.front();
+        const int oilEnd   = oil.back();
+
         std::vector<int> greyTiles =
         {
             90, 91, 92, 93,
             94, 95, 96, 97,
             98, 99, 100, 101,
-            102, 103, 104, 105
+            102, 103, 104, 105,
         };
 
         const int greyTilesBegin = greyTiles.front();
@@ -2994,6 +3014,7 @@ namespace tibia
             3700, 3703, 3707,
             3734, 3738, 3742, 3746,
             3754,
+            3811, 3812, 3813, 3814, 3815, 3816, 3817, 3818,
         };
 
         std::vector<int> blockProjectiles =
@@ -3440,6 +3461,47 @@ namespace tibia
             3799, 3800, 3801, 3802, 3803, 3804, 3805, 3806, 3807, 3808, 3809, 3810,
         };
 
+        std::vector<int> rune =
+        {
+            1277, // blank
+            1282, 1283, 1284, 1285, 1286, 1287, 1288, 1289,
+            1290, 1291, 1292, 1293, 1294, 1295, 1296, 1297,
+            1298, 1299, 1300, 1301, 1302, 1303, 1304, 1305,
+            1306, 1307, 1308, 1309, 1310, 1311, 1312, 1313,
+            1314, 1315, 1316, 1317, 1318, 1319, 1320, 1321,
+            1322, 1323, 1324, 1325, 1326, 1327, 1328, 1329,
+            1330, 1331, 1332, 1333, 1334, 1335, 1336, 1337,
+        };
+
+        std::vector<int> currency =
+        {
+            410, 411, 412, 413, 414, 415, 416, 417,
+            2889, 2890, 2891, 2892, 2893, 2894, 2895, 2896,
+            3760, 3761, 3762, 3763, 3764, 3765, 3766, 3767,
+            3768, 3769, 3770, 3771, 3772, 3773, 3774,
+        };
+
+        std::vector<int> food =
+        {
+            389, 418, 419, 420, 421, 515, 516, 991, 992, 1050,
+            1051, 1052, 1053, 1228, 1229, 1230, 1231, 1232, 1233,
+            1234, 1235, 1236, 1237, 1238, 1239, 1240, 1263, 1471,
+            1569, 1921, 1922, 1923, 2348, 2511, 2512, 2513, 2514,
+            2515, 2516, 2517, 2518, 2519, 2520, 2521, 2522, 2523,
+            2524, 2525, 2616, 2617, 2618, 2619, 2620, 2621, 2622,
+            2719, 2720, 2721, 2722, 2723, 2724, 2945, 2946, 2947,
+            2948, 2949, 2950, 2979, 2980, 2981, 2982, 2983, 2984,
+            3017, 3018, 3019, 3020, 3021, 3022, 3367, 3368, 3369,
+            3370, 3371, 3372, 3373, 3374, 3605, 3606, 3607, 3608,
+            3609, 3610, 3611, 3612, 3613, 3614, 3615, 3616, 3617,
+            3618, 3619, 3620, 3621, 3622,
+        };
+
+        std::vector<int> instrument =
+        {
+            300, 301, 1034, 1088, 1089, 1090, 1091, 1133,
+        };
+
         std::vector<int> transparent =
         {
             1,    // invisible tile
@@ -3495,6 +3557,7 @@ namespace tibia
             3030, 3032, 3034,
             3663, 3665, 3667, 3669, 3671, 3673,
             3681,
+            3824, 3825,
         };
 
         // bottom to top
@@ -3514,6 +3577,7 @@ namespace tibia
             2967,
             3028,
             3679,
+            3826, 3827,
         };
 
         // fix drawing order of objects on walls

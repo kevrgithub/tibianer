@@ -9,6 +9,8 @@
 #include <sstream>
 #include <algorithm>
 #include <locale>
+#include <chrono>
+#include <random>
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
@@ -3141,9 +3143,18 @@ public:
             return false;
         }
 
-        bool result = false;
+        tibia::Object::Ptr interactObject = objectList->back();
 
-        result = doCreatureInteractWithObject(creature, objectList->back());
+        for (auto& object : *objectList)
+        {
+            if (object->getType() == tibia::ObjectTypes::door)
+            {
+                interactObject = object;
+                break;
+            }
+        }
+
+        bool result = doCreatureInteractWithObject(creature, interactObject);
 
         if (result == false)
         {

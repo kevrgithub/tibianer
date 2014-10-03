@@ -308,10 +308,10 @@ public:
 
     void setOutfitRandom()
     {
-        m_outfit[0] = utility::getRandomNumber(0, (tibia::Outfits::head.size() / 4) - 1);
-        m_outfit[1] = utility::getRandomNumber(0, (tibia::Outfits::body.size() / 4) - 1);
-        m_outfit[2] = utility::getRandomNumber(0, (tibia::Outfits::legs.size() / 4) - 1);
-        m_outfit[3] = utility::getRandomNumber(0, (tibia::Outfits::feet.size() / 4) - 1);
+        m_outfit[0] = utility::getRandomNumber((unsigned int)0, (tibia::Outfits::head.size() / 4) - 1);
+        m_outfit[1] = utility::getRandomNumber((unsigned int)0, (tibia::Outfits::body.size() / 4) - 1);
+        m_outfit[2] = utility::getRandomNumber((unsigned int)0, (tibia::Outfits::legs.size() / 4) - 1);
+        m_outfit[3] = utility::getRandomNumber((unsigned int)0, (tibia::Outfits::feet.size() / 4) - 1);
 
         updateOutfit();
     }

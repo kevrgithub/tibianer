@@ -11,8 +11,8 @@
 #include <vector>
 #include <algorithm>
 #include <memory>
-#include <thread>
 #include <chrono>
+#include <random>
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
@@ -266,8 +266,10 @@ int main(int argc, char* argv[])
         std::cout << "Error: Failed to load hotkeys" << std::endl;
     }
 
+/*
     std::cout << "Initializing random number seed" << std::endl;
     std::srand(std::time(0));
+*/
 
     std::cout << "Creating main window" << std::endl;
     createMainWindow();

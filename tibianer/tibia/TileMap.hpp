@@ -30,8 +30,8 @@ public:
         m_waterTileNumbers.clear();
 
         //m_tiles = tiles;
-        //m_tiles.swap(tiles);
-        m_tiles = std::move(tiles);
+        //m_tiles = std::move(tiles);
+        m_tiles.swap(tiles);
 
         m_name = name;
 
@@ -77,7 +77,7 @@ public:
             }
         }
 
-        std::sort(m_tileList.begin(), m_tileList.end(), tibia::TileSort::sortTilesByTileNumber());
+        std::sort(m_tileList.begin(), m_tileList.end(), tibia::Tile::sortByTileNumber_t());
 
         applyTilePatterns();
     }
@@ -260,6 +260,31 @@ public:
                 }
 
                 updateTileId(tileNumber, tibia::SpriteData::lava[spriteIndex]);
+            }
+
+            // oil
+            if (tileId >= tibia::SpriteData::oilBegin && tileId <= tibia::SpriteData::oilEnd)
+            {
+                int tileNumber = tile->getNumber();
+
+                sf::Vector2u tileCoords = getTileCoordsByTileNumber(tileNumber);
+
+                int spriteIndex = tibia::mapWidth - (tileNumber % tibia::mapWidth);
+
+                spriteIndex = tibia::mapWidth - spriteIndex;
+
+                while (spriteIndex > 3)
+                {
+                    spriteIndex = spriteIndex - 4;
+                }
+
+                // odd row
+                if (tileCoords.y & 1)
+                {
+                    spriteIndex += 4;
+                }
+
+                updateTileId(tileNumber, tibia::SpriteData::oil[spriteIndex]);
             }
 
             // grey tiles

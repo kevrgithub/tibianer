@@ -82,6 +82,7 @@ namespace tibia
                 {tibia::SpriteFlags::lightSource,      tibia::SpriteData::lightSource},
                 {tibia::SpriteFlags::water,            tibia::SpriteData::water},
                 {tibia::SpriteFlags::lava,             tibia::SpriteData::lava},
+                {tibia::SpriteFlags::oil,              tibia::SpriteData::oil},
                 {tibia::SpriteFlags::hasHeight,        tibia::SpriteData::hasHeight},
                 {tibia::SpriteFlags::moveAbove,        tibia::SpriteData::moveAbove},
                 {tibia::SpriteFlags::moveBelow,        tibia::SpriteData::moveBelow},
@@ -95,6 +96,10 @@ namespace tibia
                 {tibia::SpriteFlags::groupable,        tibia::SpriteData::groupable},
                 {tibia::SpriteFlags::stackable,        tibia::SpriteData::stackable},
                 {tibia::SpriteFlags::pickupable,       tibia::SpriteData::pickupable},
+                {tibia::SpriteFlags::food,             tibia::SpriteData::food},
+                {tibia::SpriteFlags::instrument,       tibia::SpriteData::instrument},
+                {tibia::SpriteFlags::currency,         tibia::SpriteData::currency},
+                {tibia::SpriteFlags::rune,             tibia::SpriteData::rune},
                 {tibia::SpriteFlags::decal,            tibia::SpriteData::decals},
                 {tibia::SpriteFlags::tileEdge,         tibia::SpriteData::tileEdges},
             };

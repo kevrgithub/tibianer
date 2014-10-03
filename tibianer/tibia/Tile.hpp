@@ -19,6 +19,14 @@ public:
     typedef std::shared_ptr<tibia::Tile> Ptr;
     typedef std::vector<tibia::Tile::Ptr> List;
 
+    struct sortByTileNumber_t
+    {
+        bool operator()(tibia::Tile::Ptr a, tibia::Tile::Ptr b) const
+        {
+            return (a->getNumber() < b->getNumber());
+        }
+    };
+
     struct Properties_t
     {
         bool isSolid     = false;
@@ -37,6 +45,7 @@ public:
         bool hasBearTrapOpenObject      = false;
         bool hasMountainRampLeftObject  = false;
         bool hasMountainRampRightObject = false;
+        bool hasDoorObject              = false;
     };
 
     int getNumber()
@@ -233,9 +242,15 @@ public:
                 tileProperties.hasBearTrapOpenObject = true;
             }
 
-            if (object->getType() == tibia::ObjectTypes::teleporter)
+            int objectType = object->getType();
+
+            if (objectType == tibia::ObjectTypes::teleporter)
             {
                 tileProperties.hasTeleporterObject = true;
+            }
+            else if (objectType == tibia::ObjectTypes::door)
+            {
+                tileProperties.hasDoorObject = true;
             }
         }
 
@@ -278,17 +293,6 @@ private:
     tibia::Animation::List m_animationList;
 
 }; // class Tile
-
-namespace TileSort
-{
-    struct sortTilesByTileNumber
-    {
-        bool operator()(tibia::Tile::Ptr a, tibia::Tile::Ptr b) const
-        {
-            return (a->getNumber() < b->getNumber());
-        }
-    };
-}
 
 } // namespace tibia
 
